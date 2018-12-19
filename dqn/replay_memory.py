@@ -1,10 +1,6 @@
-from collections import namedtuple
 import random
-
-Transition = namedtuple("Transition", ("s", "a", "r_", "s_"))
-Transition.__str__ = lambda self: "".join(
-    ["(", str(self.s), ", ", str(self.a), ", ", str(self.r_), ", ", str(self.s_), ")"])
-
+from dqn.transition import Transition
+import torch
 
 class ReplayMemory(object):
 
@@ -14,7 +10,6 @@ class ReplayMemory(object):
         self.position = 0
 
     def push(self, *args):
-        """Saves a transition."""
         if len(self.memory) < self.capacity:
             self.memory.append(None)
         self.memory[self.position] = Transition(*args)
@@ -22,6 +17,16 @@ class ReplayMemory(object):
 
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
+
+    def sample_to_tensors(self,batch_size):
+        transitions = self.sample(batch_size)
+        batch = Transition(*zip(*transitions))
+        s = torch.Tensor(batch.s)
+        s_ = torch.Tensor(batch.s_)
+        # TODO , if dim a > 1 , then dont use brackets
+        a = torch.t(torch.Tensor([batch.a]))
+        r_ = torch.t(torch.Tensor([batch.r_]))
+        return torch.cat((s,a,r_,s_),dim=1)
 
     def __len__(self):
         return len(self.memory)

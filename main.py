@@ -1,72 +1,75 @@
-from rbm.rbm import RBM
-import torch
-import gym
 from dqn.replay_memory import ReplayMemory
 import torch
 import utils
-import rbm.utils_rbm as utils_rbm
 import numpy as np
-from sklearn.model_selection import ParameterGrid
+from ae.autoencoder import Autoencoder
+from envs.envs_factory import generate_envs
+import logging
+from torch import nn
+import torch.nn.functional as F
+import gym
 
-np.set_printoptions(precision=2)
+print(torch.__version__)
 
-print('Training RBM...')
-
-rm = ReplayMemory(10000)
-
-# render = lambda : plt.imshow(env.render(mode='rgb_array'))
-env = gym.make('CartPole-v0')
-
-utils.set_seed(seed=0, env=env)
-
-for _ in range(100):
-    s = env.reset()
-    done = False
-    while not done:
-        a = env.action_space.sample()
-        s_, r_, done, info = env.step(a)  # take a random action
-        rm.push(s, a, r_, s_)
-        s = s_
-print(rm)
-
-rbm_transitions = utils_rbm.transtions_to_rbm_transtions(rm.memory, env.action_space.n)
-# print(rbm_transitions)
-
-
-########## CONFIGURATION ##########
 utils.set_device()
+
+logging.basicConfig(level=logging.INFO)
+np.set_printoptions(precision=2)
+logger = logging.getLogger(__name__)
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-CUDA = torch.cuda.is_available()
+envs = []
+params=[]
+#
+# envs, params = generate_envs("CartPole-v0", {"gravity": [9.8],
+#                                              "masscart": [1.0],
+#                                              "masspole": [0.1],
+#                                              "length": [0.5],
+#                                              "force_mag": [10.0],
+#                                              })
 
-batch = torch.from_numpy(rbm_transitions).float().to(device)
+envs, params = generate_envs("CartPole-v0", {"gravity": np.linspace(9.8, 20., 2),  # [9.8],
+                                             "masscart": [0.0,1.0],
+                                             "masspole": [0.1],
+                                             "length": [0.5,1.0],
+                                             "force_mag": [0.0,10.0],
+                                             })
 
-param_grid = {'num_hidden': [16, 64, 256],
-              'k': [1, 2,  5],
-              'learning_rate': [0.001, 0.01, 0.1, 1.0],
-              'momentum_coefficient': [0.1, 0.5,  0.9],
-              'weight_decay': [0.0001, 0.001, 0.01, 0.1],
-              'use_cuda':[True]}
+# envs.append(gym.make("MountainCar-v0"))
+# params.append("MountainCar-v0")
+all_transitions = []
 
-grid = ParameterGrid(param_grid)
-print(''.join([str(iparam) + " " + str(param) + "\n" for iparam, param in enumerate(grid)]))
-min = np.inf
-argmin = None
-for params in grid:
-    rbm = RBM(num_visible=rbm_transitions.shape[1], **params)
+for ienv, env in enumerate(envs):
+    # print(params[ienv])
+    utils.set_seed(seed=0, env=env)
+    rm = ReplayMemory(10000)
+    for _ in range(100):
+        s = env.reset()
+        done = False
+        while not done:
+            # env.render()
+            a = env.action_space.sample()
+            s_, r_, done, info = env.step(a)
+            rm.push(s, a, r_, s_)
+            s = s_
+    all_transitions.append(rm.sample_to_tensors(len(rm)).to(device))
+    print(all_transitions[ienv].shape[1])
+# print(all_transitions)
 
-    for epoch in range(500):
-        epoch_error = 0.0
-        batch_error = rbm.contrastive_divergence(batch)
-        epoch_error += batch_error
-    if epoch_error <min:
-        min = epoch_error
-        argmin=params
-    print(epoch_error,params)
-print(min, argmin)
+criterion = F.mse_loss
 
-# tensor(3584.2515, device='cuda:1') {'k': 1, 'learning_rate': 0.1, 'momentum_coefficient': 0.9, 'num_hidden': 256, 'use_cuda': True, 'weight_decay': 0.0001}
+autoencoders = [Autoencoder(all_transitions[ienv].shape[1], criterion).to(device) for ienv in range(len(envs))]
 
-# print(batch)
+for ienv in range(len(envs)):
+    autoencoders[ienv].fit(all_transitions[ienv])
 
-# print(rbm.sample_visible(rbm.sample_hidden(batch)))
+
+
+
+for ienv in range(len(envs)):
+    print("---------------")
+    print("autoencoder={}".format(ienv))
+    for ienv2 in range(len(envs)):
+        x = all_transitions[ienv2]
+        print(ienv2, "loss", criterion(autoencoders[ienv](x),x).data)

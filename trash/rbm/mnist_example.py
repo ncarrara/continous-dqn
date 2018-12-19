@@ -3,7 +3,7 @@ from sklearn.linear_model import LogisticRegression
 import torch
 import torchvision.transforms
 
-from rbm import RBM
+from trash.rbm import RBM
 
 
 ########## CONFIGURATION ##########

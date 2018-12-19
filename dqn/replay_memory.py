@@ -1,6 +1,7 @@
 import random
 from dqn.transition import Transition
 import torch
+import numpy as np
 
 class ReplayMemory(object):
 
@@ -18,15 +19,24 @@ class ReplayMemory(object):
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
-    def sample_to_tensors(self,batch_size):
+    def sample_to_numpy(self,batch_size):
         transitions = self.sample(batch_size)
         batch = Transition(*zip(*transitions))
-        s = torch.Tensor(batch.s)
-        s_ = torch.Tensor(batch.s_)
+        s = np.array(batch.s)
+        s_ = np.array(batch.s_)
         # TODO , if dim a > 1 , then dont use brackets
-        a = torch.t(torch.Tensor([batch.a]))
-        r_ = torch.t(torch.Tensor([batch.r_]))
-        return torch.cat((s,a,r_,s_),dim=1)
+        a = np.transpose(np.array([batch.a]))
+        r_ = np.transpose(np.array([batch.r_]))
+        # print(s)
+        # print(a)
+
+        # print(s.shape)
+        # print(s_.shape)
+        # print(a.shape)
+        # print(r_.shape)
+        # print(s.shape)
+        return np.concatenate((s, a, r_, s_),axis=1)
+
 
     def __len__(self):
         return len(self.memory)

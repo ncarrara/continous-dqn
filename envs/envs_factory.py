@@ -3,8 +3,8 @@ import envs.cart_pole_config_env as envsconfig
 import gym
 
 
-def generate_envs(env_str, all_params):
-    grid = ParameterGrid(all_params)
+def generate_envs(env_str, env_params):
+    grid = ParameterGrid(env_params)
     envs = []
     rez_params = []
     for param in grid:

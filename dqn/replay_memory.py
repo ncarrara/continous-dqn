@@ -1,7 +1,10 @@
+import os
 import random
 from dqn.transition import Transition
-import torch
 import numpy as np
+# from utils.jsonable import Jsonable
+import json
+
 
 class ReplayMemory(object):
 
@@ -19,7 +22,7 @@ class ReplayMemory(object):
     def sample(self, batch_size):
         return random.sample(self.memory, batch_size)
 
-    def sample_to_numpy(self,batch_size):
+    def sample_to_numpy(self, batch_size):
         transitions = self.sample(batch_size)
         batch = Transition(*zip(*transitions))
         s = np.array(batch.s)
@@ -27,16 +30,27 @@ class ReplayMemory(object):
         # TODO , if dim a > 1 , then dont use brackets
         a = np.transpose(np.array([batch.a]))
         r_ = np.transpose(np.array([batch.r_]))
-        # print(s)
-        # print(a)
+        return np.concatenate((s, a, r_, s_), axis=1)
 
-        # print(s.shape)
-        # print(s_.shape)
-        # print(a.shape)
-        # print(r_.shape)
-        # print(s.shape)
-        return np.concatenate((s, a, r_, s_),axis=1)
+    def save_memory(self, path, indent=0):
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        memory = [t._asdict() for t in self.memory]
+        if indent > 0:
+            json_str = json.dumps(memory, indent=indent)
+        else:
+            json_str = json.dumps(memory)
+        with open(path, 'w') as f:
+            f.write(json_str)
 
+    def load_memory(self, path):
+        with open(path, 'r') as infile:
+            memory = json.load(infile)
+        self.memory = []
+        self.position = 0
+        for idata, data in enumerate(memory):
+            self.push(*data.values())
 
     def __len__(self):
         return len(self.memory)
@@ -44,3 +58,14 @@ class ReplayMemory(object):
     def __str__(self):
         rez = "".join(["{:05d} {} \n".format(it, str(t)) for it, t in enumerate(self.memory)])
         return rez[:-1]
+
+# m = ReplayMemory(1000)
+# m.push([1, 2, 3], 4, 18, [5, 6, 7])
+# m.push([1, 2, 3], 4, 18, [5, 6, 7])
+# m.push([1, 2, 3], 4, 18, [5, 6, 7])
+# m.dump_memory("memory.json")
+# # import json
+# # print json.dumps(m)
+# m = ReplayMemory(100)
+# m.load_memory("memory.json")
+# print m.memory

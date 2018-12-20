@@ -1,8 +1,13 @@
 import random
 import numpy as np
+from dqn.replay_memory import ReplayMemory
 import torch
+import os
 import logging
+
 logger = logging.getLogger(__name__)
+
+
 class Color:
     PURPLE = '\033[95m'
     CYAN = '\033[96m'
@@ -14,6 +19,22 @@ class Color:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     END = '\033[0m'
+
+
+def read_samples(path_data="data/samples"):
+    import configuration
+    logger.info("reading samples ...")
+    files = os.listdir(path_data)
+    all_transitions = [None] * len(files)
+    for file in files:
+        id_env = int(file.split(".")[0])
+        path_file = path_data + "/" + file
+        logger.info("reading {}".format(path_file))
+        rm = ReplayMemory(10000)
+        rm.load_memory(path_file)
+        data = rm.sample_to_numpy(len(rm))
+        all_transitions[id_env] = torch.from_numpy(data).float().to(configuration.DEVICE)
+    return all_transitions
 
 
 def array_to_cross_comparaison(tab):
@@ -40,6 +61,8 @@ def set_seed(seed, env=None):
     torch.manual_seed(seed)
     if env is not None:
         env.seed(seed)
+
+
 
 
 import torch
@@ -70,3 +93,4 @@ def set_device():
 
     logger.info("setting process in device {}".format(device))
     torch.cuda.set_device(device)
+    return device

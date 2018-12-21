@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    N = 100
+    N = 1000
     autoencoders = utils.load_autoencoders(C.workspace + "/" + C.path_models)
     all_transitions = utils.read_samples(C.workspace + "/" + C.path_samples)
 

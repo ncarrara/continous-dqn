@@ -1,0 +1,52 @@
+{
+  "general": {
+    "level": "INFO",
+    "workspace": "data/config_2",
+    "path_samples": "samples",
+    "path_models": "models",
+    "seed": 2
+  },
+  "generate_samples": {
+    "env_str": "CartPoleConfig-v0",
+    "env_params": {
+      "gravity": [
+        9.8
+      ],
+      "masscart": [
+        1.0
+      ],
+      "masspole": [
+        0.1
+      ],
+      "length": [
+        0.01,
+        0.1,
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        2.5,
+        3.0,
+        3.5,
+        5.0,
+        10.0,
+        20.0
+      ],
+      "force_mag": [
+        10.0
+      ]
+    }
+  },
+  "learn_autoencoders": {
+    "weight_decay": 0.0,
+    "learning_rate": 0.001,
+    "autoencoder_size": [
+      8,
+      32
+    ],
+    "optimizer_str": "ADAM",
+    "normalize": true,
+    "n_epochs": 5000,
+    "criterion": "l1"
+  }
+}

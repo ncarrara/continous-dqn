@@ -12,10 +12,11 @@ logger = logging.getLogger(__name__)
 def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
          autoencoder_size, n_epochs):
     criterion = F.l1_loss if criterion == "l1" else None
-    if not os.path.exists(C.path_samples):
-        os.makedirs(C.path_samples)
+    folder_samples = C.workspace+"/"+C.path_samples
+    if not os.path.exists(folder_samples):
+        os.makedirs(folder_samples)
 
-    all_transitions = utils.read_samples(C.path_samples)
+    all_transitions = utils.read_samples(folder_samples)
     min_n, max_n = autoencoder_size
     autoencoders = [Autoencoder(transitions.shape[1], min_n, max_n) for transitions in all_transitions]
     for ienv, transitions in enumerate(all_transitions):
@@ -36,11 +37,11 @@ def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
                                stop_loss=0.01,
                                criterion=criterion)
 
-        folder = C.workspace + "/" + C.path_models
+        folder_models = C.workspace + "/" + C.path_models
 
-        if not os.path.exists(folder):
-            os.makedirs(folder)
-        path_autoencoder = folder + "/{}.pt".format(ienv)
+        if not os.path.exists(folder_models):
+            os.makedirs(folder_models)
+        path_autoencoder = folder_models + "/{}.pt".format(ienv)
         logger.info("saving autoencoder at {}".format(path_autoencoder))
         torch.save(autoencoders[ienv], path_autoencoder)
 

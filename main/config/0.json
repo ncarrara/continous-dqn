@@ -45,5 +45,6 @@
     "normalize": true,
     "n_epochs": 1000,
     "criterion": "l1"
-  }
+  },
+  "N_base_trajectories":5000
 }

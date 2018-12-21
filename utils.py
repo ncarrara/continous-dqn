@@ -21,8 +21,20 @@ class Color:
     END = '\033[0m'
 
 
-def read_samples(path_data="data/samples"):
-    import configuration
+def load_autoencoders(path_autoencoders):
+    from configuration import DEVICE
+    logger.info("reading autoencoders at {}".format(path_autoencoders))
+    files_autoencoders = os.listdir(path_autoencoders)
+    autoencoders = [None] * len(files_autoencoders)
+    for file in files_autoencoders:
+        i_autoencoder = int(file.split(".")[0])
+        path_autoencoder = path_autoencoders + "/" + file
+        autoencoders[i_autoencoder] = torch.load(path_autoencoder, map_location=DEVICE)
+    return autoencoders
+
+
+def read_samples(path_data):
+    from configuration import DEVICE
     logger.info("reading samples ...")
     files = os.listdir(path_data)
     all_transitions = [None] * len(files)
@@ -33,7 +45,7 @@ def read_samples(path_data="data/samples"):
         rm = ReplayMemory(10000)
         rm.load_memory(path_file)
         data = rm.sample_to_numpy(len(rm))
-        all_transitions[id_env] = torch.from_numpy(data).float().to(configuration.DEVICE)
+        all_transitions[id_env] = torch.from_numpy(data).float().to(DEVICE)
     return all_transitions
 
 
@@ -61,8 +73,6 @@ def set_seed(seed, env=None):
     torch.manual_seed(seed)
     if env is not None:
         env.seed(seed)
-
-
 
 
 import torch

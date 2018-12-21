@@ -4,18 +4,18 @@ from ae.autoencoder import Autoencoder
 import torch.nn.functional as F
 import os
 import logging
-import configuration as c
+from configuration import C
 
 logger = logging.getLogger(__name__)
 
 
-def test(path_data, path_models, criterion, optimizer_str, weight_decay, learning_rate, normalize,
+def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
          autoencoder_size, n_epochs):
     criterion = F.l1_loss if criterion == "l1" else None
-    if not os.path.exists(path_models):
-        os.makedirs(path_models)
+    if not os.path.exists(C.path_samples):
+        os.makedirs(C.path_samples)
 
-    all_transitions = utils.read_samples(path_data)
+    all_transitions = utils.read_samples(C.path_samples)
     min_n, max_n = autoencoder_size
     autoencoders = [Autoencoder(transitions.shape[1], min_n, max_n) for transitions in all_transitions]
     for ienv, transitions in enumerate(all_transitions):
@@ -35,15 +35,18 @@ def test(path_data, path_models, criterion, optimizer_str, weight_decay, learnin
                                normalize=normalize,
                                stop_loss=0.01,
                                criterion=criterion)
-        path_autoencoder = path_models + "/{}.pt".format(ienv)
+
+        folder = C.workspace + "/" + C.path_models
+
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        path_autoencoder = folder + "/{}.pt".format(ienv)
         logger.info("saving autoencoder at {}".format(path_autoencoder))
         torch.save(autoencoders[ienv], path_autoencoder)
 
 
 def main():
-    test(c.C.CONFIG["general"]["path_samples"],
-         c.C.CONFIG["general"]["path_models"],
-         **c.C.CONFIG["learn_autoencoders"])
+    test(**C.CONFIG["learn_autoencoders"])
 
 
 if __name__ == "__main__":

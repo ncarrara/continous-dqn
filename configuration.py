@@ -18,9 +18,11 @@ class Configuration():
     def load(self, path_config):
         with open(path_config, 'r') as infile:
             self.CONFIG = json.load(infile)
-        workspace = self.CONFIG["general"]["workspace"]
-        if not os.path.exists(workspace):
-            os.makedirs(workspace)
+        self.workspace = self.CONFIG["general"]["workspace"]
+        self.path_samples = self.CONFIG["general"]["path_samples"]
+        self.path_models = self.CONFIG["general"]["path_models"]
+        if not os.path.exists(self.workspace):
+            os.makedirs(self.workspace)
         level = self.CONFIG["general"]["level"]
         seed = self.CONFIG["general"]["seed"]
         utils.set_seed(seed)
@@ -32,7 +34,7 @@ class Configuration():
             raise Exception("unknow logging level")
 
         if str(torch.__version__) == "0.4.1.":
-            logger.warn("0.4.1. is bugged regarding mse loss")
+            logger.warning("0.4.1. is bugged regarding mse loss")
 
         np.set_printoptions(precision=2)
         logger.info("Pytorch version : {}".format(torch.__version__))

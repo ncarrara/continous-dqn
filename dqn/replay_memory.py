@@ -1,15 +1,19 @@
 import os
 import random
-from dqn.transition import Transition
 import numpy as np
-# from utils.jsonable import Jsonable
 import json
+
+from dqn.transition import Transition
 
 
 class ReplayMemory(object):
 
     def __init__(self, capacity):
         self.capacity = capacity
+        self.memory = []
+        self.position = 0
+
+    def reset(self):
         self.memory = []
         self.position = 0
 

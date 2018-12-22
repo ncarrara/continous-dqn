@@ -6,6 +6,23 @@
     "path_models": "models",
     "seed": 0
   },
+  "dqn": {
+    "gamma": 0.999,
+    "batch_size_experience_replay": 128,
+    "target_update": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "lr": 0.001,
+    "weight_decay": 0.001
+  },
+  "net": {
+    "sizes": [
+      4,
+      16,
+      8,
+      2
+    ]
+  },
   "generate_samples": {
     "env_str": "CartPoleConfig-v0",
     "env_params": {
@@ -45,5 +62,6 @@
     "normalize": true,
     "n_epochs": 1000,
     "criterion": "l1"
-  }
+  },
+  "N_base_trajectories": 5000
 }

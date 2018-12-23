@@ -1,54 +1,56 @@
-from dqn.transfer_module import TransferModule
 from configuration import C
 import utils
+import random
 import numpy as np
 from dqn.transition import Transition
 from envs.envs_factory import generate_envs
 import torch.nn.functional as F
 import logging
-from dqn.dqn import DQN
-from dqn.net import Net
-import matplotlib.pyplot as plt
+
 logger = logging.getLogger(__name__)
+import dqn.utils_dqn as utils_dqn
+import matplotlib.pyplot as plt
+import gym
 
 
 def main():
-    N = 100
     envs, params = generate_envs(**C["generate_samples"])
-    env = envs[0]
-    net = Net(**C["net"])
-    dqn = DQN(policy_network=net, **C["dqn"])
-
     autoencoders = utils.load_autoencoders(C.workspace + "/" + C.path_models)
-    # all_transitions = utils.read_samples(C.workspace + "/" + C.path_samples)
+    ers = utils.load_experience_replays(C.workspace + "/" + C.path_samples)
+    for er in ers:
+        er.to_tensors()
 
-    tm = TransferModule(autoencoders, loss=F.l1_loss)
-    dqn.reset()
-    tm.reset()
-    utils.set_seed(seed=C.seed, env=env)
-    env.seed(C.seed)
-    rrr=[]
-    for n in range(N):
-        s = env.reset()
-        done = False
-        rr=0
-        while not done:
-            env.render()
-            a = dqn.pi(s, np.zeros(env.action_space.n))
-            s_, r_, done, info = env.step(a)
-            rr+=r_
-            t = (s.tolist(), a, r_, s_.tolist())
-            tm.push(*t)
-            dqn.update(*t)
-            s = s_
-        rrr.append(rr)
-        # if len(rrr)%5==0 and len(rrr)>0:
-        #     print("n",n)
-        #     xxx = np.mean(np.reshape(np.array(rrr),(int(len(rrr)/5),-1)),axis=1)
-        #     plt.plot(range(len(xxx)),xxx)
-        #     plt.show()
+    N = C["transfer_dqn"]['N']
+
+    for i_env in range(len(envs)):
+        param = params[i_env]
+        env = envs[i_env]
+        print(param)
+
+        r_wo_t,r_wo_t_greedy = utils_dqn.run_dqn_without_transfer(env, seed=C.seed, **C["transfer_dqn"])
+
+        r_w_t,r_w_t_greedy = utils_dqn.run_dqn_with_transfer(env, seed=C.seed,
+                                                autoencoders=autoencoders,
+                                                ers=ers,
+                                                **C["transfer_dqn"])
+        n_dots = 10
+
+        r_wo_t = np.mean(np.reshape(np.array(r_wo_t), (int(len(r_wo_t) / int(N / n_dots)), -1)), axis=1)
+        r_wo_t_greedy = np.mean(np.reshape(np.array(r_wo_t_greedy), (int(len(r_wo_t_greedy) / int(N / n_dots)), -1)), axis=1)
+        r_w_t = np.mean(np.reshape(np.array(r_w_t), (int(len(r_w_t) / int(N / n_dots)), -1)), axis=1)
+        r_w_t_greedy = np.mean(np.reshape(np.array(r_w_t_greedy), (int(len(r_w_t_greedy) / int(N / n_dots)), -1)), axis=1)
+
+        wo_transfer, = plt.plot(range(len(r_wo_t)), r_wo_t, label="w/o transfert",color='blue')
+        wo_transfer_greedy, = plt.plot(range(len(r_wo_t_greedy)), r_wo_t_greedy, label="w/o transfert (greedy)",color='blue',marker='*',markersize=15)
+        w_transfer, = plt.plot(range(len(r_w_t)), r_w_t, label="with transfert",color='orange')
+        w_transfer_greedy, = plt.plot(range(len(r_w_t_greedy)), r_w_t_greedy, label="with transfert (greedy)",color='orange',marker='*',markersize=15)
+        plt.legend(handles=[wo_transfer,wo_transfer_greedy, w_transfer,w_transfer_greedy])
+        plt.title(str(param['length']))
+        plt.show()
+
+        plt.close()
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
+    C.load("config/0.json")
     main()

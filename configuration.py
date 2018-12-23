@@ -17,6 +17,8 @@ class Configuration(object):
         self.dict={}
 
     def __getitem__(self, arg):
+        if not self.dict:
+            raise Exception("please load the configuration file")
         return self.dict[arg]
 
     def __str__(self):

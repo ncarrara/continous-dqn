@@ -8,8 +8,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def epsilon_decay(start=1.0,decay=0.01,N=100):
+def epsilon_decay(start=1.0, decay=0.01, N=100):
     return [np.exp(-n / (1. / decay)) * start for n in range(N)]
+
 
 class Color:
     PURPLE = '\033[95m'
@@ -36,17 +37,25 @@ def load_autoencoders(path_autoencoders):
     return autoencoders
 
 
-def read_samples(path_data):
-    from configuration import DEVICE
+def load_experience_replays(path_data):
     logger.info("reading samples ...")
     files = os.listdir(path_data)
-    all_transitions = [None] * len(files)
+    ers = [None] * len(files)
     for file in files:
         id_env = int(file.split(".")[0])
         path_file = path_data + "/" + file
         logger.info("reading {}".format(path_file))
         rm = ReplayMemory(10000)
         rm.load_memory(path_file)
+        ers[id_env] = rm
+    return ers
+
+
+def read_samples(path_data):
+    from configuration import DEVICE
+    ers = load_experience_replays(path_data)
+    all_transitions = [None] * len(ers)
+    for id_env, rm in enumerate(ers):
         data = rm.sample_to_numpy(len(rm))
         all_transitions[id_env] = torch.from_numpy(data).float().to(DEVICE)
     return all_transitions

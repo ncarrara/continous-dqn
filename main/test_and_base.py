@@ -13,10 +13,10 @@ def main():
     autoencoders = utils.load_autoencoders(C.workspace + "/" + C.path_models)
     all_transitions = utils.read_samples(C.workspace + "/" + C.path_samples)
 
-    tm = TransferModule(autoencoders, loss=F.l1_loss)
+    tm = TransferModule(models=autoencoders, loss=F.l1_loss)
 
-    envs, params = generate_envs(**C.CONFIG["generate_samples"])
-    seed = C.CONFIG["general"]["seed"]
+    envs, params = generate_envs(**C["generate_samples"])
+    seed = C["general"]["seed"]
 
     errors_test = []
     errors_base = []
@@ -33,7 +33,7 @@ def main():
             while not done:
                 a = env.action_space.sample()
                 s_, r_, done, info = env.step(a)
-                tm.push(s.tolist(), a, r_, s_.tolist())
+                tm.push(s.tolist(), a, r_, s_.tolist(),done,info)
 
                 s = s_
         errors_test.append(tm.errors())
@@ -45,4 +45,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
+    C.load("config/0.json")
     main()

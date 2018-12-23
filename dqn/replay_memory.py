@@ -51,10 +51,26 @@ class ReplayMemory(object):
     def load_memory(self, path):
         with open(path, 'r') as infile:
             memory = json.load(infile)
-        self.memory = []
-        self.position = 0
+        self.reset()
         for idata, data in enumerate(memory):
             self.push(*data.values())
+
+    def to_tensors(self):
+        import torch
+        from configuration import DEVICE
+        for i in range(len(self.memory)):
+
+            state, action, reward, next_state, done, info = self.memory[i]
+            state = torch.tensor([[state]], device=DEVICE, dtype=torch.float)
+            if not done:
+                next_state = torch.tensor([[next_state]], device=DEVICE, dtype=torch.float)
+            else:
+                next_state = None
+            action = torch.tensor([[action]], device=DEVICE, dtype=torch.long)
+            reward = torch.tensor([reward], device=DEVICE)
+            self.memory[i] = Transition(state, action, reward, next_state, done, info)
+
+        return self
 
     def __len__(self):
         return len(self.memory)

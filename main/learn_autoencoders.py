@@ -47,8 +47,9 @@ def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
 
 
 def main():
-    test(**C.CONFIG["learn_autoencoders"])
+    test(**C["learn_autoencoders"])
 
 
 if __name__ == "__main__":
+    C.load("config/0.json")
     main()

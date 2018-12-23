@@ -29,5 +29,6 @@ def main():
 
 
 if __name__ == "__main__":
-    # execute only if run as a script
+    # execute only if run as a
+    C.load("config/0.json")
     main()

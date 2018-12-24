@@ -4,22 +4,28 @@ import torch.nn.functional as F
 import utils
 import random
 
-
 import numpy as np
 
 from dqn.dqn import DQN
 from dqn.net import Net
 import matplotlib.pyplot as plt
 from dqn.transfer_module import TransferModule
+import logging
 
-def run_dqn_with_transfer(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
-    return run_dqn(i_env,env,autoencoders,ers,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
+logger = logging.getLogger(__name__)
+
+def run_dqn_with_transfer(i_env, env, autoencoders, ers, net_params, dqn_params, decay, N, seed, env_params):
+    return run_dqn(i_env, env, autoencoders, ers, net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
+                   seed=seed, env_params=env_params)
 
 
-def run_dqn_without_transfer(i_env,env,net_params,dqn_params,decay,N,seed):
-    return run_dqn(i_env,env,autoencoders=None,ers=None,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
+def run_dqn_without_transfer(i_env, env, net_params, dqn_params, decay, N, seed, env_params):
+    return run_dqn(i_env, env, autoencoders=None, ers=None, net_params=net_params, dqn_params=dqn_params, decay=decay,
+                   N=N, seed=seed,
+                   env_params=env_params)
 
-def run_dqn(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
+
+def run_dqn(i_env, env, autoencoders, ers, net_params, dqn_params, decay, N, seed, env_params):
     do_transfer = autoencoders is not None or ers is not None
     if do_transfer:
         tm = TransferModule(models=autoencoders,
@@ -58,17 +64,21 @@ def run_dqn(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
             if do_transfer:
                 tm.push(*t)
 
-                best_er,errors = tm.best_source_transitions()
+                best_er, errors = tm.best_source_transitions()
 
                 dqn.update_transfer_experience_replay(best_er)
-                if nb_samples<10:
-                    print("[N_trajs={},N_samples={}] errors = {}".format(n, nb_samples,
+                if nb_samples < 10:
+                    logger.info("[N_trajs={},N_samples={}] errors = {}".format(n, nb_samples,
                                                                          utils.format_errors(errors, i_env)))
 
             s = s_
-            nb_samples+=1
+            nb_samples += 1
         if do_transfer and n % 50 == 0:
-            print("[N_trajs={},N_samples={}] errors = {}".format(n,nb_samples, utils.format_errors(errors, i_env)))
+            logger.info("------------------------------------")
+            logger.info("[N_trajs={},N_samples={}] errors = {}".format(n, nb_samples, utils.format_errors(errors, i_env)))
+            logger.info("Best fit ER's env parameters : {}".format(env_params[np.argmin(errors)]))
+            logger.info("Actual env parameters: {}".format(env_params[i_env]))
+            logger.info("--------------------------------------")
 
         rrr.append(rr)
 
@@ -82,15 +92,13 @@ def run_dqn(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
             s = s_
         rrr_greedy.append(rr)
 
-    return rrr,rrr_greedy
-        # n_dots = 10
-        # if len(rrr) % int(N / n_dots) == 0 and len(rrr) > 0:
-        #     print("n", n)
-        #     xxx = np.mean(np.reshape(np.array(rrr), (int(len(rrr) / int(N / n_dots)), -1)), axis=1)
-        #     plt.plot(range(len(xxx)), xxx)
-        #     plt.show()
-
-
+    return rrr, rrr_greedy
+    # n_dots = 10
+    # if len(rrr) % int(N / n_dots) == 0 and len(rrr) > 0:
+    #     print("n", n)
+    #     xxx = np.mean(np.reshape(np.array(rrr), (int(len(rrr) / int(N / n_dots)), -1)), axis=1)
+    #     plt.plot(range(len(xxx)), xxx)
+    #     plt.show()
 
 
 """
@@ -154,7 +162,7 @@ def filled_hist(ax, edges, values, bottoms=None, orientation='v',
     if len(edges) - 1 != len(values):
         raise ValueError('Must provide one more bin edge than value not: '
                          'len(edges): {lb} len(values): {lv}'.format(
-                             lb=len(edges), lv=len(values)))
+            lb=len(edges), lv=len(values)))
 
     if bottoms is None:
         bottoms = np.zeros_like(values)
@@ -232,7 +240,7 @@ def stack_hist(ax, stacked_data, sty_cycle, bottoms=None,
     # deal with default
     if plot_kwargs is None:
         plot_kwargs = {}
-    #print(plot_kwargs)
+    # print(plot_kwargs)
     try:
         l_keys = stacked_data.keys()
         label_data = True
@@ -268,29 +276,30 @@ def stack_hist(ax, stacked_data, sty_cycle, bottoms=None,
         arts[label] = ret
     ax.legend(fontsize=10)
     return arts
+
+
 def create_Q_histograms(title, values, path, labels):
     plt.clf()
     maxfreq = 0.
     fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
     n, bins, patches = ax.hist(x=values, label=labels, alpha=1.,
-                                stacked=False)#, bins=np.linspace(-5, 5, 100))  # , alpha=0.7, rwidth=0.85)
+                               stacked=False)  # , bins=np.linspace(-5, 5, 100))  # , alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
 
     plt.xlabel('Value')
     plt.ylabel('Frequency')
     plt.title(title)
     plt.legend(loc='upper right')
-    path = path+"/histogram"
+    path = path + "/histogram"
     if not os.path.exists(path):
         os.makedirs(path)
     plt.savefig(path + "/" + title)
     plt.close()
 
-def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
 
+def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
     #
     # # set up style cycles
-
 
     if mask_action is None:
         mask_action = np.zeros(len(QQ[0]))
@@ -317,21 +326,20 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
     edges = np.linspace(-2, 2, 200, endpoint=True)
     hist_func = partial(np.histogram, bins=edges)
     colors = plt.get_cmap('tab10').colors
-    #['b', 'g', 'r', 'c', 'm', 'y', 'k']
+    # ['b', 'g', 'r', 'c', 'm', 'y', 'k']
     hatchs = ['/', '*', '+', '|']
-    cols=[]
-    hats =[]
-    for i,lab in enumerate(labels):
-        cols.append(colors[i%len(colors)])
-        hats.append(hatchs[i%len(hatchs)])
+    cols = []
+    hats = []
+    for i, lab in enumerate(labels):
+        cols.append(colors[i % len(colors)])
+        hats.append(hatchs[i % len(hatchs)])
 
     color_cycle = cycler(facecolor=cols)
     label_cycle = cycler('label', labs)
     hatch_cycle = cycler('hatch', hats)
     fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
     arts = stack_hist(ax, values, color_cycle + label_cycle + hatch_cycle,
-                      hist_func=hist_func,labels=labs)
-
+                      hist_func=hist_func, labels=labs)
 
     plt.grid(axis='y', alpha=0.75)
 
@@ -339,7 +347,7 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
     plt.ylabel('Frequency')
     plt.title(title)
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    path = path+"/histogram"
+    path = path + "/histogram"
     # plt.legend()
     if not os.path.exists(path):
         os.makedirs(path)

@@ -1,14 +1,14 @@
 {
   "general": {
     "level": "INFO",
-    "workspace": "data/random",
+    "workspace": "data/0_random",
     "path_samples": "samples",
     "path_models": "models",
     "seed": 0
   },
   "no_transfer_dqn": {
-    "N": 100,
-    "decay": 0.05,
+    "N": 1000,
+    "decay": 0.01,
     "dqn_params": {
       "gamma": 0.999,
       "batch_size_experience_replay": 128,
@@ -51,13 +51,14 @@
     }
   },
   "generate_samples": {
+
     "env_str": "CartPoleConfig-v0",
     "env_params": {
-      "gravity": "np.random.choice(np.linspace(0.01,9.8+100,500),2)",
-      "masscart": "np.random.choice(np.linspace(0.01,1.0+10,500),2)",
-      "masspole": "np.random.choice(np.linspace(0.01,0.1+2,500),2)",
-      "length": "np.random.choice(np.linspace(0.01,0.5+2,500),2)",
-      "force_mag": "np.random.choice(np.linspace(0.01,10+100.0,500),2)"
+      "gravity": "[9.8]",
+      "masscart": "[1.0]",
+      "masspole": "[0.1]",
+      "length": "np.random.choice(np.logspace(0.0001,0.5,200,endpoint=True)-1.,20)",
+      "force_mag": "[10.0]"
     }
   },
   "learn_autoencoders": {

@@ -1,7 +1,7 @@
 {
   "general": {
     "level": "INFO",
-    "workspace": "data/config_0_bis,
+    "workspace": "data/config_0",
     "path_samples": "samples",
     "path_models": "models",
     "seed": 0

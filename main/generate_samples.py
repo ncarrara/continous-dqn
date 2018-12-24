@@ -3,7 +3,7 @@ import utils as utils
 from envs.envs_factory import generate_envs
 import logging
 from configuration import C
-
+import json
 
 def main():
     logger = logging.getLogger(__name__)
@@ -28,8 +28,12 @@ def main():
                 rm.push(s.tolist(), a, r_, s_.tolist(), done, info)
                 s = s_
         rm.save_memory(C.workspace + "/" + C.path_samples + "/{}.json".format(ienv))
+    with open(C.workspace + "/" + C.path_samples + "/"+C.PARAMS_FILE, 'w') as file:
+        dump = json.dumps(params,indent=4)
+        print(dump)
+        file.write(dump)
 
 
 if __name__ == "__main__":
-    C.load("config/0.json")
+    C.load("config/test.json")
     main()

@@ -5,16 +5,18 @@ import numpy as np
 import json
 import pprint
 import os
+import envs.envs_factory as ef
 
 logger = logging.getLogger(__name__)
 
 
 class Configuration(object):
 
+    PARAMS_FILE = "params.json"
 
     def __init__(self, *args, **kwargs):
         super(Configuration, self).__init__(*args, **kwargs)
-        self.dict={}
+        self.dict = {}
 
     def __getitem__(self, arg):
         if not self.dict:
@@ -28,14 +30,14 @@ class Configuration(object):
         with open(path_config, 'r') as infile:
             self.dict = json.load(infile)
 
-        self.id=path_config
-        self.workspace =  self.dict["general"]["workspace"]
-        self.path_samples =  self.dict["general"]["path_samples"]
-        self.path_models =  self.dict["general"]["path_models"]
+        self.id = path_config
+        self.workspace = self.dict["general"]["workspace"]
+        self.path_samples = self.dict["general"]["path_samples"]
+        self.path_models = self.dict["general"]["path_models"]
         if not os.path.exists(self.workspace):
             os.makedirs(self.workspace)
-        level =  self.dict["general"]["level"]
-        self.seed =  self.dict["general"]["seed"]
+        level = self.dict["general"]["level"]
+        self.seed = self.dict["general"]["seed"]
         utils.set_seed(self.seed)
         if level == "INFO":
             logging.basicConfig(level=logging.INFO)
@@ -50,6 +52,13 @@ class Configuration(object):
         np.set_printoptions(precision=2)
         logger.info("Pytorch version : {}".format(torch.__version__))
 
+    def load_sample_params(self):
+        if not self.dict:
+            raise Exception("please load the configuration file first")
+        with open(self.workspace+"/"+self.path_samples+"/"+self.PARAMS_FILE,'r') as file:
+            params = json.load(file)
+        print(params)
+        return params
 
 device = utils.set_device()
 DEVICE = torch.device("cuda:" + str(device) if torch.cuda.is_available() else "cpu")

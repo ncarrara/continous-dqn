@@ -27,13 +27,14 @@ def main():
         env = envs[i_env]
         print(param)
 
-
         r_w_t, r_w_t_greedy = utils_dqn.run_dqn_with_transfer(i_env, env, seed=C.seed,
                                                               autoencoders=autoencoders,
                                                               ers=ers,
+                                                              env_params=params,
                                                               **C["transfer_dqn"])
 
-        r_wo_t, r_wo_t_greedy = utils_dqn.run_dqn_without_transfer(i_env, env, seed=C.seed, **C["transfer_dqn"])
+        r_wo_t, r_wo_t_greedy = utils_dqn.run_dqn_without_transfer(i_env, env, seed=C.seed,
+                                                                   env_params=params, **C["transfer_dqn"])
 
         n_dots = 10
 
@@ -51,7 +52,7 @@ def main():
         w_transfer_greedy, = plt.plot(range(len(r_w_t_greedy)), r_w_t_greedy, label="with transfert (greedy)",
                                       color='orange', marker='*', markersize=15)
         plt.legend(handles=[wo_transfer, wo_transfer_greedy, w_transfer, w_transfer_greedy])
-        plt.title(C.id+" "+str(param['length']))
+        plt.title(C.id + " " + str(param['length']))
         plt.show()
 
         plt.close()

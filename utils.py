@@ -66,18 +66,31 @@ def array_to_cross_comparaison(tab):
     # print("".join(["{}\n".format("".join(["{:.2f} ".format(a) for a in aa])) for aa in rez]))
     toprint = ""
     for ienv in range(len(tab)):
-        bold_index = np.argmin(tab[ienv])
-        for ienv2 in range(len(tab)):
-            if ienv2 == bold_index:
-                toprint += Color.BOLD + "{:.2f} ".format(tab[ienv][ienv2]) + Color.END
-            else:
-                if ienv2 == ienv:
-                    toprint += Color.PURPLE + "{:.2f} ".format(tab[ienv][ienv2]) + Color.END
-                else:
-                    toprint += "{:.2f} ".format(tab[ienv][ienv2])
-        toprint += "\n"
+        # bold_index = np.argmin(tab[ienv])
+        # for ienv2 in range(len(tab)):
+        #     if ienv2 == bold_index:
+        #         toprint += Color.BOLD + "{:.2f} ".format(tab[ienv][ienv2]) + Color.END
+        #     else:
+        #         if ienv2 == ienv:
+        #             toprint += Color.PURPLE + "{:.2f} ".format(tab[ienv][ienv2]) + Color.END
+        #         else:
+        #             toprint += "{:.2f} ".format(tab[ienv][ienv2])
+        toprint += format_errors(tab[ienv], ienv) + "\n"
     return toprint
 
+
+def format_errors(errors, ienv):
+    toprint=""
+    bold_index = np.argmin(errors)
+    for ienv2 in range(len(errors)):
+        if ienv2 == bold_index:
+            toprint += Color.BOLD + "{:.2f} ".format(errors[ienv2]) + Color.END
+        else:
+            if ienv2 == ienv:
+                toprint += Color.PURPLE + "{:.2f} ".format(errors[ienv2]) + Color.END
+            else:
+                toprint += "{:.2f} ".format(errors[ienv2])
+    return toprint
 
 def set_seed(seed, env=None):
     random.seed(seed)

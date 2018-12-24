@@ -24,11 +24,15 @@ class TransferModule:
     def errors(self):
         x = self.memory.sample_to_numpy(len(self.memory))
         x = torch.from_numpy(x).float().to(DEVICE)
-        return self._errors_with_tensors(x)
+
+        self._errors= self._errors_with_tensors(x)
+        return self._errors
 
     def best_source_transitions(self):
         if self.experience_replays is None:
             raise Exception("must setup experience replays")
         errors = self.errors()
+
+
         i = np.argmin(errors)
-        return self.experience_replays[i]
+        return self.experience_replays[i],errors

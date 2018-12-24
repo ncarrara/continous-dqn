@@ -75,10 +75,7 @@ class DQN:
 
         size_transfer = size_batch - len(transitions)
         if size_transfer > 0 and self.transfer_experience_replay is not None:
-            print("transferring {} samples".format(size_transfer))
-
             transfer_transitions = self.transfer_experience_replay.sample(size_transfer)
-            print(type(transitions), type(transfer_transitions))
             transitions = transitions + transfer_transitions
 
         batch = Transition(*zip(*transitions))

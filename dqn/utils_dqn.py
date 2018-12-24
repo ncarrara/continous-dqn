@@ -5,21 +5,21 @@ import utils
 import random
 
 
-
+import numpy as np
 
 from dqn.dqn import DQN
 from dqn.net import Net
 import matplotlib.pyplot as plt
 from dqn.transfer_module import TransferModule
 
-def run_dqn_with_transfer(env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
-    return run_dqn(env,autoencoders,ers,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
+def run_dqn_with_transfer(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
+    return run_dqn(i_env,env,autoencoders,ers,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
 
 
-def run_dqn_without_transfer(env,net_params,dqn_params,decay,N,seed):
-    return run_dqn(env,autoencoders=None,ers=None,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
+def run_dqn_without_transfer(i_env,env,net_params,dqn_params,decay,N,seed):
+    return run_dqn(i_env,env,autoencoders=None,ers=None,net_params=net_params,dqn_params=dqn_params,decay=decay,N=N,seed=seed)
 
-def run_dqn(env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
+def run_dqn(i_env,env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
     do_transfer = autoencoders is not None or ers is not None
     if do_transfer:
         tm = TransferModule(models=autoencoders,
@@ -39,10 +39,12 @@ def run_dqn(env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
     # plt.plot(range(N), epsilons)
     # plt.show()
     # plt.close()
+    nb_samples = 0
     for n in range(N):
         s = env.reset()
         done = False
         rr = 0
+
         while not done:
 
             if random.random() < epsilons[n]:
@@ -55,8 +57,19 @@ def run_dqn(env,autoencoders,ers,net_params,dqn_params,decay,N,seed):
             dqn.update(*t)
             if do_transfer:
                 tm.push(*t)
-                dqn.update_transfer_experience_replay(tm.best_source_transitions())
+
+                best_er,errors = tm.best_source_transitions()
+
+                dqn.update_transfer_experience_replay(best_er)
+                if nb_samples<10:
+                    print("[N_trajs={},N_samples={}] errors = {}".format(n, nb_samples,
+                                                                         utils.format_errors(errors, i_env)))
+
             s = s_
+            nb_samples+=1
+        if do_transfer and n % 50 == 0:
+            print("[N_trajs={},N_samples={}] errors = {}".format(n,nb_samples, utils.format_errors(errors, i_env)))
+
         rrr.append(rr)
 
         s = env.reset()

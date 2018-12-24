@@ -1,7 +1,7 @@
 {
   "general": {
     "level": "INFO",
-    "workspace": "data/config_0_bis,
+    "workspace": "data/config_2",
     "path_samples": "samples",
     "path_models": "models",
     "seed": 0
@@ -59,18 +59,16 @@
         1.0
       ],
       "masspole": [
-        0.1
-      ],
-      "length": [
         0.1,
         0.2,
         0.3,
         0.4,
         0.5,
         0.6,
-        5,
-        10,
-        20
+        1.0
+      ],
+      "length": [
+        0.5
       ],
       "force_mag": [
         10.0

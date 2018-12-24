@@ -28,6 +28,7 @@ class Configuration(object):
         with open(path_config, 'r') as infile:
             self.dict = json.load(infile)
 
+        self.id=path_config
         self.workspace =  self.dict["general"]["workspace"]
         self.path_samples =  self.dict["general"]["path_samples"]
         self.path_models =  self.dict["general"]["path_models"]

@@ -1,7 +1,7 @@
 {
   "general": {
     "level": "INFO",
-    "workspace": "data/config_0_bis,
+    "workspace": "data/config_1",
     "path_samples": "samples",
     "path_models": "models",
     "seed": 0
@@ -32,7 +32,7 @@
     "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
-      "batch_size_experience_replay": 128,
+      "batch_size_experience_replay": 1024,
       "target_update": 10,
       "optimizer": "ADAM",
       "loss_function": "l2",
@@ -86,8 +86,8 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 5000,
+    "n_epochs": 1000,
     "criterion": "l1"
   },
-  "N_base_trajectories": 10000
+  "N_base_trajectories": 5000
 }

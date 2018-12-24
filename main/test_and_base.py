@@ -34,7 +34,6 @@ def main():
                 a = env.action_space.sample()
                 s_, r_, done, info = env.step(a)
                 tm.push(s.tolist(), a, r_, s_.tolist(),done,info)
-
                 s = s_
         errors_test.append(tm.errors())
     print("base")

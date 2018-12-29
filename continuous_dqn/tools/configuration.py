@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class ConfigurationContinuousDQN(Configuration):
 
     def load(self, path_config):
-        super.load(path_config)
+        super(ConfigurationContinuousDQN,self).load(path_config)
         self.path_sources = self.workspace + "/" + "sources"
 
         self.path_samples = self.path_sources + "/" + "samples"

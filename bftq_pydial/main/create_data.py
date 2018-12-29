@@ -1,18 +1,15 @@
 # coding=utf-8
-import matplotlib
 from bftq_pydial.tools.features import feature_0
 from utils.math import epsilon_decay
 from utils_rl.transition.replay_memory import ReplayMemory
 from bftq_pydial.tools.policies import PytorchFittedPolicy, RandomPolicy
 import utils_rl.algorithms.pytorch_fittedq as pftq
 import numpy as np
-
-np.set_printoptions(precision=4)
 from gym_pydial.env.env_pydial import EnvPydial
 import bftq_pydial.tools.utils_run_pydial as urpy
 from bftq_pydial.tools.policies import EpsilonGreedyPolicy
-
 from bftq_pydial.tools.configuration import C
+from utils_rl.transition.transition import TransitionGym
 
 
 def main():
@@ -49,9 +46,8 @@ def main():
 
     pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0])
     pi_greedy = RandomPolicy()
-    datas = []
     rez = np.zeros((C["create_data"]["N_trajs"], 4))
-    rm = ReplayMemory(100000)
+    rm = ReplayMemory(100000, TransitionGym)
     for i in range(C["create_data"]["N_trajs"]):
         if i % 10 == 0:
             print(i)
@@ -63,8 +59,7 @@ def main():
             beta=1.0, print_dial=False)
         rez[i] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:
-            rm.push(sample)
-        # datas.extend(urpy.dialogue_to_data(dialogue))
+            rm.push(*sample)
         if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
             transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                          C["create_data"]["lambda_"],
@@ -73,7 +68,6 @@ def main():
             ftq.reset(C["create_data"]["reset_weight"])
             pi = ftq.fit(transitions_ftq)
             pi_greedy = PytorchFittedPolicy(pi, action_space, e, feature)
-    # urpy.datas_to_file(datas, C.workspace + "/" + C.id + ".data")
     rm.save_memory(C.workspace + "/" + C.id + ".data")
     urpy.print_results(rez)
 

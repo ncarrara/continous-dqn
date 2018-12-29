@@ -1,7 +1,7 @@
+from continuous_dqn.dqn.utils_dqn import run_dqn_without_transfer
 from continuous_dqn.tools.configuration import C
 import numpy as np
 import logging
-from continuous_dqn import dqn as utils_dqn
 
 logger = logging.getLogger(__name__)
 import gym
@@ -9,12 +9,12 @@ import gym
 import matplotlib.pyplot as plt
 
 def main():
-    env = gym.make(C["source_envs"]['env_str'])
+    env = gym.make(C["no_transfer_dqn"]['env_str'])
     N = C["no_transfer_dqn"]['N']
-    rewards = utils_dqn.run_dqn_without_transfer(i_env=0,
+    rewards = run_dqn_without_transfer(i_env=0,
                                                  env=env,
                                                  seed=C.seed,
-                                                 env_params=C["source_envs"]['env_str'],
+                                                 env_params=C["no_transfer_dqn"]['env_str'],
                                                  **C["no_transfer_dqn"])
     n_dots = 10
     xaxax =int(len(rewards) / int(N / n_dots))
@@ -27,5 +27,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/mountain_car_0.json")
+    C.load("config/0_random.json")
     main()

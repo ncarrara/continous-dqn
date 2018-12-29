@@ -8,8 +8,9 @@ from utils_rl.transition.transition import TransitionGym
 
 class ReplayMemory(object):
 
-    def __init__(self, capacity):
+    def __init__(self, capacity,class_transtion=TransitionGym):
         self.capacity = capacity
+        self.class_transtion=class_transtion
         self.memory = []
         self.position = 0
 
@@ -20,7 +21,7 @@ class ReplayMemory(object):
     def push(self, *args):
         if len(self.memory) < self.capacity:
             self.memory.append(None)
-        self.memory[self.position] = TransitionGym(*args)
+        self.memory[self.position] = self.class_transtion(*args)
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size):
@@ -28,7 +29,7 @@ class ReplayMemory(object):
 
     def sample_to_numpy(self, batch_size):
         transitions = self.sample(batch_size)
-        batch = TransitionGym(*zip(*transitions))
+        batch = self.class_transtion(*zip(*transitions))
         s = np.array(batch.s)
         s_ = np.array(batch.s_)
         # TODO , if dim a > 1 , then dont use brackets

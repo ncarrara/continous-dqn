@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import copy
 import matplotlib.pyplot as plt
 from utils_rl.transition.replay_memory import ReplayMemory
-from utils_rl.transition.transition import Transition
+from utils_rl.transition.transition import Transition, TransitionGym
 from bftq_pydial.tools.configuration import C
 from utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions
 
@@ -44,7 +44,6 @@ class NetFTQ(torch.nn.Module):
 
         self.predict = torch.nn.Linear(all_layers[-2], all_layers[-1])
 
-
     def set_normalization_params(self, mean, std):
         if self.normalize:
             std[std == 0.] = 1.  # on s'en moque, on divisera 0 par 1.
@@ -53,7 +52,7 @@ class NetFTQ(torch.nn.Module):
 
     def forward(self, x):
         # print "x : ",x
-        if self.normalize :  # hasattr(self, "normalize"):
+        if self.normalize:  # hasattr(self, "normalize"):
             x = (x.float() - self.mean.float()) / self.std.float()
         for layer in self.layers:
             x = self.activation(layer(x))
@@ -75,7 +74,7 @@ class PytorchFittedQ:
                  max_ftq_epoch=np.inf,
                  max_nn_epoch=1000,
                  gamma=0.99,
-                 learning_rate=0.001,weight_decay=0.001,
+                 learning_rate=0.001, weight_decay=0.001,
                  reset_policy_each_ftq_epoch=True,
                  delta_stop=0,
                  batch_size_experience_replay=50,
@@ -120,7 +119,7 @@ class PytorchFittedQ:
         self.disp_states = disp_states
         self.disp = disp
         self.statistiques = None
-        self.memory = ReplayMemory(10000)
+        self.memory = ReplayMemory(10000, Transition)
         self.reset()
 
     def reset(self, reset_weight=True):
@@ -134,20 +133,19 @@ class PytorchFittedQ:
         self._action_batch = None
         self._reward_batch = None
 
-
     def _construct_batch(self, transitions):
         for t in transitions:
             state = torch.tensor([[t.s]], device=C.device, dtype=torch.float)
-            if t.next_state is not None:
+            if t.s_ is not None:
                 next_state = torch.tensor([[t.s_]], device=C.device, dtype=torch.float)
             else:
                 next_state = None
             action = torch.tensor([[t.a]], device=C.device, dtype=torch.long)
             reward = torch.tensor([t.r_], device=C.device)
-            self.memory.push(state, action, next_state, reward)
+            self.memory.push(state, action, reward, next_state)
 
         zipped = Transition(*zip(*self.memory.memory))
-        state_batch = torch.cat(zipped.state)
+        state_batch = torch.cat(zipped.s)
         mean = torch.mean(state_batch, 0)
         std = torch.std(state_batch, 0)
         self._policy_network.set_normalization_params(mean, std)

@@ -1,9 +1,11 @@
-from continuous_dqn.dqn import ReplayMemory
+from continuous_dqn.envs.envs_factory import generate_envs
 from continuous_dqn.tools import utils as utils
-from continuous_dqn.envs import generate_envs
 import logging
 from continuous_dqn.tools.configuration import C
 import json
+
+from utils_rl.transition.replay_memory import ReplayMemory
+from utils_rl.transition.transition import TransitionGym
 
 
 def main():
@@ -15,7 +17,7 @@ def main():
         logger.info("generating samples for env {}".format(ienv))
         utils.set_seed(seed=seed, env=env)
         env.seed(seed)
-        rm = ReplayMemory(10000)
+        rm = ReplayMemory(10000,TransitionGym)
         # print(C.CONFIG["N_base_trajectories"],type(C.CONFIG["N_base_trajectories"]))
         for i_traj in range(N_trajs):
             if i_traj % (N_trajs / 10) == 0:
@@ -36,5 +38,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/test.json")
+    C.load("config/0_random.json")
     main()

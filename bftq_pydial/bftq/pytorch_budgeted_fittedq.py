@@ -11,7 +11,7 @@ import copy
 import os
 from utils_rl.algorithms.pytorch_fittedq import ReplayMemory
 import bftq_pydial.bftq.concave_utils as concave_utils
-import bftq_pydial.tools.configuration.C  as C
+from bftq_pydial.tools.configuration import C
 
 from utils_rl.visualization.toolsbox import create_Q_histograms
 
@@ -19,7 +19,7 @@ OptimalPolicy = namedtuple('OptimalPolicy',
                            ('id_action_inf', 'id_action_sup', 'proba_inf', 'proba_sup', 'budget_inf', 'budget_sup'))
 
 TransitionBFTQ = namedtuple('TransitionBFTQ',
-                            ('state', 'action', 'next_state', 'reward', 'constraint', 'beta', "hull_id"))
+                            ('state', 'action',  'reward', "next_state",'constraint', 'beta', "hull_id"))
 
 
 def optimal_pia_pib(beta, hull, statistic):
@@ -116,7 +116,6 @@ class PytorchBudgetedFittedQ:
         self.disp_states = disp_states
         self.disp_states_ids = disp_states_ids
         self.do_dynamic_disp_state = not self.disp_states
-
         self.disp = disp
         self.workspace = workspace
         self.N_actions = N_actions
@@ -203,9 +202,7 @@ class PytorchBudgetedFittedQ:
         it = 0
         lastkeyid = 0
         hull_keys = {}
-        # print "transitions",transitions
         for i_t, t in enumerate(transitions):
-            # print t
             hull_key = str(t.next_state)
             if self.disp and it % np.ceil(len(transitions) / 10) == 0: print(
                 "[epoch_bftq={:02}][_construct_batch] {} transitions proceeded".format(self._id_ftq_epoch, it))
@@ -227,7 +224,7 @@ class PytorchBudgetedFittedQ:
                 state = torch.tensor([[t.state]], device=C.device, dtype=torch.float)
                 beta = torch.tensor([[[beta]]], device=C.device, dtype=torch.float)
 
-                self.memory.push(state, action, next_state, reward, constraint, beta, hull_id)
+                self.memory.push(state, action, reward,next_state, constraint, beta, hull_id)
 
             key = str(t.state) + str(t.action)
             key_states.add(str(t.next_state))
@@ -243,17 +240,18 @@ class PytorchBudgetedFittedQ:
                 means[key] = np.array([t.reward, 1, t.constraint, 1])
 
             it += 1
-
+        # print(self.disp_states_ids)
+        # print(len(self.disp_states))
+        # print(self.disp_next_states_ids)
+        # print(len(self.disp_next_states))
+        # exit()
         self.nb_unique_hull_to_compute = lastkeyid
         if self.disp: print("nbhull to compute : {}".format(lastkeyid))
 
-        # for k, v in means.iteritems():
-        #     print( "R={:.2f},C={:.2f}".format(v[0] / float(v[1]), v[2] / float(v[3]))
         if self.disp: print(
             "[epoch_bftq={:02}][_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}" \
                 .format(self._id_ftq_epoch, len(self.memory), len(means)))
 
-        # print self.memory.memory
         zipped = TransitionBFTQ(*zip(*self.memory.memory))
         beta_batch = torch.cat(zipped.beta)
         state_batch = torch.cat(zipped.state)
@@ -300,7 +298,8 @@ class PytorchBudgetedFittedQ:
         self._policy_network.reset()
 
         self._construct_batch(transitions)
-        dispstateidsrand = np.random.random_integers(0, len(self.disp_states), 10)
+        dispstateidsrand = np.random.random_integers(0, len(self.disp_states)-1, 10)
+        # print(dispstateidsrand)
         self.delta = np.inf
         while self._id_ftq_epoch < self._MAX_FTQ_EPOCH and self.delta > self.DELTA:
             if self.disp: print("[epoch_bftq={:02}] ---------".format(self._id_ftq_epoch))
@@ -311,7 +310,7 @@ class PytorchBudgetedFittedQ:
             self._id_ftq_epoch += 1
 
             if self.disp: print("[epoch_bftq={:02}] delta={}".format(self._id_ftq_epoch, self.delta))
-            if self.disp:
+            if self.disp :
                 for i_s in dispstateidsrand:
                     state = self.disp_next_states[i_s]
                     id = str(self.disp_next_states_ids[i_s])
@@ -326,7 +325,7 @@ class PytorchBudgetedFittedQ:
 
         final_network = copy.deepcopy(self._policy_network)
 
-        if self.disp:
+        if self.disp :
             for i_s in dispstateidsrand:
                 state = self.disp_next_states[i_s]
                 id = str(self.disp_next_states_ids[i_s])
@@ -385,7 +384,7 @@ class PytorchBudgetedFittedQ:
         status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
         len_hull = 0
         i_non_terminal = 0
-        for _, _, next_state, _, _, beta, hull_id in self.mini_batch:
+        for _, _, _, next_state, _, beta, hull_id in self.mini_batch:
             # print( i
 
             stats = {}
@@ -401,6 +400,9 @@ class PytorchBudgetedFittedQ:
                 len_hull += len(hulls[i])
 
                 status[stats["status"]] += 1
+                # print(next_state.shape)
+                # print(next_state)
+                # print(torch.tensor([[[opts[i].budget_inf]]], device=C.device, dtype=torch.float32).shape)
                 next_state_beta[i * 2 + 0][0] = torch.cat(
                     (next_state, torch.tensor([[[opts[i].budget_inf]]], device=C.device, dtype=torch.float32)),
                     dim=2)
@@ -428,7 +430,7 @@ class PytorchBudgetedFittedQ:
             warning_qc_negatif = 0.
             warning_qc__negatif = 0.
             next_state_c_neg = 0.
-        for _, _, next_state, _, _, _, hull_id in self.mini_batch:
+        for _, _, _, next_state, _, _, hull_id in self.mini_batch:
             if self.disp and i % np.ceil((len(self.mini_batch) / 5)) == 0:
                 print("[epoch_bftq={:02}][_ftq_epoch] processing mini batch {}".format(self._id_ftq_epoch, i))
             if self._is_terminal_state(next_state):

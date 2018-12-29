@@ -4,7 +4,7 @@ from continuous_dqn import envs as mountain_car_config_env
 import continuous_dqn.envs.lunar_lander_config_env as lunar_lander_config_env
 import gym
 import logging
-
+import numpy as np
 logger = logging.getLogger(__name__)
 
 def generate_env_params_combination(env_params):

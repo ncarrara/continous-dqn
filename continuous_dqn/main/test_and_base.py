@@ -1,7 +1,7 @@
-from continuous_dqn.dqn import TransferModule
+from continuous_dqn.dqn.transfer_module import TransferModule
+from continuous_dqn.envs.envs_factory import generate_envs
 from continuous_dqn.tools.configuration import C
 from continuous_dqn.tools import utils
-from continuous_dqn.envs import generate_envs
 import torch.nn.functional as F
 import logging
 
@@ -51,5 +51,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
-    C.load("config/0.json")
+    C.load("config/0_random.json")
     main()

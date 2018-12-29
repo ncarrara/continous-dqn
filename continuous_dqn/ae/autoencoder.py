@@ -5,7 +5,7 @@ import numpy as np
 from torch import nn
 import torch.nn.functional as F
 import logging
-from continuous_dqn.tools import configuration as c
+from continuous_dqn.tools.configuration import C
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +36,7 @@ class Autoencoder(nn.Module):
         self.encoder = nn.Sequential(*encoder_layers)
         self.decoder = nn.Sequential(*decoder_layers)
 
-        self.to(c.DEVICE)
+        self.to(C.device)
         self.std = None
         self.mean = None
 
@@ -66,8 +66,8 @@ class Autoencoder(nn.Module):
             criterion = F.mse_loss
         logger.info("[fit] fitting ...")
         for epoch in range(n_epochs):
-            random_indexes = torch.LongTensor(np.random.choice(range(datas.shape[0]), size_minibatch)).to(c.DEVICE)
-            mini_batch = datas.index_select(0, random_indexes).to(c.DEVICE)
+            random_indexes = torch.LongTensor(np.random.choice(range(datas.shape[0]), size_minibatch)).to(C.device)
+            mini_batch = datas.index_select(0, random_indexes).to(C.device)
             loss = criterion(self(mini_batch), mini_batch)
             optimizer.zero_grad()
             loss.backward()

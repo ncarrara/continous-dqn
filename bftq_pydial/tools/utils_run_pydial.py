@@ -5,7 +5,6 @@ from utils.datastructure import merge_two_dicts
 from utils_rl.transition.transition import Transition, TransitionGym
 
 
-
 def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
     print("data to transition ... ")
     max_r_ftq = 0
@@ -14,7 +13,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
     nbNone = 0
     for data in datas:
         if not data.a in 'hello()':
-            reward_ftq = data.r_ - (lambda_ * data.c_)
+            reward_ftq = data.r_ - (lambda_ * data.info["c_"])
             max_r_ftq = np.abs(reward_ftq) if np.abs(reward_ftq) > max_r_ftq else max_r_ftq
             max_r_bftq = np.abs(data.r_) if np.abs(data.r_) > max_r_bftq else max_r_bftq
             if data.s_ is None: nbNone += 1
@@ -28,14 +27,14 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
             s = feature(data.s, e)
             s_ = feature(data.s_, e)
             a = e.action_space().index(data.a)
-            c_ = data.c_
+            c_ = data.info["c_"]
             reward_ftq = r_ - (lambda_ * c_)
             reward_bftq = r_
             if normalize_reward:
                 reward_ftq /= max_r_ftq
                 reward_bftq /= max_r_bftq
-            t_ftq = Transition(s, a, s_, reward_ftq)
-            t_bftq = pbf.TransitionBFTQ(s, a, s_, reward_bftq, c_, None, None)
+            t_ftq = Transition(s, a, reward_ftq, s_)
+            t_bftq = pbf.TransitionBFTQ(s, a, reward_bftq, s_, c_, None, None)
             transitions_ftq.append(t_ftq)
             transitions_bftq.append(t_bftq)
     print("nbdialogues : ", nbNone)
@@ -90,8 +89,6 @@ def print_results(results):
 #     return datas
 
 
-
-
 # print(to_onehot([2,4,5,8],6))
 
 
@@ -107,7 +104,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
     i = 0
     s_, r_, end, info_env = env.step(a)
     if print_dial: print(a)
-    turn = TransitionGym(s, a, r_, s_, end, info_env)
+    turn = (s, a, r_, s_, end, info_env)
     dialogue.append(turn)
     info_env = {}
     info_pi = {"beta": beta}
@@ -115,17 +112,17 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
 
     while not end:
         s = s_
-        actions = env.action_space_executable()  # s_pydial, env.prev_sys_act)
+        actions = env.action_space_executable()
         info_pi = merge_two_dicts(info_pi, info_env)
         a, is_master_action, info_pi = pi.execute(s, actions, info_pi)
         s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         if print_dial:
-            print("i={} ||| sys={} ||| usr={} ||| patience={}".format(i, a, info_env["last user act"],
-                                                                      info_env[
-                                                                          "patience"]))  # , info_env["master acts"]
+            print("i={} ||| sys={} ||| usr={} ||| patience={}".format(i, a,
+                                                                      info_env["last user act"],
+                                                                      info_env["patience"]))
         c_ = info_env["c_"]  # 1. / env.maxTurns  # info_env["c_"]
         # print s_
-        turn = TransitionGym(s, a, r_, s_, end, info_env)
+        turn = (s, a, r_, s_, end, info_env)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)
@@ -151,30 +148,6 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., p
     return dialogues, result
 
 
-# def load_datas(path_sample_data):
-#     print("reading json data file of samples in {}".format(path_sample_data))
-#     with open(path_sample_data, 'r') as infile:
-#         datass = json.load(infile)
-#     datas = [None] * len(datass)
-#     for idata, data in enumerate(datass):
-#         datas[idata] = Data(**data)
-#     return datas
-
-# def dialogues_to_samples(dialogues):
-#     samples = []
-#     for dialogue in dialogues:
-#         for sample in dialogue:
-#             samples.append(sample)
-#     return samples
-#
-#
-# def construct_random_pi():
-#     def pi(s, actions):
-#         idx = np.random.choice(len(actions), 1)[0]
-#         return actions[idx]
-#
-#     return pi
-#
 #
 # def change_trajectories(M, trajectories):
 #     res = []
@@ -197,15 +170,4 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., p
 #             rp = -M
 #         res.append((s, a, rp, sp, cp))
 #     return res
-#
-#
-# def trajectories_to_samples(trajectories):
-#     samples = []
-#     for trajectory in trajectories:
-#         samples.extend(trajectory)
-#     return samples
-
-
-
-
 

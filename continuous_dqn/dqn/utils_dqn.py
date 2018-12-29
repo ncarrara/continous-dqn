@@ -8,27 +8,27 @@ import random
 import numpy as np
 import logging
 
+from utils.math import epsilon_decay
 from utils_rl.algorithms.dqn import DQN, NetDQN
 
 logger = logging.getLogger(__name__)
 
 
-def run_dqn_with_transfer( env, autoencoders, ers, net_params, dqn_params, decay,
-                           N, seed, test_params,
-                          sources_params,traj_max_size):
-    return run_dqn( env, autoencoders, ers, net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
-                   seed=seed, test_params=test_params, sources_params=sources_params,traj_max_size=traj_max_size)
+def run_dqn_with_transfer(env, autoencoders, ers, net_params, dqn_params, decay,
+                          N, seed, test_params,
+                          sources_params, traj_max_size):
+    return run_dqn(env, autoencoders, ers, net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
+                   seed=seed, test_params=test_params, sources_params=sources_params, traj_max_size=traj_max_size)
 
 
-def run_dqn_without_transfer( env, net_params, dqn_params, decay, N, seed, test_params,
-                              sources_params,traj_max_size, **params):
-    return run_dqn( env, autoencoders=None, ers=None,
+def run_dqn_without_transfer(env, net_params, dqn_params, decay, N, seed, traj_max_size, **params):
+    return run_dqn(env, autoencoders=None, ers=None,
                    net_params=net_params, dqn_params=dqn_params, decay=decay,
-                   N=N, seed=seed, test_params=test_params, sources_params=sources_params,traj_max_size=traj_max_size)
+                   N=N, seed=seed, test_params=None, sources_params=None, traj_max_size=traj_max_size)
 
 
-def run_dqn( env, autoencoders, ers, net_params, dqn_params, decay, N, seed, test_params,
-             sources_params,traj_max_size):
+def run_dqn(env, autoencoders, ers, net_params, dqn_params, decay, N, seed, test_params,
+            sources_params, traj_max_size):
     do_transfer = autoencoders is not None or ers is not None
     if do_transfer:
         tm = TransferModule(models=autoencoders,
@@ -44,14 +44,14 @@ def run_dqn( env, autoencoders, ers, net_params, dqn_params, decay, N, seed, tes
 
     rrr = []
     rrr_greedy = []
-    epsilons = utils.epsilon_decay(start=1.0, decay=decay, N=N)
+    epsilons = epsilon_decay(start=1.0, decay=decay, N=N)
 
     nb_samples = 0
     for n in range(N):
         s = env.reset()
         done = False
         rr = 0
-        it=0
+        it = 0
         while (not done):
 
             if random.random() < epsilons[n]:
@@ -68,7 +68,7 @@ def run_dqn( env, autoencoders, ers, net_params, dqn_params, decay, N, seed, tes
                 best_er, errors = tm.best_source_transitions()
 
                 dqn.update_transfer_experience_replay(best_er)
-                if nb_samples < 10:
+                if do_transfer and nb_samples < 10:
                     logger.info("[N_trajs={},N_samples={}] {}".format(n, nb_samples,
                                                                       utils.format_errors(errors,
                                                                                           sources_params,
@@ -76,10 +76,9 @@ def run_dqn( env, autoencoders, ers, net_params, dqn_params, decay, N, seed, tes
 
             s = s_
             nb_samples += 1
-            it+=1
+            it += 1
             if traj_max_size is not None and it >= traj_max_size:
                 break
-
 
         if do_transfer and n % 50 == 0:
             logger.info("------------------------------------")
@@ -108,4 +107,3 @@ def run_dqn( env, autoencoders, ers, net_params, dqn_params, decay, N, seed, tes
     #     xxx = np.mean(np.reshape(np.array(rrr), (int(len(rrr) / int(N / n_dots)), -1)), axis=1)
     #     plt.plot(range(len(xxx)), xxx)
     #     plt.show()
-

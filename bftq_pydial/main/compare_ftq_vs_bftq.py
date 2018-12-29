@@ -1,6 +1,8 @@
 # coding=utf-8
 import matplotlib
 from bftq_pydial.tools.features import feature_0
+from utils_rl.transition.replay_memory import ReplayMemory
+from utils_rl.transition.transition import TransitionGym
 
 matplotlib.use("template")
 from bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy
@@ -58,8 +60,9 @@ def main():
         policy_network=policy_network,
         **C["main"]["ftq_params"]
     )
-    datas = urpy.load_datas(C["main"]["path_sample_data"])
-    transitions_ftq, transition_bftq = urpy.datas_to_transitions(datas, e, feature,
+    rm = ReplayMemory(100000,TransitionGym)
+    rm.load_memory(C["main"]["path_sample_data"])
+    transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                  C["main"]["lambda_"],
                                                                  C["main"]["normalize_reward"])
 
@@ -72,7 +75,7 @@ def main():
                                           N_dialogues=C["main"]["N_trajs"],
                                           print_dial=False)
 
-    print(np.mean(results_bftq, axis=1))
+    urpy.print_results(results)
 
     ftq.reset(C["main"]["reset_weight"])
     pi = ftq.fit(transitions_ftq)

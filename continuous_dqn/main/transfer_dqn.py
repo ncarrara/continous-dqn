@@ -1,7 +1,8 @@
+from continuous_dqn.dqn.utils_dqn import run_dqn_with_transfer, run_dqn_without_transfer
+from continuous_dqn.envs.envs_factory import generate_envs
 from continuous_dqn.tools.configuration import C
 from continuous_dqn.tools import utils
 import numpy as np
-from continuous_dqn.envs import generate_envs
 import logging
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,7 @@ def main():
     autoencoders = utils.load_autoencoders(C.path_models)
     ers = utils.load_experience_replays(C.path_samples)
     for er in ers:
-        er.to_tensors()
+        er.to_tensors(C.device)
 
     N = C["transfer_dqn"]['N']
 
@@ -35,7 +36,7 @@ def main():
 
         logger.info("======== WITH TRANSFER ==========")
 
-        r_w_t, r_w_t_greedy = utils_dqn.run_dqn_with_transfer(env, seed=C.seed,
+        r_w_t, r_w_t_greedy = run_dqn_with_transfer(env, seed=C.seed,
                                                               autoencoders=autoencoders,
                                                               ers=ers,
                                                               sources_params=source_params,
@@ -43,7 +44,7 @@ def main():
                                                               **C["transfer_dqn"])
 
         logger.info("======== WITHOUT TRANSFER ==========")
-        r_wo_t, r_wo_t_greedy = utils_dqn.run_dqn_without_transfer(env, seed=C.seed,
+        r_wo_t, r_wo_t_greedy = run_dqn_without_transfer(env, seed=C.seed,
                                                                    sources_params=source_params,
                                                                    test_params=test_params, **C["transfer_dqn"])
 
@@ -124,5 +125,5 @@ def show():
 
 
 if __name__ == "__main__":
-    C.load("config/0.json")
+    C.load("config/0_random.json")
     main()

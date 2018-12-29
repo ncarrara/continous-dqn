@@ -12,9 +12,7 @@ logger = logging.getLogger(__name__)
 def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
          autoencoder_size, n_epochs):
     criterion = F.l1_loss if criterion == "l1" else None
-    if not os.path.exists(C.path_samples):
-        os.makedirs(C.path_samples)
-
+    C.makedirs(C.path_samples)
     all_transitions = utils.read_samples(C.path_samples)
     min_n, max_n = autoencoder_size
     autoencoders = [Autoencoder(transitions.shape[1], min_n, max_n) for transitions in all_transitions]
@@ -49,5 +47,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/0.json")
+    C.load("config/0_random.json")
     main()

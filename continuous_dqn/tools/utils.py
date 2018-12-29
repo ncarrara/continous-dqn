@@ -6,6 +6,7 @@ import logging
 
 from utils.color import Color
 from utils_rl.transition.replay_memory import ReplayMemory
+from utils_rl.transition.transition import TransitionGym
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +28,13 @@ def load_experience_replays(path_data):
     files = os.listdir(path_data)
     logger.info("reading : {}".format(files))
     ers = [None] * len(files)
+    if len(files)==0:
+        raise Exception("No data files in folder {}".format(path_data))
     for file in files:
         id_env = int(file.split(".")[0])
         path_file = path_data + "/" + file
         logger.info("reading {}".format(path_file))
-        rm = ReplayMemory(10000)
+        rm = ReplayMemory(10000,TransitionGym)
         rm.load_memory(path_file)
         ers[id_env] = rm
     return ers
@@ -43,7 +46,7 @@ def read_samples(path_data):
     all_transitions = [None] * len(ers)
     for id_env, rm in enumerate(ers):
         data = rm.sample_to_numpy(len(rm))
-        all_transitions[id_env] = torch.from_numpy(data).float().to(C.DEVICE)
+        all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
     return all_transitions
 
 

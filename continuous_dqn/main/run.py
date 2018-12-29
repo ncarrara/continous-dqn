@@ -8,14 +8,14 @@ import continuous_dqn.main.no_transfer_dqn as no_transfer_dqn
 
 C.load("config/0_random.json")
 
-# clean.main()
+clean.main()
 
-# generate_samples.main()
-# learn_autoencoders.main()
-# test_and_base.main()
-# no_transfer_dqn.main()
+generate_samples.main()
+learn_autoencoders.main()
+test_and_base.main()
+no_transfer_dqn.main()
 transfer_dqn.main()
-# transfer_dqn.show()
+transfer_dqn.show()
 
 
 

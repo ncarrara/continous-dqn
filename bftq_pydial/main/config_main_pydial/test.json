@@ -1,0 +1,92 @@
+{
+
+  "general": {
+    "id": "test",
+    "pydial_configuration": "env1-hdc-CR.cfg",
+    "seed": 0,
+    "workspace": "tmp/test",
+    "level": "INFO"
+  },
+  "main": {
+    "path_sample_data": "tmp/test/test.data",
+    "reset_weight": false,
+    "lambda_": 0,
+    "normalize_reward": true,
+    "N_trajs": 4,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    },
+    "net_params": {
+
+      "activation_type": "RELU",
+      "reset_type": "XAVIER",
+      "intra_layers": [
+        512,
+        256,
+        128,
+        64
+      ]
+    },
+    "net_bftq_params": {
+      "beta_encoder_type": "LINEAR",
+      "size_beta_encoder": 1
+    },
+    "bftq_params": {
+      "weights_losses": [1.0,1.0],
+      "gamma_c": 0.99,
+      "loss_function_c": "l2"
+    },
+    "ftq_params": {
+      "disp": true,
+      "nn_loss_stop_condition": 0.0,
+      "max_nn_epoch": 200,
+      "gamma": 0.95,
+      "optimizer": "ADAM",
+      "loss_function": "l2",
+      "max_ftq_epoch": 3,
+      "reset_policy_each_ftq_epoch": true,
+      "delta_stop": 0.01,
+      "weight_decay":0.001,
+      "batch_size_experience_replay": "ALL_BATCH",
+      "workspace": "tmp/ftq"
+    }
+  },
+  "create_data": {
+    "gamma_c": 1,
+    "trajs_by_ftq_batch": 3,
+    "reset_weight": false,
+    "lambda_": 0,
+    "normalize_reward": true,
+    "N_trajs": 4,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    },
+    "net_params": {
+      "activation_type": "RELU",
+      "reset_type": "XAVIER",
+      "intra_layers": [
+        512,
+        256,
+        128,
+        64
+      ]
+    },
+    "ftq_params": {
+      "disp": true,
+      "nn_loss_stop_condition": 0.0,
+      "max_nn_epoch": 200,
+      "gamma": 0.95,
+      "optimizer": "ADAM",
+      "loss_function": "l2",
+      "max_ftq_epoch": 30,
+      "reset_policy_each_ftq_epoch": true,
+      "delta_stop": 0.01,
+      "weight_decay":0.001,
+      "batch_size_experience_replay": "ALL_BATCH",
+      "workspace": "tmp/ftq"
+    }
+  }
+}
+

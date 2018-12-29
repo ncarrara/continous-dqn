@@ -53,4 +53,5 @@ class ConfigurationContinuousDQN(Configuration):
         return self._load_params(self.path_sources_params)
 
 
-C = ConfigurationContinuousDQN()
+C = ConfigurationContinuousDQN().load_pytorch()
+

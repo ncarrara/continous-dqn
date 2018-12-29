@@ -59,4 +59,5 @@ class Configuration(object):
         _device = utils.set_device()
         self.device = torch.device("cuda:" + str(_device) if torch.cuda.is_available() else "cpu")
         logger.info("DEVICE : ", self.device)
+        return self
 

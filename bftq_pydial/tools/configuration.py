@@ -18,4 +18,4 @@ class ConfigurationBFTQ_PYDIAL(Configuration):
             logger.info("NO SEED")
 
 
-C = ConfigurationBFTQ_PYDIAL()
+C = ConfigurationBFTQ_PYDIAL().load_pytorch()

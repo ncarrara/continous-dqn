@@ -4,17 +4,12 @@ from bftq_pydial.tools.features import feature_0
 
 matplotlib.use("template")
 from bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy
-import bftq_pydial.algorithms.pytorch_fittedq as pftq
-import bftq_pydial.algorithms.pytorch_budgeted_fittedq as pbftq
+import utils_rl.algorithms.pytorch_fittedq as pftq
+import bftq_pydial.bftq.pytorch_budgeted_fittedq as pbftq
 import numpy as np
 from gym_pydial.env.env_pydial import EnvPydial
 import bftq_pydial.tools.utils_run_pydial as urpy
 from bftq_pydial.tools.configuration import C
-import logging
-
-
-
-
 
 
 def main():
@@ -87,7 +82,7 @@ def main():
                                      C["main"]["bftq_params"]["gamma_c"],
                                      N_dialogues=C["main"]["N_trajs"],
                                      print_dial=False)
-    print(np.mean(results, axis=1))
+    urpy.print_results(results)
 if __name__=="__main__":
     C.load("config_main_pydial/test.json")
     main()

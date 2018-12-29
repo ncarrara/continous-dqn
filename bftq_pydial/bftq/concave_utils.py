@@ -22,7 +22,7 @@ def compute_interest_points(fonctions, N, min_x=0.0, max_x=1.0, disp=False, path
     idxs_corresponding_function = []
     x = min_x
     j = 0
-    for k in xrange(0, N + 1):
+    for k in range(0, N + 1):
         indexe_max_f = None
         max = -np.inf
         for index_f in range(0, len(fonctions)):
@@ -44,7 +44,7 @@ def compute_interest_points(fonctions, N, min_x=0.0, max_x=1.0, disp=False, path
         hull = ConvexHull(points)
     except QhullError:
         # ca veut dire colinéaire, donc une fonction meilleur que les autres et constants (ou toutes fonctions equivalents)
-        interest_idxs = xrange(0, N + 1)
+        interest_idxs = range(0, N + 1)
         colinearity = True
         if disp:
             plt.plot(points[interest_idxs][:, 0], points[interest_idxs][:, 1], 'x')

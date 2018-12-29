@@ -1,0 +1,88 @@
+{
+  "general": {
+    "level": "INFO",
+    "workspace": "data/config_0_random",
+    "seed": null
+  },
+  "test_and_base": {
+    "N": 1000
+  },
+  "no_transfer_dqn": {
+    "N": 1000,
+    "decay": 0.01,
+    "dqn_params": {
+      "gamma": 0.999,
+      "batch_size_experience_replay": 128,
+      "target_update": 10,
+      "optimizer": "ADAM",
+      "loss_function": "l2",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "workspace": "dqn"
+    },
+    "net_params": {
+      "sizes": [
+        4,
+        16,
+        8,
+        2
+      ]
+    }
+  },
+  "transfer_dqn": {
+    "traj_max_size": null,
+    "N": 500,
+    "decay": 0.05,
+    "dqn_params": {
+      "gamma": 0.999,
+      "batch_size_experience_replay": 128,
+      "target_update": 10,
+      "optimizer": "ADAM",
+      "loss_function": "l2",
+      "lr": 0.001,
+      "weight_decay": 0.01,
+      "workspace": "dqn"
+    },
+    "net_params": {
+      "sizes": [
+        4,
+        16,
+        8,
+        2
+      ]
+    }
+  },
+  "source_envs": {
+    "envs_params": {
+      "gravity": "[9.8]",
+      "masscart": "[1.0]",
+      "masspole": "[0.1]",
+      "length": "np.random.choice(np.logspace(0.0001,0.5,500,endpoint=True)-1.,20)",
+      "force_mag": "[10.0]"
+    },
+    "envs_str": "CartPoleConfig-v0"
+  },
+  "target_envs": {
+    "envs_params": {
+      "gravity": "[9.8]",
+      "masscart": "[1.0]",
+      "masspole": "[0.1]",
+      "length": "np.random.choice(np.logspace(0.0001,0.5,500,endpoint=True)-1.,2)",
+      "force_mag": "[10.0]"
+    },
+    "envs_str": "CartPoleConfig-v0"
+  },
+  "learn_autoencoders": {
+    "weight_decay": 0.0,
+    "learning_rate": 0.001,
+    "autoencoder_size": [
+      8,
+      32
+    ],
+    "optimizer_str": "ADAM",
+    "normalize": true,
+    "n_epochs": 5000,
+    "criterion": "l1"
+  },
+  "N_base_trajectories": 10000
+}

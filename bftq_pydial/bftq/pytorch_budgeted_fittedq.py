@@ -9,96 +9,17 @@ import torch.optim as optim
 import torch.nn.functional as F
 import copy
 import os
-from bftq_pydial.algorithms.pytorch_fittedq import ReplayMemory
-import bftq_pydial.algorithms.concave_utils as concave_utils
-from bftq_pydial.tools.configuration import DEVICE
+from utils_rl.algorithms.pytorch_fittedq import ReplayMemory
+import bftq_pydial.bftq.concave_utils as concave_utils
+import bftq_pydial.tools.configuration.C  as C
+
+from utils_rl.visualization.toolsbox import create_Q_histograms
+
 OptimalPolicy = namedtuple('OptimalPolicy',
                            ('id_action_inf', 'id_action_sup', 'proba_inf', 'proba_sup', 'budget_inf', 'budget_sup'))
 
 TransitionBFTQ = namedtuple('TransitionBFTQ',
                             ('state', 'action', 'next_state', 'reward', 'constraint', 'beta', "hull_id"))
-
-
-def compute_repartition_value(values, min, max, nb_steps):
-    raise Exception("A debugger, il a une erreur, un décalage de une step avant zéro pour les valeurs de zéro")
-    # print values
-    repartition = np.zeros(nb_steps + 2)
-    occ_inf = 0.
-    occ_sup = 0.
-    for value in values:
-        if value < min:
-            occ_inf += 1.
-        elif value > max:
-            occ_sup += 1.
-        else:
-            pos = np.abs(value - min)
-            percent = pos / np.abs(max - min)
-            index = percent * float(nb_steps - 1)
-            final_index = 1 + int(np.floor(index))
-            # print value,"->",pos,percent,index,final_index
-            repartition[final_index] += 1
-    repartition[0] = occ_inf
-    repartition[-1] = occ_sup
-    # print repartition
-    # exit()
-    return repartition
-
-
-def print_repartitions(repartitions, min, max, steps, epoch):
-    s = ""
-    for i in range(steps):
-        s = s + " {:6.2f}".format(min + i * ((max - min) / float(steps)))
-    s = "   x<{:6.2f}".format(min) + s + " {:6.2f}".format(max) + "<x\n"
-    for epoch in range(epoch + 1):
-        # print repartition
-        s += "{:02}  ".format(epoch) + print_repartition(repartitions[epoch], steps) + "\n"
-    return s
-
-
-def print_repartition(repartition, steps):
-    sum = np.sum(repartition)
-    s = ""
-    for ii in range(steps + 2):
-        s += " {:6.2f}".format(np.nan if sum == 0 else repartition[ii] * 100. / sum)
-    return s
-
-
-def print_Qr_Qc(epoch, repartitions_Qr, repartitions_Qc, values_Qr, values_Qc, min, max, steps):
-    repartitions_Qr[epoch] = compute_repartition_value(values_Qr, min, max, steps)
-    repartitions_Qc[epoch] = compute_repartition_value(values_Qc, min, max, steps)
-
-    s = "\nRepartition de la Qr" + "\n"
-    s += print_repartitions(repartitions_Qr, min, max, steps, epoch)
-    s += "\nRepartition de la Qc" + "\n"
-    s += print_repartitions(repartitions_Qc, min, max, steps, epoch)
-    return s
-
-
-def create_Q_histograms(title, values, path, labels):
-    plt.clf()
-    maxfreq = 0.
-    # for i, value in enumerate(values):
-    #     n, bins, patches = plt.hist(x=value, bins='auto', label=labels[i], alpha=0.5,rwidth=1.)  # , alpha=0.7, rwidth=0.85)
-    #     print i
-    n, bins, patches = plt.hist(x=values, bins=np.linspace(-1.5, 1.5, 100), label=labels, alpha=1.,
-                                stacked=False)  # , alpha=0.7, rwidth=0.85)
-    # maxfreq=np.max([n[i].max() for i in range(len(n))])
-    # max = n.max()
-    # maxfreq = max if max > maxfreq else maxfreq
-    plt.grid(axis='y', alpha=0.75)
-
-    plt.xlabel('Value')
-    plt.ylabel('Frequency')
-    plt.title(title)
-    plt.legend(loc='upper right')
-
-    # Set a clean upper y-axis limit.
-    # plt.ylim(ymax=np.ceil(maxfreq / 10) * 10 if maxfreq % 10 else maxfreq + 10)
-    if not os.path.exists(path):
-        os.mkdir(path)
-    plt.savefig(path + "/" + title)
-    # plt.show()
-    plt.close()
 
 
 def optimal_pia_pib(beta, hull, statistic):
@@ -205,7 +126,7 @@ class PytorchBudgetedFittedQ:
             self.str_actions = actions_str
         self.betas = betas
         self.betas_for_discretisation = betas_for_discretisation
-        self._policy_network = policy_network.to(DEVICE)
+        self._policy_network = policy_network.to(C.device)
         self._policy_network.reset()
         self._MAX_FTQ_EPOCH = max_ftq_epoch
         self._MAX_NN_EPOCH = max_nn_epoch
@@ -291,20 +212,20 @@ class PytorchBudgetedFittedQ:
             if hull_key in hull_keys:
                 hull_id = hull_keys[hull_key]
             else:
-                hull_id = torch.tensor([[[lastkeyid]]], device=DEVICE, dtype=torch.long)
+                hull_id = torch.tensor([[[lastkeyid]]], device=C.device, dtype=torch.long)
                 lastkeyid += 1
                 hull_keys[hull_key] = hull_id
             for beta in self.betas:
                 if t.next_state is not None:
-                    next_state = torch.tensor([[t.next_state]], device=DEVICE, dtype=torch.float)
+                    next_state = torch.tensor([[t.next_state]], device=C.device, dtype=torch.float)
                 else:
-                    next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=DEVICE,
+                    next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=C.device,
                                               dtype=torch.float)
-                action = torch.tensor([[t.action]], device=DEVICE, dtype=torch.long)
-                reward = torch.tensor([t.reward], device=DEVICE, dtype=torch.float)
-                constraint = torch.tensor([t.constraint], device=DEVICE, dtype=torch.float)
-                state = torch.tensor([[t.state]], device=DEVICE, dtype=torch.float)
-                beta = torch.tensor([[[beta]]], device=DEVICE, dtype=torch.float)
+                action = torch.tensor([[t.action]], device=C.device, dtype=torch.long)
+                reward = torch.tensor([t.reward], device=C.device, dtype=torch.float)
+                constraint = torch.tensor([t.constraint], device=C.device, dtype=torch.float)
+                state = torch.tensor([[t.state]], device=C.device, dtype=torch.float)
+                beta = torch.tensor([[[beta]]], device=C.device, dtype=torch.float)
 
                 self.memory.push(state, action, next_state, reward, constraint, beta, hull_id)
 
@@ -398,7 +319,7 @@ class PytorchBudgetedFittedQ:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                        hull = self.convexe_hull(s=torch.tensor([state], device=DEVICE, dtype=torch.float32),
+                        hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
                                                  Q=self._policy_network,
                                                  action_mask=np.zeros(self.N_actions),
                                                  id="next_state_" + id, disp=True)
@@ -413,7 +334,7 @@ class PytorchBudgetedFittedQ:
                     self.draw_Qr_and_Qc(state, self._policy_network,
                                         "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                    hull = self.convexe_hull(s=torch.tensor([state], device=DEVICE, dtype=torch.float32),
+                    hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
                                              Q=final_network,
                                              action_mask=np.zeros(self.N_actions),
                                              id="next_state_" + id, disp=True)
@@ -425,13 +346,13 @@ class PytorchBudgetedFittedQ:
                     self.draw_Qr_and_Qc(state, self._policy_network,
                                         "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                    hull = self.convexe_hull(s=torch.tensor([state], device=DEVICE, dtype=torch.float32),
+                    hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
                                              Q=final_network,
                                              action_mask=np.zeros(self.N_actions),
                                              id="state_final_hulls_" + id, disp=True)
 
         def pi(state, beta, action_mask):
-            hull = self.convexe_hull(s=torch.tensor([state], device=DEVICE, dtype=torch.float32), Q=final_network,
+            hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32), Q=final_network,
                                      action_mask=action_mask,
                                      id="run_" + str(state), disp=False)
             opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
@@ -441,7 +362,7 @@ class PytorchBudgetedFittedQ:
             return a, b
 
         def pi_tmp(state, beta):
-            hull = self.convexe_hull(s=torch.tensor([state], device=DEVICE, dtype=torch.float32), Q=final_network,
+            hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32), Q=final_network,
                                      action_mask=np.zeros(self.N_actions),
                                      id="run_" + str(state), disp=False)
             opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
@@ -457,7 +378,7 @@ class PytorchBudgetedFittedQ:
 
     def compute_opts(self, hulls):
         next_state_beta = torch.zeros((self.size_mini_batch * 2, 1, self._policy_network.size_state + 1),
-                                      device=DEVICE)
+                                      device=C.device)
         i = 0
         opts = [None] * self.size_mini_batch
 
@@ -481,10 +402,10 @@ class PytorchBudgetedFittedQ:
 
                 status[stats["status"]] += 1
                 next_state_beta[i * 2 + 0][0] = torch.cat(
-                    (next_state, torch.tensor([[[opts[i].budget_inf]]], device=DEVICE, dtype=torch.float32)),
+                    (next_state, torch.tensor([[[opts[i].budget_inf]]], device=C.device, dtype=torch.float32)),
                     dim=2)
                 next_state_beta[i * 2 + 1][0] = torch.cat(
-                    (next_state, torch.tensor([[[opts[i].budget_sup]]], device=DEVICE, dtype=torch.float32)),
+                    (next_state, torch.tensor([[[opts[i].budget_sup]]], device=C.device, dtype=torch.float32)),
                     dim=2)
 
             i += 1
@@ -498,8 +419,8 @@ class PytorchBudgetedFittedQ:
         return opts, next_state_beta
 
     def compute_next_values(self, Q, opts):
-        next_state_rewards = torch.zeros(self.size_mini_batch, device=DEVICE)
-        next_state_constraints = torch.zeros(self.size_mini_batch, device=DEVICE)
+        next_state_rewards = torch.zeros(self.size_mini_batch, device=C.device)
+        next_state_constraints = torch.zeros(self.size_mini_batch, device=C.device)
         i = 0
         if self.disp:
             i_non_terminal = 0
@@ -563,8 +484,8 @@ class PytorchBudgetedFittedQ:
             Q_next = self._policy_network(next_state_beta)
             next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
         else:
-            next_state_rewards = torch.zeros(self.size_mini_batch, device=DEVICE)
-            next_state_constraints = torch.zeros(self.size_mini_batch, device=DEVICE)
+            next_state_rewards = torch.zeros(self.size_mini_batch, device=C.device)
+            next_state_constraints = torch.zeros(self.size_mini_batch, device=C.device)
 
         expected_state_action_rewards = self._reward_batch + (self._GAMMA * next_state_rewards)
         expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
@@ -656,7 +577,7 @@ class PytorchBudgetedFittedQ:
             Q=Q,
             action_mask=action_mask,
             betas=self.betas_for_discretisation,
-            device=DEVICE,
+            device=C.device,
             disp=disp,
             path=self.workspace,
             id=id)
@@ -706,7 +627,7 @@ class PytorchBudgetedFittedQ:
         yc = np.zeros((len(betas), self.N_actions))
         for idx, beta in enumerate(betas):
             # print( s
-            qrqc = Q(torch.tensor([[np.append(s, beta)]], device=DEVICE).float()).cpu().detach().numpy()
+            qrqc = Q(torch.tensor([[np.append(s, beta)]], device=C.device).float()).cpu().detach().numpy()
             # print( qrqc
             yr[idx] = qrqc[0][:self.N_actions]
             yc[idx] = qrqc[0][self.N_actions:]

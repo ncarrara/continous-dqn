@@ -1,14 +1,9 @@
 import numpy as np
-import torch
-import random
-from utils import Settings
-from collections import namedtuple
-import json
-import bftq_pydial.algorithms.pytorch_fittedq as pftq
-import bftq_pydial.algorithms.pytorch_budgeted_fittedq as pbf
-from bftq_pydial.algorithms.replay_memory import Sample
 
-Data = namedtuple('Data', ('s', 'a', 's_', 'r_', 'c_','info'))
+import bftq_pydial.bftq.pytorch_budgeted_fittedq as pbf
+from utils.datastructure import merge_two_dicts
+from utils_rl.transition.transition import Transition, TransitionGym
+
 
 
 def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
@@ -39,7 +34,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
             if normalize_reward:
                 reward_ftq /= max_r_ftq
                 reward_bftq /= max_r_bftq
-            t_ftq = pftq.Transition(s, a, s_, reward_ftq)
+            t_ftq = Transition(s, a, s_, reward_ftq)
             t_bftq = pbf.TransitionBFTQ(s, a, s_, reward_bftq, c_, None, None)
             transitions_ftq.append(t_ftq)
             transitions_bftq.append(t_bftq)
@@ -62,42 +57,39 @@ def print_results(results):
     print(pp + " " + p)
 
 
-def datas_to_file(datas, path):
-    tosave = []
-    for data in datas:
-        tosave.append(data._asdict())
-    print(datas[-2].info)
-    with open(path, 'w') as outfile:
-        json.dump(tosave, outfile)
+# def datas_to_file(datas, path):
+#     tosave = []
+#     for data in datas:
+#         tosave.append(data._asdict())
+#     print(datas[-2].info)
+#     with open(path, 'w') as outfile:
+#         json.dump(tosave, outfile)
+
+#
+# def dialogues_to_datas(dialogues):
+#     datas = []
+#     for dialogue in dialogues:
+#         for sample in dialogue:
+#             s, a, rp, s_, info = sample
+#             action = a
+#             reward = float(rp)
+#             constraint = info["c_"]
+#             data = Data(s, action, s_, reward, constraint,info)
+#             datas.append(data)
+#     return datas
+#
+# def dialogue_to_data(dialogue):
+#     datas=[]
+#     for sample in dialogue:
+#         s, a, rp, s_, info = sample
+#         action = a
+#         reward = float(rp)
+#         constraint = info["c_"]
+#         data = Data(s, action, s_, reward, constraint, info)
+#         datas.append(data)
+#     return datas
 
 
-def dialogues_to_datas(dialogues):
-    datas = []
-    for dialogue in dialogues:
-        for sample in dialogue:
-            s, a, rp, s_, info = sample
-            action = a
-            reward = float(rp)
-            constraint = info["c_"]
-            data = Data(s, action, s_, reward, constraint,info)
-            datas.append(data)
-    return datas
-
-def dialogue_to_data(dialogue):
-    datas=[]
-    for sample in dialogue:
-        s, a, rp, s_, info = sample
-        action = a
-        reward = float(rp)
-        constraint = info["c_"]
-        data = Data(s, action, s_, reward, constraint, info)
-        datas.append(data)
-    return datas
-
-def merge_two_dicts(x, y):
-    z = x.copy()  # start with x's keys and values
-    z.update(y)  # modifies z with y's keys and values & returns None
-    return z
 
 
 # print(to_onehot([2,4,5,8],6))
@@ -115,7 +107,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
     i = 0
     s_, r_, end, info_env = env.step(a)
     if print_dial: print(a)
-    turn = Sample(s, a, r_, s_, info_env)
+    turn = TransitionGym(s, a, r_, s_, end, info_env)
     dialogue.append(turn)
     info_env = {}
     info_pi = {"beta": beta}
@@ -129,10 +121,11 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
         s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         if print_dial:
             print("i={} ||| sys={} ||| usr={} ||| patience={}".format(i, a, info_env["last user act"],
-                                                                      info_env["patience"]))  # , info_env["master acts"]
+                                                                      info_env[
+                                                                          "patience"]))  # , info_env["master acts"]
         c_ = info_env["c_"]  # 1. / env.maxTurns  # info_env["c_"]
         # print s_
-        turn = Sample(s, a, r_, s_, info_env)
+        turn = TransitionGym(s, a, r_, s_, end, info_env)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)
@@ -157,27 +150,62 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., p
     print("mean turn : ", turn / float(N_dialogues))
     return dialogues, result
 
-def load_datas(path_sample_data):
-    print("reading json data file of samples in {}".format(path_sample_data))
-    with open(path_sample_data, 'r') as infile:
-        datass = json.load(infile)
-    datas = [None] * len(datass)
-    for idata, data in enumerate(datass):
-        datas[idata] = Data(**data)
-    return datas
 
-def dialogues_to_samples(dialogues):
-    samples = []
-    for dialogue in dialogues:
-        for sample in dialogue:
-            samples.append(sample)
-    return samples
+# def load_datas(path_sample_data):
+#     print("reading json data file of samples in {}".format(path_sample_data))
+#     with open(path_sample_data, 'r') as infile:
+#         datass = json.load(infile)
+#     datas = [None] * len(datass)
+#     for idata, data in enumerate(datass):
+#         datas[idata] = Data(**data)
+#     return datas
+
+# def dialogues_to_samples(dialogues):
+#     samples = []
+#     for dialogue in dialogues:
+#         for sample in dialogue:
+#             samples.append(sample)
+#     return samples
+#
+#
+# def construct_random_pi():
+#     def pi(s, actions):
+#         idx = np.random.choice(len(actions), 1)[0]
+#         return actions[idx]
+#
+#     return pi
+#
+#
+# def change_trajectories(M, trajectories):
+#     res = []
+#     for trajectory in trajectories:
+#         t = []
+#         for sample in trajectory:
+#             s, a, rp, sp, cp = sample
+#             if cp > 0.:
+#                 rp = -M
+#             t.append((s, a, rp, sp, cp))
+#         res.append(t)
+#     return res
+#
+#
+# def change_samples(M, samples):
+#     res = []
+#     for sample in samples:
+#         s, a, rp, sp, cp = sample
+#         if cp > 0.:
+#             rp = -M
+#         res.append((s, a, rp, sp, cp))
+#     return res
+#
+#
+# def trajectories_to_samples(trajectories):
+#     samples = []
+#     for trajectory in trajectories:
+#         samples.extend(trajectory)
+#     return samples
 
 
-def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    raise Exception("seed for pydial ?")
-    Settings.set_seed(seed)
+
+
 

@@ -1,18 +1,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from collections import namedtuple
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import copy
-import random
-import os
 import matplotlib.pyplot as plt
-import bftq_pydial.tools.filled_step as fs
-from bftq_pydial.algorithms.replay_memory import ReplayMemory, Transition
-from bftq_pydial.algorithms.utils_algorithms import create_Q_histograms, create_Q_histograms_for_actions
+from utils_rl.transition.replay_memory import ReplayMemory
+from utils_rl.transition.transition import Transition
 from bftq_pydial.tools.configuration import C
-from bftq_pydial.tools.configuration import DEVICE
+from utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions
+
 
 class NetFTQ(torch.nn.Module):
     DONT_NORMALIZE_YET = None
@@ -96,7 +93,7 @@ class PytorchFittedQ:
         self.nn_stop_loss_condition = nn_loss_stop_condition
         self.batch_size_experience_replay = batch_size_experience_replay
         self.delta_stop = delta_stop
-        self._policy_network = policy_network.to(DEVICE)
+        self._policy_network = policy_network.to(C.device)
         self._max_ftq_epoch = max_ftq_epoch
         self._max_nn_epoch = max_nn_epoch
         self._gamma = gamma
@@ -140,13 +137,13 @@ class PytorchFittedQ:
 
     def _construct_batch(self, transitions):
         for t in transitions:
-            state = torch.tensor([[t.state]], device=DEVICE, dtype=torch.float)
+            state = torch.tensor([[t.s]], device=C.device, dtype=torch.float)
             if t.next_state is not None:
-                next_state = torch.tensor([[t.next_state]], device=DEVICE, dtype=torch.float)
+                next_state = torch.tensor([[t.s_]], device=C.device, dtype=torch.float)
             else:
                 next_state = None
-            action = torch.tensor([[t.action]], device=DEVICE, dtype=torch.long)
-            reward = torch.tensor([t.reward], device=DEVICE)
+            action = torch.tensor([[t.a]], device=C.device, dtype=torch.long)
+            reward = torch.tensor([t.r_], device=C.device)
             self.memory.push(state, action, next_state, reward)
 
         zipped = Transition(*zip(*self.memory.memory))
@@ -166,13 +163,13 @@ class PytorchFittedQ:
         self.batch_size = len(transitions)
         batch = Transition(*zip(*transitions))
 
-        self._non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.next_state)),
-                                            device=DEVICE,
+        self._non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
+                                            device=C.device,
                                             dtype=torch.uint8)
-        self._non_final_next_states = torch.cat([s for s in batch.next_state if s is not None])
-        self._state_batch = torch.cat(batch.state)
-        self._action_batch = torch.cat(batch.action)
-        self._reward_batch = torch.cat(batch.reward)
+        self._non_final_next_states = torch.cat([s for s in batch.s_ if s is not None])
+        self._state_batch = torch.cat(batch.s)
+        self._action_batch = torch.cat(batch.a)
+        self._reward_batch = torch.cat(batch.r_)
 
     def fit(self, transitions):
         self._construct_batch(transitions)
@@ -189,8 +186,8 @@ class PytorchFittedQ:
             if self.disp and self.process_between_epoch is not None:
                 def pi(state, action_mask):
                     action_mask[action_mask == 1.] = np.infty
-                    action_mask = torch.tensor([action_mask], device=DEVICE, dtype=torch.float)
-                    s = torch.tensor([[state]], device=DEVICE, dtype=torch.float)
+                    action_mask = torch.tensor([action_mask], device=C.device, dtype=torch.float)
+                    s = torch.tensor([[state]], device=C.device, dtype=torch.float)
                     a = self._policy_network(s).sub(action_mask).max(1)[1].view(1, 1).item()
                     return a
 
@@ -214,19 +211,19 @@ class PytorchFittedQ:
 
         for state in self.disp_states:
             print("Q({})={}".format(state, self._policy_network(
-                torch.tensor([[state]], device=DEVICE, dtype=torch.float)).cpu().detach().numpy()))
+                torch.tensor([[state]], device=C.device, dtype=torch.float)).cpu().detach().numpy()))
 
         def pi(state, action_mask):
             action_mask[action_mask == 1.] = np.infty
-            action_mask = torch.tensor([action_mask], device=DEVICE, dtype=torch.float)
-            s = torch.tensor([[state]], device=DEVICE, dtype=torch.float)
+            action_mask = torch.tensor([action_mask], device=C.device, dtype=torch.float)
+            s = torch.tensor([[state]], device=C.device, dtype=torch.float)
             a = final_network(s).sub(action_mask).max(1)[1].view(1, 1).item()
             return a
 
         return pi
 
     def _ftq_epoch(self):
-        next_state_values = torch.zeros(self.batch_size, device=DEVICE)
+        next_state_values = torch.zeros(self.batch_size, device=C.device)
         if self._id_ftq_epoch > 0:
             next_state_values[self._non_final_mask] = self._policy_network(self._non_final_next_states).max(1)[
                 0].detach()

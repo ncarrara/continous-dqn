@@ -1,0 +1,66 @@
+{
+  "general": {
+    "id": "test",
+    "pydial_configuration": "env1-hdc-CR.cfg",
+    "seed": 0,
+    "workspace": "tmp/test",
+    "level": "INFO"
+  },
+  "gamma": 0.99,
+  "gamma_c": 0.99,
+  "create_data": {
+    "trajs_by_ftq_batch": 200,
+    "reset_weight": false,
+    "lambda_": 0,
+    "normalize_reward": true,
+    "N_trajs": 2000,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    }
+  },
+  "main": {
+    "path_sample_data": "tmp/test/test.data",
+    "reset_weight": false,
+    "lambda_": 0,
+    "normalize_reward": true,
+    "N_trajs": 4,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    },
+    "net_bftq_params": {
+      "beta_encoder_type": "LINEAR",
+      "size_beta_encoder": 1
+    },
+    "bftq_params": {
+      "weights_losses": [
+        1.0,
+        1.0
+      ],
+      "loss_function_c": "l2"
+    }
+  },
+  "net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      300,
+      100
+    ]
+  },
+  "ftq_params": {
+    "disp": true,
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 200,
+    "optimizer": "RMS_PROP",
+    "loss_function": "l2",
+    "max_ftq_epoch": 30,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.01,
+    "batch_size_experience_replay": "ALL_BATCH",
+    "workspace": "tmp/test/ftq"
+  }
+}
+

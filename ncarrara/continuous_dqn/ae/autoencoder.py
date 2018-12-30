@@ -57,6 +57,8 @@ class Autoencoder(nn.Module):
             criterion=None, normalize=False):
         means = torch.mean(datas, dim=0)
         stds = torch.std(datas, dim=0)
+        # print(means)
+        # exit()
         if normalize:
             self.set_normalization_params(means, stds)
         if size_minibatch is None:

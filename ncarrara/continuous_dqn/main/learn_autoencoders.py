@@ -1,11 +1,13 @@
 import torch
-from ncarrara.continuous_dqn.tools import utils as utils
+from ncarrara.continuous_dqn.tools import utils as utils, features
 from ncarrara.continuous_dqn.ae.autoencoder import Autoencoder
 import torch.nn.functional as F
 import os
 import logging
 
 from ncarrara.continuous_dqn.tools.configuration import C
+from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
+from ncarrara.utils.os import makedirs
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +15,10 @@ logger = logging.getLogger(__name__)
 def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
          autoencoder_size, n_epochs):
     criterion = F.l1_loss if criterion == "l1" else None
-    C.makedirs(C.path_samples)
-    all_transitions = utils.read_samples(C.path_samples)
+    makedirs(C.path_samples)
+    feature = build_feature_autoencoder(C["feature_autoencoder_info"])
+
+    all_transitions = utils.read_samples_for_autoencoders(C.path_samples, feature)
     min_n, max_n = autoencoder_size
     autoencoders = [Autoencoder(transitions.shape[1], min_n, max_n) for transitions in all_transitions]
     for ienv, transitions in enumerate(all_transitions):
@@ -35,7 +39,6 @@ def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
                                stop_loss=0.01,
                                criterion=criterion)
 
-
         if not os.path.exists(C.path_models):
             os.makedirs(C.path_models)
         path_autoencoder = C.path_models + "/{}.pt".format(ienv)
@@ -48,5 +51,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/0_random.json")
+    C.load("config/0_pydial.json")
     main()

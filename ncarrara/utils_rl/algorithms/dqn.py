@@ -4,9 +4,9 @@ import torch
 import copy
 import torch.nn.functional as F
 
-from ncarrara.continuous_dqn.tools import C
-from ncarrara.utils_rl import ReplayMemory
-from ncarrara.utils_rl import TransitionGym
+from ncarrara.continuous_dqn.tools.configuration import C
+from ncarrara.utils_rl.transition.replay_memory import Memory
+from ncarrara.utils_rl.transition.transition import TransitionGym
 
 
 class NetDQN(torch.nn.Module):
@@ -71,7 +71,7 @@ class DQN:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         self.optimizer = optimizer
-        self.memory = ReplayMemory(10000,TransitionGym)
+        self.memory = Memory()
         self.i_episode = 0
         self.n_actions = self.policy_net.predict.out_features
         self.transfer_experience_replay = None
@@ -152,7 +152,7 @@ class DQN:
         else:
             next_state = None
         action = torch.tensor([[action]], device=C.device, dtype=torch.long)
-        reward = torch.tensor([reward], device=C.device,dtype=torch.float)
+        reward = torch.tensor([float(reward)], device=C.device,dtype=torch.float)
         self.memory.push(state, action, reward, next_state,done,info)
         self._optimize_model()
         # print(next_state)

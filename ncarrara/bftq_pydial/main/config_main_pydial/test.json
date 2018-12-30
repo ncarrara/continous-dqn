@@ -28,18 +28,18 @@
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.01
-    },
-    "net_bftq_params": {
-      "beta_encoder_type": "LINEAR",
-      "size_beta_encoder": 1
-    },
-    "bftq_params": {
-      "weights_losses": [
-        1.0,
-        1.0
-      ],
-      "loss_function_c": "l2"
     }
+  },
+  "bftq_params": {
+    "loss_function_c": "l2",
+    "weights_losses": [
+      1.0,
+      1.0
+    ]
+  },
+  "net_bftq_params": {
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 1
   },
   "net_params": {
     "activation_type": "RELU",

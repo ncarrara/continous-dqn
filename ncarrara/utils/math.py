@@ -5,6 +5,13 @@ import torch
 import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
+def to_onehot(vector, max_value):
+    rez = [0] * (max_value + 1)
+    for i in range(len(vector)):
+        index = vector[i] if vector[i] < max_value else max_value
+        index = i * (max_value + 1) + index
+        rez[int(index)] = 1.
+    return rez
 
 def set_seed(seed):
     if seed is not None:

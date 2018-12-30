@@ -4,9 +4,9 @@ import os
 import torch
 import logging
 
+from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 from ncarrara.utils.color import Color
-from ncarrara.utils_rl.transition.replay_memory import ReplayMemory
-from ncarrara.utils_rl.transition.transition import TransitionGym
+from ncarrara.utils_rl.transition.replay_memory import Memory
 
 logger = logging.getLogger(__name__)
 
@@ -23,29 +23,29 @@ def load_autoencoders(path_autoencoders):
     return autoencoders
 
 
-def load_experience_replays(path_data):
+def load_memories(path_data):
     logger.info("reading samples ...")
     files = os.listdir(path_data)
     logger.info("reading : {}".format(files))
-    ers = [None] * len(files)
-    if len(files)==0:
+    memories = [None] * len(files)
+    if len(files) == 0:
         raise Exception("No data files in folder {}".format(path_data))
     for file in files:
         id_env = int(file.split(".")[0])
         path_file = path_data + "/" + file
         logger.info("reading {}".format(path_file))
-        rm = ReplayMemory(10000,TransitionGym)
-        rm.load_memory(path_file)
-        ers[id_env] = rm
-    return ers
+        m = Memory()
+        m.load_memory(path_file)
+        memories[id_env] = m
+    return memories
 
 
-def read_samples(path_data):
+def read_samples_for_autoencoders(path_data, feature):
     from ncarrara.continuous_dqn.tools.configuration import C
-    ers = load_experience_replays(path_data)
-    all_transitions = [None] * len(ers)
-    for id_env, rm in enumerate(ers):
-        data = rm.sample_to_numpy(len(rm))
+    memories = load_memories(path_data)
+    all_transitions = [None] * len(memories)
+    for id_env, rm in enumerate(memories):
+        data = np.array([feature(transition) for transition in rm.memory])
         all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
     return all_transitions
 
@@ -55,24 +55,24 @@ def array_to_cross_comparaison(tab, params_source, params_test):
 
     toprint = ""
     for ienv in range(len(tab)):
-        formaterrors = format_errors(tab[ienv], params_source, params_test[ienv],show_params=True) + "\n"
+        formaterrors = format_errors(tab[ienv], params_source, params_test[ienv], show_params=True) + "\n"
         toprint += formaterrors
 
-    len_params = len("".join(["{:.2f} ".format(v) for v in params_test[0].values()]))+2
+    len_params = len("".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in params_test[0].values()])) + 2
 
-    head = "" #""-" * (6+len_params) * len(params_source) + "\n"
+    head = ""  # ""-" * (6+len_params) * len(params_source) + "\n"
     for key in keys:
         xx = " " * len_params
         for param in params_source:
-            xx += "{:5.2f} ".format(param[key])
+            xx += param[key]+" " if type(param[key]) == str else "{:5.2f} ".format(param[key])
         head += "{} <- {}\n".format(xx, key)
-    head = head + " "*len_params+ "-" * 6 * len(params_source) + "\n"
+    head = head + " " * len_params + "-" * 6 * len(params_source) + "\n"
 
     return head + toprint
 
 
-def format_errors(errors, params_source, param_test,show_params=False):
-    toprint = "" if not show_params else "".join(["{:.2f} ".format(v) for v in param_test.values()])+"| "
+def format_errors(errors, params_source, param_test, show_params=False):
+    toprint = "" if not show_params else "".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in param_test.values()]) + "| "
     min_idx = np.argmin(errors)
 
     for isource in range(len(errors)):
@@ -98,5 +98,3 @@ def format_errors(errors, params_source, param_test,show_params=False):
                 value_better = Color.UNDERLINE + Color.BOLD + "{:.2f}".format(vb) + Color.END + Color.END
                 diff += k + ":" + value_env + "/" + value_better + " "
     return toprint + "\t" + diff
-
-

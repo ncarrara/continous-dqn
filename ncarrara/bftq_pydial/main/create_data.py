@@ -2,7 +2,7 @@
 from ncarrara.bftq_pydial.tools.features import feature_0
 from ncarrara.utils.math import epsilon_decay
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
-from ncarrara.utils_rl.transition.replay_memory import ReplayMemory
+from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, RandomPolicy
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
@@ -29,7 +29,7 @@ def main():
 
     def process_between_epoch(pi):
         logger.info("process_between_epoch ...")
-        pi = PytorchFittedPolicy(pi, e.action_space, e, feature)
+        pi = PytorchFittedPolicy(pi,e, feature)
         _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], 5, 1., False)
         return np.mean(results, axis=0)
 
@@ -52,7 +52,7 @@ def main():
     pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0])
     pi_greedy = RandomPolicy()
     rez = np.zeros((C["create_data"]["N_trajs"], 4))
-    rm = ReplayMemory(100000, TransitionGym)
+    rm = Memory()
     for i in range(C["create_data"]["N_trajs"]):
         if i % 50 == 0:
             logger.info(i)
@@ -74,7 +74,7 @@ def main():
 
             ftq.reset(C["create_data"]["reset_weight"])
             pi = ftq.fit(transitions_ftq)
-            pi_greedy = PytorchFittedPolicy(pi, e.action_space, e, feature)
+            pi_greedy = PytorchFittedPolicy(pi, e, feature)
             logger.info("------------------------------------------------------------------")
             logger.info("------------------------------------------------------------------")
     rm.save_memory(C.workspace + "/" + C.id + ".data")

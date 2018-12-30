@@ -3,15 +3,19 @@ from ncarrara.continuous_dqn.envs.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
 import torch.nn.functional as F
 import logging
+import numpy as np
 
 from ncarrara.continuous_dqn.tools.configuration import C
+from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 
 logger = logging.getLogger(__name__)
 
 
 def main():
     autoencoders = utils.load_autoencoders(C.path_models)
-    all_transitions = utils.read_samples(C.path_samples)
+    feature_autoencoder = build_feature_autoencoder(C["feature_autoencoder_info"])
+
+    all_transitions = utils.read_samples_for_autoencoders(C.path_samples,feature_autoencoder)
     tm = TransferModule(models=autoencoders, loss=F.l1_loss)
 
     errors_base = []
@@ -24,12 +28,8 @@ def main():
     print(utils.array_to_cross_comparaison(errors_base, source_params, source_params))
 
 
-
-
-
     test_envs, test_params = generate_envs(**C["target_envs"])
     # seed = C["general"]["seed"]
-
     errors_test = []
     for ienv, test_env in enumerate(test_envs):
         tm.reset()
@@ -40,9 +40,14 @@ def main():
             s = test_env.reset()
             done = False
             while not done:
-                a = test_env.action_space.sample()
+                if hasattr(test_env, "action_space_executable"):
+                    a = np.random.choice(test_env.action_space_executable())
+                else:
+                    a = test_env.action_space.sample()
+                # a = test_env.action_space.sample()
                 s_, r_, done, info = test_env.step(a)
-                tm.push(s.tolist(), a, r_, s_.tolist(),done,info)
+                feat=feature_autoencoder((s, a, r_, s_,done,info))
+                tm.push(feat)
                 s = s_
         errors_test.append(tm.errors())
 
@@ -52,5 +57,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
-    C.load("config/0_random.json")
+    C.load("config/0_pydial.json")
     main()

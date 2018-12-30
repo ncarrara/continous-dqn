@@ -9,7 +9,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import copy
 import os
-from ncarrara.utils_rl.transition.replay_memory import ReplayMemory
+from ncarrara.utils_rl.transition.replay_memory import Memory
 import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms
@@ -146,7 +146,7 @@ class PytorchBudgetedFittedQ:
 
         self.min_print_q = -0.1
         self.max_print_q = 1
-        self.memory = ReplayMemory(1000000, TransitionBFTQ)
+        self.memory = Memory(class_transition=TransitionBFTQ)
         self.step_occ = 11
         if self.disp:
             self.repartitions_c = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))

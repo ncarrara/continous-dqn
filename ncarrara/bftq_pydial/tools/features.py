@@ -1,14 +1,3 @@
-import numpy as np
-import pprint
-
-
-def to_onehot(vector, max_value):
-    rez = np.zeros(len(vector) * (max_value + 1))
-    for i in range(len(vector)):
-        index = vector[i] if vector[i] < max_value else max_value
-        index = i * (max_value + 1) + index
-        rez[int(index)] = 1.
-    return rez
 
 
 def feature_0(s, e):
@@ -26,7 +15,7 @@ def feature_4(s, e, use_dontdothat=True):
         user_acts = s["user_acts"]
 
         flatten = s["flatten"]
-        last_act_onehot = [0.] * (N_actions + 1)
+        last_act_onehot = [0.] * (N_actions )#+ 1)
         repeat_one_hot = [0.] * 11
         dontdothat = [0.] * e.action_space.n
 

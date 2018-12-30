@@ -7,7 +7,7 @@
   },
   "feature_str": "identity",
   "test_and_base": {
-    "N": 1000
+    "N": 5
   },
   "no_transfer_dqn": {
     "traj_max_size": null,
@@ -33,9 +33,10 @@
       ]
     }
   },
+  "n_actions": 2,
   "transfer_dqn": {
     "traj_max_size": null,
-    "N": 500,
+    "N": 5,
     "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
@@ -55,6 +56,13 @@
         2
       ]
     }
+  },
+  "feature_autoencoder_info": {
+    "feature_str": "feature_autoencoder_identity"
+
+  },
+  "feature_dqn_info": {
+    "feature_str": "feature_dqn_identity"
   },
   "source_envs": {
     "envs_params": {
@@ -85,8 +93,8 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 5000,
+    "n_epochs": 50,
     "criterion": "l1"
   },
-  "N_base_trajectories": 10000
+  "N_base_trajectories": 2
 }

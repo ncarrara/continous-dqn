@@ -1,12 +1,12 @@
 {
   "general": {
-    "id": "config_0_random",
+    "id": "config_0_pydial",
     "level": "INFO",
-    "workspace": "data/config_0_random",
+    "workspace": "data/config_0_pydial",
     "seed": null
   },
   "test_and_base": {
-    "N": 1000
+    "N": 10
   },
   "no_transfer_dqn": {
     "traj_max_size": null,
@@ -25,16 +25,17 @@
     },
     "net_params": {
       "sizes": [
-        4,
-        16,
-        8,
-        2
+        296,
+        128,
+        64,
+        32,
+        17
       ]
     }
   },
   "transfer_dqn": {
     "traj_max_size": null,
-    "N": 500,
+    "N": 30,
     "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
@@ -48,25 +49,69 @@
     },
     "net_params": {
       "sizes": [
-        4,
-        16,
-        8,
-        2
+        296,
+        128,
+        64,
+        32,
+        17
       ]
     }
   },
-  "feature_str": "feature_0",
+  "feature_autoencoder_info": {
+    "feature_str": "feature_autoencoder_pydial",
+    "action_str": [
+      "hello",
+      "request_area",
+      "confirm_area",
+      "select_area",
+      "request_food",
+      "confirm_food",
+      "select_food",
+      "request_pricerange",
+      "confirm_pricerange",
+      "select_pricerange",
+      "inform",
+      "inform_byname",
+      "inform_alternatives",
+      "bye",
+      "repeat",
+      "reqmore",
+      "restart"
+    ]
+  },
+  "feature_dqn_info": {
+    "feature_str": "feature_dqn_pydial",
+    "action_str": [
+      "hello",
+      "request_area",
+      "confirm_area",
+      "select_area",
+      "request_food",
+      "confirm_food",
+      "select_food",
+      "request_pricerange",
+      "confirm_pricerange",
+      "select_pricerange",
+      "inform",
+      "inform_byname",
+      "inform_alternatives",
+      "bye",
+      "repeat",
+      "reqmore",
+      "restart"
+    ]
+  },
   "source_envs": {
     "envs_params": {
       "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "[0.0,0.1,0.2,0.3,0.7]"
+      "error_rate": "[0.0]"
     },
     "envs_str": "gym_pydial"
   },
   "target_envs": {
     "envs_params": {
       "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "[0.0,0.1,0.2,0.3,0.7]"
+      "error_rate": "[0.0,0.1]"
     },
     "envs_str": "gym_pydial"
   },
@@ -79,8 +124,8 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 5000,
+    "n_epochs": 50,
     "criterion": "l1"
   },
-  "N_base_trajectories": 200
+  "N_base_trajectories": 1
 }

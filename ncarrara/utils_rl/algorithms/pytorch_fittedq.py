@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import copy
 import matplotlib.pyplot as plt
 
-from ncarrara.utils_rl.transition.replay_memory import ReplayMemory
+from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import Transition
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions
 import logging
@@ -122,7 +122,7 @@ class PytorchFittedQ:
         self.disp_states = disp_states
         self.disp = disp
         self.statistiques = None
-        self.memory = ReplayMemory(10000, Transition)
+        self.memory = Memory(class_transition=Transition)
         self.reset()
 
     def reset(self, reset_weight=True):
@@ -182,7 +182,7 @@ class PytorchFittedQ:
             self._sample_batch()
             self.logger.info("[epoch_ftq={}] #batch={}".format(self._id_ftq_epoch, len(self._state_batch)))
             losses = self._ftq_epoch()
-            self.logger.info("loss", losses[-1])
+            self.logger.info("loss {}".format(losses[-1]))
 
             if self.disp and self.process_between_epoch is not None:
                 def pi(state, action_mask):

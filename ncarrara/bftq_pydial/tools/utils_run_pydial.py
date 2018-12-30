@@ -26,7 +26,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
         r_ = data.r_
         s = feature(data.s, e)
         s_ = feature(data.s_, e)
-        a = e.action_space().index(data.a)
+        a = data.a #e.action_space().index(data.a)
         c_ = data.info["c_"]
         reward_ftq = r_ - (lambda_ * c_)
         reward_bftq = r_
@@ -63,7 +63,6 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
     dialogue = []
     pi.reset()
     s = env.reset()
-    # s_pydial = env.current_pydial_state
     a= env.action_space_str.index('hello')
     rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
     i = 0
@@ -78,8 +77,11 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
     while not end:
         s = s_
         actions = env.action_space_executable()
+        action_mask=np.zeros(env.action_space.n)
+        for action in actions:
+            action_mask[action]=1
         info_pi = merge_two_dicts(info_pi, info_env)
-        a, is_master_action, info_pi = pi.execute(s, actions, info_pi)
+        a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)
         s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         if print_dial:
             print("i={} ||| sys={} ||| usr={} ||| patience={}".format(i, a,
@@ -87,7 +89,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
                                                                       info_env["patience"]))
         c_ = info_env["c_"]  # 1. / env.maxTurns  # info_env["c_"]
         # print s_
-        turn = (s, a, r_, s_, end, info_env)
+        turn = (s, int(a), r_, s_, end, info_env)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)

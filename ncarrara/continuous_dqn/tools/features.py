@@ -46,6 +46,7 @@ def feature_autoencoder_pydial(transition, action_space_str):
 
 
 def feature_dqn_identity(s):
+    # je suis sur de vouloir faire ça ????
     if type(s) == type(np.zeros(1)):
         s = s.tolist()
     return s

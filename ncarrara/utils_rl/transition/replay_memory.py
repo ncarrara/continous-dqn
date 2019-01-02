@@ -3,11 +3,13 @@ import random
 import numpy as np
 import json
 
+from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import sys
-
+import logging
 
 class Memory(object):
+    logger = logging.getLogger(__name__)
 
     def __init__(self, capacity=sys.maxsize,class_transition=TransitionGym):
         self.capacity = capacity
@@ -29,16 +31,14 @@ class Memory(object):
         batch_size = len(self.memory) if batch_size > len(self.memory) else batch_size
         return random.sample(self.memory, batch_size)
 
-    def save_memory(self, path, indent=0):
-        dirname = os.path.dirname(path)
-        if not os.path.exists(dirname):
-            os.makedirs(dirname)
+    def save_memory(self, path,filename, indent=0):
+        makedirs(path)
         memory = [t._asdict() for t in self.memory]
         if indent > 0:
             json_str = json.dumps(memory, indent=indent)
         else:
             json_str = json.dumps(memory)
-        with open(path, 'w') as f:
+        with open(path+os.path.sep+filename, 'w') as f:
             f.write(json_str)
 
     def load_memory(self, path):
@@ -49,23 +49,26 @@ class Memory(object):
             self.push(*data.values())
 
     def apply_feature_to_states(self, feature):
+        Memory.logger.info('Applying feature to states in memory')
         for i in range(len(self.memory)):
             state, action, reward, next_state, done, info = self.memory[i]
             self.memory[i] = TransitionGym(feature(state), action, reward, feature(next_state), done, info)
 
     def to_tensors(self, device):
         import torch
-        for i in range(len(self.memory)):
+        Memory.logger.info('Transforming memory to tensors')
+        with torch.no_grad():
+            for i in range(len(self.memory)):
 
-            state, action, reward, next_state, done, info = self.memory[i]
-            state = torch.tensor([[state]], device=device, dtype=torch.float)
-            if not done:
-                next_state = torch.tensor([[next_state]], device=device, dtype=torch.float)
-            else:
-                next_state = None
-            action = torch.tensor([[action]], device=device, dtype=torch.long)
-            reward = torch.tensor([float(reward)], device=device)
-            self.memory[i] = TransitionGym(state, action, reward, next_state, done, info)
+                state, action, reward, next_state, done, info = self.memory[i]
+                state = torch.tensor([[state]], device=device, dtype=torch.float)
+                if not done:
+                    next_state = torch.tensor([[next_state]], device=device, dtype=torch.float)
+                else:
+                    next_state = None
+                action = torch.tensor([[action]], device=device, dtype=torch.long)
+                reward = torch.tensor([float(reward)], device=device)
+                self.memory[i] = TransitionGym(state, action, reward, next_state, done, info)
 
         return self
 

@@ -20,11 +20,14 @@ def set_seed(seed):
         np.random.seed(seed)
         torch.manual_seed(seed)
 
-def epsilon_decay(start=1.0, decay=0.01, N=100):
+def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
-    plt.plot(range(len(decays)),decays)
-    plt.title("epsilon decays")
-    plt.close()
+    logger.info("Epsilons (decayed) : [{}]".format(''.join(["{:.2f} ".format(eps) for eps in decays])))
+    if show:
+        plt.plot(range(len(decays)),decays)
+        plt.title("epsilon decays")
+        plt.show()
+        plt.close()
     return decays
 
 def normalized(a):

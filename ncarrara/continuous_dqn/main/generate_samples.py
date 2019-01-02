@@ -1,12 +1,10 @@
 import logging
 import json
 
-from ncarrara.continuous_dqn.envs.envs_factory import generate_envs
-from ncarrara.continuous_dqn.tools import utils as utils
+from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.utils.math import set_seed
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.utils_rl.transition.transition import TransitionGym
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -44,7 +42,7 @@ def main():
                         done,
                         info)
                 s = s_
-        rm.save_memory(C.path_samples + "/{}.json".format(ienv))
+        rm.save_memory(C.path_samples, "{}.json".format(ienv))
     with open(C.path_sources_params, 'w') as file:
         dump = json.dumps(params, indent=4)
         print(dump)

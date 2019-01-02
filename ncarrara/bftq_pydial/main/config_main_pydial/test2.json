@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test",
+    "id": "test2",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/test2",
     "level": "INFO"
   },
   "feature_str": "feature_pydial",

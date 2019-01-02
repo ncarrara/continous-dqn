@@ -4,8 +4,10 @@ import numpy as np
 import json
 import pprint
 import os
+from abc import ABC, abstractmethod
 
 from ncarrara.utils.math import set_seed
+from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch import set_device
 
 
@@ -20,12 +22,27 @@ class Configuration(object):
         self.device = None
 
     def __getitem__(self, arg):
-        if not self.dict:
-            raise Exception("please load the configuration file")
+        self.__check__()
         return self.dict[arg]
 
     def __str__(self):
         return pprint.pformat(self.dict)
+
+    def __check__(self):
+        if not self.dict:
+            raise Exception("please load the configuration file")
+
+    def create_fresh_workspace(self):
+        self.__check__()
+        self.__clean_workspace()
+        makedirs(self.workspace)
+        return self
+
+    def __clean_workspace(self):
+        self.__check__()
+        os.system("rm -rf {}".format(self.workspace))
+        return self
+
 
     def load(self, path_config):
         with open(path_config, 'r') as infile:
@@ -34,11 +51,12 @@ class Configuration(object):
         self.id = self.dict["general"]["id"]
         self.workspace = self.dict["general"]["workspace"]
 
+
+
         self.logging_level = self.dict["general"]["level"]
         self.seed = self.dict["general"]["seed"]
 
         logging.basicConfig(level=logging.getLevelName(self.logging_level))
-
 
         if self.seed is not None:
             set_seed(self.seed)
@@ -47,10 +65,12 @@ class Configuration(object):
             self.logger.warning("0.4.1. is bugged regarding mse loss")
         np.set_printoptions(precision=2)
         self.logger.info("Pytorch version : {}".format(torch.__version__))
+        return self
 
     def load_matplotlib(self, graphic_engine):
         import matplotlib
-        matplotlib.use(graphic_engine)  # template
+        matplotlib.use(graphic_engine)
+        return self
 
     def load_pytorch(self):
         _device = set_device()

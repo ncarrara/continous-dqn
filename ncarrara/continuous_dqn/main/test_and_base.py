@@ -1,5 +1,5 @@
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
-from ncarrara.continuous_dqn.envs.envs_factory import generate_envs
+from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
 import torch.nn.functional as F
 import logging

@@ -1,12 +1,12 @@
 {
   "general": {
-    "id": "config_0_pydial",
+    "id": "0_pydial",
     "level": "INFO",
-    "workspace": "data/config_0_pydial",
-    "seed": null
+    "workspace": "tmp/0_pydial",
+    "seed": 0
   },
   "test_and_base": {
-    "N": 10
+    "N": 250
   },
   "no_transfer_dqn": {
     "traj_max_size": null,
@@ -35,24 +35,22 @@
   },
   "transfer_dqn": {
     "traj_max_size": null,
-    "N": 30,
+    "N": 250,
     "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
-      "batch_size_experience_replay": 128,
+      "batch_size_experience_replay": 256,
       "target_update": 10,
       "optimizer": "ADAM",
       "loss_function": "l2",
       "lr": 0.001,
-      "weight_decay": 0.01,
+      "weight_decay": 0.001,
       "workspace": "dqn"
     },
     "net_params": {
       "sizes": [
-        296,
-        128,
-        64,
-        32,
+        300,
+        100,
         17
       ]
     }
@@ -104,14 +102,14 @@
   "source_envs": {
     "envs_params": {
       "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "[0.0]"
+      "error_rate": "np.random.choice(np.linspace(0.0,1.0,500),10)"
     },
     "envs_str": "gym_pydial"
   },
   "target_envs": {
     "envs_params": {
       "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "[0.0,0.1]"
+      "error_rate": "np.random.choice(np.linspace(0.0,1.0,500),10)"
     },
     "envs_str": "gym_pydial"
   },
@@ -120,12 +118,12 @@
     "learning_rate": 0.001,
     "autoencoder_size": [
       8,
-      32
+      128
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 50,
+    "n_epochs": 1000,
     "criterion": "l1"
   },
-  "N_base_trajectories": 1
+  "N_base_trajectories": 250
 }

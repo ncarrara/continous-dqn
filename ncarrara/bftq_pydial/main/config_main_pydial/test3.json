@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test",
+    "id": "test3",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/test3",
     "level": "INFO"
   },
   "feature_str": "feature_pydial",
@@ -18,18 +18,18 @@
   "gamma": 0.99,
   "gamma_c": 0.99,
   "create_data": {
-    "trajs_by_ftq_batch": 200,
+    "trajs_by_ftq_batch": 100,
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 2000,
+    "N_trajs": 500,
     "epsilon_decay": {
       "start": 0.3,
-      "decay": 0.005
+      "decay": 0.01
     }
   },
   "main": {
-    "path_sample_data": "tmp/test/test.data",
+    "path_sample_data": "tmp/test3/test3.data",
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
@@ -60,13 +60,13 @@
     "max_nn_epoch": 200,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 30,
+    "max_ftq_epoch": 26,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.001,
+    "weight_decay": 0.01,
     "batch_size_experience_replay": "ALL_BATCH",
-    "workspace": "tmp/test/ftq"
+    "workspace": "tmp/test3/ftq"
   }
 }
 

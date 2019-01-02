@@ -75,7 +75,8 @@ class PytorchFittedQ:
                  max_ftq_epoch=np.inf,
                  max_nn_epoch=1000,
                  gamma=0.99,
-                 learning_rate=0.001, weight_decay=0.001,
+                 learning_rate=0.001,
+                 weight_decay=0.001,
                  reset_policy_each_ftq_epoch=True,
                  delta_stop=0,
                  batch_size_experience_replay=50,
@@ -203,6 +204,8 @@ class PytorchFittedQ:
                 fig, ax = plt.subplots(1, 1, figsize=(4, 4), tight_layout=True)
                 ax.plot(range(self._id_ftq_epoch + 1), rewards, label="reward")
                 plt.savefig(self.workspace + '/' + "reward_between_epoch.png")
+                if self._id_ftq_epoch == self._max_ftq_epoch-1 or self.delta <= self.delta_stop:
+                    plt.show()
                 plt.close()
 
             self._id_ftq_epoch += 1

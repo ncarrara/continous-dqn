@@ -1,26 +1,27 @@
 {
   "general": {
-    "id": "config_0_random",
+    "id": "0_random",
     "level": "INFO",
-    "workspace": "data/config_0_random",
+    "workspace": "tmp/0_random",
     "seed": null
   },
   "feature_str": "identity",
   "test_and_base": {
-    "N": 5
+    "N": 100
   },
   "no_transfer_dqn": {
     "traj_max_size": null,
     "env_str": "CartPole-v0",
-    "N": 1000,
-    "decay": 0.01,
+    "N": 100,
+    "start_decay": 0.5,
+    "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
       "batch_size_experience_replay": 128,
       "target_update": 10,
       "optimizer": "ADAM",
       "loss_function": "l2",
-      "lr": 0.001,
+      "lr": 0.01,
       "weight_decay": 0.01,
       "workspace": "dqn"
     },
@@ -35,16 +36,17 @@
   },
   "n_actions": 2,
   "transfer_dqn": {
-    "traj_max_size": null,
-    "N": 5,
+    "traj_max_size": 200,
+    "N": 100,
+    "start_decay": 0.5,
     "decay": 0.05,
     "dqn_params": {
       "gamma": 0.999,
-      "batch_size_experience_replay": 128,
+      "batch_size_experience_replay": 2048,
       "target_update": 10,
       "optimizer": "ADAM",
       "loss_function": "l2",
-      "lr": 0.001,
+      "lr": 0.01,
       "weight_decay": 0.01,
       "workspace": "dqn"
     },
@@ -69,7 +71,7 @@
       "gravity": "[9.8]",
       "masscart": "[1.0]",
       "masspole": "[0.1]",
-      "length": "np.random.choice(np.logspace(0.0001,0.5,500,endpoint=True)-1.,2)",
+      "length": "np.random.choice(np.linspace(0.3,1.5,500),30)",
       "force_mag": "[10.0]"
     },
     "envs_str": "CartPoleConfig-v0"
@@ -79,7 +81,7 @@
       "gravity": "[9.8]",
       "masscart": "[1.0]",
       "masspole": "[0.1]",
-      "length": "np.random.choice(np.logspace(0.0001,0.5,500,endpoint=True)-1.,2)",
+      "length": "np.random.choice(np.linspace(0.3,1.5,500),20)",
       "force_mag": "[10.0]"
     },
     "envs_str": "CartPoleConfig-v0"
@@ -93,8 +95,8 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 50,
+    "n_epochs": 500,
     "criterion": "l1"
   },
-  "N_base_trajectories": 2
+  "N_base_trajectories": 100
 }

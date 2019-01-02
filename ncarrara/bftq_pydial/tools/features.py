@@ -1,10 +1,10 @@
+def feature_factory(feature_str):
+    if feature_str == "feature_pydial":
+        return feature_pydial
+    elif feature_str == "feature_slot_filling":
+        return feature_slot_filling
 
-
-def feature_0(s, e):
-    return feature_4(s, e, False)
-
-
-def feature_4(s, e, use_dontdothat=True):
+def feature_pydial(s, e):
     N_actions = e.action_space.n
     if s is None:
         return None
@@ -15,15 +15,12 @@ def feature_4(s, e, use_dontdothat=True):
         user_acts = s["user_acts"]
 
         flatten = s["flatten"]
-        last_act_onehot = [0.] * (N_actions )#+ 1)
+        last_act_onehot = [0.] * (N_actions)  # + 1)
         repeat_one_hot = [0.] * 11
-        dontdothat = [0.] * e.action_space.n
 
         # what is my last summary act
         if not master_acts:
             pass
-        # elif master_acts[-1] == u'hello()':
-        #     last_act_onehot[N_actions] = 1.
         else:
             last_act_onehot[e.action_space_str.index(summary_acts[-1])] = 1.
 
@@ -40,22 +37,11 @@ def feature_4(s, e, use_dontdothat=True):
                 i += 1
             repeat_one_hot[concecutive_repetion] = 1.
 
-        # what summary act will repeat the same MASTER act ?
-        # WARNING: take a shitload of computational time
-        if use_dontdothat:
-            if not master_acts:
-                pass
-            else:
-                belief = s["pydial_state"]
-                last_master_act = master_acts[-1]
-                for iact, act in enumerate(e.action_space):
-                    next_master_act = e._summary_act_to_master_act(belief, act, last_master_act)
-                    if next_master_act == last_master_act:
-                        dontdothat[iact] = 1.
-        if use_dontdothat:
-
-            rez = flatten + last_act_onehot + repeat_one_hot + dontdothat
-        else:
-            rez = flatten + last_act_onehot + repeat_one_hot
+        rez = flatten + last_act_onehot + repeat_one_hot
 
         return rez
+
+
+def feature_slot_filling(s,e):
+    raise Exception("TODO")
+

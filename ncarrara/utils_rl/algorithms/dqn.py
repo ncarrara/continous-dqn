@@ -47,6 +47,7 @@ class NetDQN(torch.nn.Module):
     def reset(self):
         self.apply(self._init_weights)
 
+
 class DQN:
     ALL_BATCH = "ALL_BATCH"
     ADAPTATIVE = "ADAPTATIVE"
@@ -73,6 +74,7 @@ class DQN:
         self.optimizer = optimizer
         self.memory = Memory()
         self.i_episode = 0
+        self.no_need_for_transfer_anymore = False
         self.n_actions = self.policy_net.predict.out_features
         self.transfer_experience_replay = None
 
@@ -99,21 +101,24 @@ class DQN:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.i_episode = 0
         self.transfer_experience_replay = None
+        self.no_need_for_transfer_anymore = False
 
     def _optimize_model(self):
-        if self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ADAPTATIVE:
-            size_batch = len(self.memory) / 10
-        elif self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ALL_BATCH:
-            size_batch = len(self.memory)
-        else:
-            size_batch = self.BATCH_SIZE_EXPERIENCE_REPLAY
+        # if self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ADAPTATIVE:
+        #     size_batch = len(self.memory) / 10
+        # elif self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ALL_BATCH:
+        #     size_batch = len(self.memory)
+        # else:
+        size_batch = self.BATCH_SIZE_EXPERIENCE_REPLAY
 
         transitions = self.memory.sample(len(self.memory) if size_batch > len(self.memory) else size_batch)
 
         size_transfer = size_batch - len(transitions)
-        if size_transfer > 0 and self.transfer_experience_replay is not None:
+        if size_transfer > 0 and self.transfer_experience_replay is not None and not self.no_need_for_transfer_anymore:
             transfer_transitions = self.transfer_experience_replay.sample(size_transfer)
             transitions = transitions + transfer_transitions
+
+        self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
@@ -152,8 +157,8 @@ class DQN:
         else:
             next_state = None
         action = torch.tensor([[action]], device=C.device, dtype=torch.long)
-        reward = torch.tensor([float(reward)], device=C.device,dtype=torch.float)
-        self.memory.push(state, action, reward, next_state,done,info)
+        reward = torch.tensor([float(reward)], device=C.device, dtype=torch.float)
+        self.memory.push(state, action, reward, next_state, done, info)
         self._optimize_model()
         # print(next_state)
         if next_state is None:

@@ -1,6 +1,5 @@
 import abc
 
-from env.slot_filling_2.env_slot_filling import U_NONE
 
 
 class AbstractUser(object):
@@ -10,7 +9,6 @@ class AbstractUser(object):
     def __init__(self, ser, cerr, cok, cstd):
         self.cstd = cstd
         self.ser = ser
-        self.current_action = U_NONE
         self.cerr = cerr
         self.cok = cok
         pass
@@ -25,7 +23,6 @@ class AbstractUser(object):
 
     @abc.abstractmethod
     def reset(self):
-        self.current_action = U_NONE
         pass
 
     @abc.abstractmethod

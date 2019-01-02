@@ -1,19 +1,13 @@
 {
   "general": {
-    "id": "test4",
+    "id": "test3",
     "seed": 0,
-    "workspace": "tmp/test4",
+    "workspace": "tmp/test3",
     "level": "INFO"
-  },
-  "env_info": {
-    "config_file": "env6-hdc-LAP.cfg",
-    "turn_reward": 0.0,
-    "error_rate": 0.5,
-    "pydial_logging_level": "ERROR"
   },
   "feature_str": "feature_pydial",
   "generate_envs": {
-    "env_str": "gym_pydial",
+    "envs_str": "gym_pydial",
     "envs_params": {
       "config_file": ["env6-hdc-LAP.cfg"],
       "turn_reward": [0.0],
@@ -35,7 +29,7 @@
     }
   },
   "main": {
-    "path_sample_data": "tmp/test4/test4.data",
+    "path_sample_data": "tmp/test3/test3.data",
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
@@ -72,7 +66,7 @@
     "delta_stop": 0.001,
     "weight_decay": 0.01,
     "batch_size_experience_replay": "ALL_BATCH",
-    "workspace": "tmp/test4/ftq"
+    "workspace": "tmp/test3/ftq"
   }
 }
 

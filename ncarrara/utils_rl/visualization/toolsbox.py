@@ -11,13 +11,13 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 
 
-def create_Q_histograms(title, values, path, labels):
+def create_Q_histograms(title, values, path, labels,inf=-1,sup=1):
     makedirs(path)
     plt.clf()
     maxfreq = 0.
     fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
     n, bins, patches = ax.hist(x=values, label=labels, alpha=1.,
-                                stacked=False, bins=np.linspace(-5, 5, 100))  # , alpha=0.7, rwidth=0.85)
+                                stacked=False, bins=np.linspace(inf, sup, 100))  # , alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
 
     plt.xlabel('Value')
@@ -29,7 +29,7 @@ def create_Q_histograms(title, values, path, labels):
     plt.savefig(path + "/" + title)
     plt.close()
 
-def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
+def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1,sup=1):
     makedirs(path)
     #
     # # set up style cycles
@@ -53,7 +53,7 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None):
             values.append(value)
     plt.clf()
 
-    edges = np.linspace(-2, 2, 200, endpoint=True)
+    edges = np.linspace(inf, sup, 200, endpoint=True)
     hist_func = partial(np.histogram, bins=edges)
     colors = plt.get_cmap('tab10').colors
     #['b', 'g', 'r', 'c', 'm', 'y', 'k']

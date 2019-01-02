@@ -1,13 +1,13 @@
 {
   "general": {
-    "id": "test",
+    "id": "test2",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/test2",
     "level": "INFO"
   },
   "feature_str": "feature_pydial",
   "generate_envs": {
-    "env_str": "gym_pydial",
+    "envs_str": "gym_pydial",
     "envs_params": {
       "config_file": ["env6-hdc-LAP.cfg"],
       "turn_reward": [0.0],

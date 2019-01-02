@@ -1,41 +1,35 @@
 {
   "general": {
-    "id": "test_slot_filling",
+    "id": "test",
     "seed": 0,
-    "workspace": "tmp/test_slot_filling",
+    "workspace": "tmp/test",
     "level": "INFO"
   },
-  "feature_str": "feature_slot_filling",
+  "feature_str": "feature_pydial",
   "generate_envs": {
-    "env_str": "slot_filling_env_v0",
+    "envs_str": "gym_pydial",
     "envs_params": {
-      "user_params": [{"cerr": -1,"cok": 1,"ser": 0.3,"std": 0.2,"proba_handup": 0.3}],
-      "max_size":[null],
-      "size_constraints":[3],
-      "stop_if_summarize":[true],
-      "reward_if_fail":[0.0],
-      "reward_by_turn":[0.0],
-      "reward_if_summarize_and_fail":[0.0],
-      "reward_if_max_trajectory":[0.0],
-      "reward_if_uaction_is_wtf":[0.0],
-      "reward_if_sucess":[100.0]
+      "config_file": ["env6-hdc-LAP.cfg"],
+      "turn_reward": [0.0],
+      "error_rate": [0.5],
+      "pydial_logging_level": ["ERROR"]
     }
   },
   "gamma": 0.99,
   "gamma_c": 0.99,
   "create_data": {
-    "trajs_by_ftq_batch": 100,
+    "trajs_by_ftq_batch": 200,
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 500,
+    "N_trajs": 2000,
     "epsilon_decay": {
       "start": 0.3,
-      "decay": 0.01
+      "decay": 0.005
     }
   },
   "main": {
-    "path_sample_data": "tmp/test_slot_filling/test_slot_filling.data",
+    "path_sample_data": "tmp/test/test.data",
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
@@ -66,13 +60,13 @@
     "max_nn_epoch": 200,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 26,
+    "max_ftq_epoch": 30,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.01,
+    "weight_decay": 0.001,
     "batch_size_experience_replay": "ALL_BATCH",
-    "workspace": "tmp/test_slot_filling/ftq"
+    "workspace": "tmp/test/ftq"
   }
 }
 

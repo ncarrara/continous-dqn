@@ -1,29 +1,28 @@
 # coding=utf-8
-import matplotlib
-
 from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.features import feature_0
+from ncarrara.bftq_pydial.tools.features import feature_factory
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
+import logging
 
 
 def main(lambda_):
-    # e = EnvPydial(**C["env_info"], seed=C["general"]["seed"])
+    logger = logging.getLogger(__name__)
+    logger.setLevel(C.logging_level)
 
-    envs = generate_envs(C["env_str"], C["envs_params"])
+    envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
-    action_space = e.action_space
-    feature = feature_0
+    feature = feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
     print("neural net input size :", size_state)
 
     policy_network = NetFTQ(n_in=size_state,
-                            n_out=action_space.n,
+                            n_out=e.action_space.n,
                             **C["net_params"])
 
     ftq = PytorchFittedQ(
@@ -44,7 +43,7 @@ def main(lambda_):
                                      C["gamma"],
                                      C["gamma_c"],
                                      N_dialogues=C["main"]["N_trajs"],
-                                     print_dial=False)
+                                     print_dial=True)
     urpy.print_results(results)
 
     # policy_network_bftq = pbftq.NetBFTQ(size_state=size_state,
@@ -85,5 +84,5 @@ def main(lambda_):
 
 
 if __name__ == "__main__":
-    C.load("config_main_pydial/test.json")
-    main()
+    C.load("config/test_slot_filling.json")
+    main(lambda_=0)

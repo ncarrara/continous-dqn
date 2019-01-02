@@ -4,21 +4,23 @@ import ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq as pbf
 from ncarrara.utils.datastructure import merge_two_dicts
 from ncarrara.utils_rl.transition.transition import Transition
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
-    print("data to transition ... ")
+    logger.info("data to transition ... ")
     max_r_ftq = 0
     max_r_bftq = 0
     e = env
     nbNone = 0
     for data in datas:
-        # if not data.a in 'hello()':
         reward_ftq = data.r_ - (lambda_ * data.info["c_"])
         max_r_ftq = np.abs(reward_ftq) if np.abs(reward_ftq) > max_r_ftq else max_r_ftq
         max_r_bftq = np.abs(data.r_) if np.abs(data.r_) > max_r_bftq else max_r_bftq
         if data.s_ is None: nbNone += 1
-        if data.s_ is not None and (data.r_ == 20. or data.r_ == -20): raise Exception("not cool bro")
-
+    logger.info("max_r_ftq : {:.2f} max_r_bftq : {:.2f}".format(max_r_ftq, max_r_bftq))
     transitions_ftq = []
     transitions_bftq = []
     for data in datas:
@@ -26,19 +28,19 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
         r_ = data.r_
         s = feature(data.s, e)
         s_ = feature(data.s_, e)
-        a = data.a #e.action_space().index(data.a)
+        a = data.a  # e.action_space().index(data.a)
         c_ = data.info["c_"]
         reward_ftq = r_ - (lambda_ * c_)
         reward_bftq = r_
         if normalize_reward:
-            reward_ftq /= max_r_ftq
-            reward_bftq /= max_r_bftq
+            reward_ftq /= (1. if max_r_ftq == 0. else max_r_ftq)
+            reward_bftq /= (1. if max_r_bftq == 0. else max_r_bftq)
         t_ftq = Transition(s, a, reward_ftq, s_)
         t_bftq = pbf.TransitionBFTQ(s, a, reward_bftq, s_, c_, None, None)
         transitions_ftq.append(t_ftq)
         transitions_bftq.append(t_bftq)
-    print("nbdialogues : ", nbNone)
-    print("data to transition ... done")
+    logger.info("nbdialogues : {}".format(nbNone))
+    logger.info("data to transition ... done")
     return transitions_ftq, transitions_bftq
 
 
@@ -56,46 +58,55 @@ def print_results(results):
     print(pp + " " + p)
 
 
-
 def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, print_dial=False):
     if print_dial:
         print('---------------------------------')
     dialogue = []
     pi.reset()
-    s = env.reset()
-    a= env.action_space_str.index('hello')
-    rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
-    i = 0
-    s_, r_, end, info_env = env.step(a)
-    if print_dial: print(a)
-    turn = (s, a, r_, s_, end, info_env)
-    dialogue.append(turn)
-    info_env = {}
-    info_pi = {"beta": beta}
-    i += 1
+
+    if env.ID == "gym_pydial":
+        s = env.reset()
+        a = env.action_space_str.index('hello')
+        rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
+        i = 0
+        s_, r_, end, info_env = env.step(a)
+        if print_dial: print(a)
+        turn = (s, a, r_, s_, end, info_env)
+        dialogue.append(turn)
+        info_env = {}
+        info_pi = {"beta": beta}
+        i += 1
+    else:
+        s_ = env.reset()
+        rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
+        i = 0
+        info_env = {}
+        info_pi = {"beta": beta}
+        end = False
 
     while not end:
         s = s_
-        actions = env.action_space_executable()
-        action_mask=np.zeros(env.action_space.n)
-        for action in actions:
-            action_mask[action]=1
+        if hasattr(env, "action_space_executable"):
+            actions = env.action_space_executable()
+            action_mask = np.zeros(env.action_space.n)
+            for action in actions:
+                action_mask[action] = 1
+        else:
+            action_mask = [0.] * env.action_space.n
         info_pi = merge_two_dicts(info_pi, info_env)
         a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)
-        s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
-        if print_dial:
-            print("i={} ||| sys={} ||| usr={} ||| patience={}".format(i, a,
-                                                                      info_env["last user act"],
-                                                                      info_env["patience"]))
-        c_ = info_env["c_"]  # 1. / env.maxTurns  # info_env["c_"]
-        # print s_
+        if print_dial: print(a)
+        if env.ID == "gym_pydial":
+            s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
+        else:
+            s_, r_, end, info_env = env.step(a)
+        c_ = info_env["c_"]
         turn = (s, int(a), r_, s_, end, info_env)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)
         ret_c += c_ * (gamma_c ** i)
         dialogue.append(turn)
-        last_a = a
         i += 1
 
     return dialogue, rew_r, rew_c, ret_r, ret_c
@@ -113,28 +124,3 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., p
         turn += len(dialogue)
     print("mean turn : ", turn / float(N_dialogues))
     return dialogues, result
-
-
-#
-# def change_trajectories(M, trajectories):
-#     res = []
-#     for trajectory in trajectories:
-#         t = []
-#         for sample in trajectory:
-#             s, a, rp, sp, cp = sample
-#             if cp > 0.:
-#                 rp = -M
-#             t.append((s, a, rp, sp, cp))
-#         res.append(t)
-#     return res
-#
-#
-# def change_samples(M, samples):
-#     res = []
-#     for sample in samples:
-#         s, a, rp, sp, cp = sample
-#         if cp > 0.:
-#             rp = -M
-#         res.append((s, a, rp, sp, cp))
-#     return res
-

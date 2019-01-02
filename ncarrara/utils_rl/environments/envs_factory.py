@@ -22,7 +22,8 @@ def generate_env_params_combination(env_params):
 
 
 def generate_envs(envs_str, envs_params):
-    logger.info("[generate_envs] params : \n{}".format(envs_params))
+    logger.info(
+        "[generate_envs] params : \n\n{}".format("".join(["\t{} : {}\n".format(k, v) for k, v in envs_params.items()])))
     grid = generate_env_params_combination(envs_params)
     logger.info("[generate_envs] number of envs : {}".format(len(grid)))
 
@@ -37,13 +38,15 @@ def generate_envs(envs_str, envs_params):
             env = LunarLanderConfigEnv(**param)
         elif envs_str == "gym_pydial":
             env = EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
-        elif envs_str==SlotFillingEnv.ID:
-            env=SlotFillingEnv(**param)
+        elif envs_str == SlotFillingEnv.ID:
+            env = SlotFillingEnv(**param)
         else:
             env = gym.make(envs_str)
             for k, v in param.items():
                 setattr(env, k, v)
         envs.append(env)
         rez_params.append(param)
-    logger.info("[generate_envs] actual params : \n{}".format("".join([str(pa) + "\n" for pa in rez_params])))
+    logger.info("[generate_envs] actual params : \n\n{}".format("".join(["{}\n".format("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()])) for param in rez_params])))
+    # for param in rez_params:
+    #     logger.info("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()]))
     return envs, rez_params

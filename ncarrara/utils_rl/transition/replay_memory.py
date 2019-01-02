@@ -34,6 +34,7 @@ class Memory(object):
     def save_memory(self, path,filename, indent=0):
         makedirs(path)
         memory = [t._asdict() for t in self.memory]
+        # print(memory)
         if indent > 0:
             json_str = json.dumps(memory, indent=indent)
         else:

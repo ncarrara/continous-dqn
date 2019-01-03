@@ -117,8 +117,13 @@ def feature_slot_filling(s, e):
             if len(s["str_usr_actions"]) > 0:
                 one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"]-1])] = 1.
 
-        turn = s["turn"] / e.max_turn
-        feat = recos_status + one_hot_usr_act + [turn]
+        # turn = [s["turn"] / e.max_turn]
+
+        turn = [0]*e.max_turn
+        turn[s["turn"]]=1
+
+
+        feat = recos_status + one_hot_usr_act + turn
         # print(feat)
         # if np.sum(np.where(np.asarray(feat)==None))>0:
         #     raise Exception("None in there s={} feat={}".format(s,feat))

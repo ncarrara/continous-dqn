@@ -59,7 +59,7 @@ def main():
         pi_epsilon_greedy.epsilon = decays[i]
         pi_epsilon_greedy.pi_greedy = pi_greedy
         trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
-            e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=1.0, print_dial=False)
+            e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=1.0)
         rez[i] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:
             rm.push(*sample)
@@ -85,7 +85,7 @@ def main():
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,
                                  gamma_r=C["gamma"], gamma_c=C["gamma_c"],
-                                 beta=1.0, print_dial=False, N_dialogues=100)
+                                 beta=1.0, N_dialogues=100)
     print("greedy results")
     urpy.print_results(rez)
 

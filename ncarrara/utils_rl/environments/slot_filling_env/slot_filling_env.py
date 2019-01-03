@@ -139,7 +139,7 @@ class SlotFillingEnv(object):
         elif str_sys_action == "BYE":
             logger.info("[TURN {}] systeme ended dialogue premarturely !".format(self.turn))
             return None, self.penalty_if_bye, True, {"c_": 0.}
-        elif self.turn >= self.max_turn:
+        elif self.turn >= self.max_turn-1:
             logger.info("[TURN {}] max size reached !".format(self.turn))
             return None, self.penalty_if_max_turn, True, {"c_": 0.}
         elif str_user_action == "HANGUP":
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     e.seed(1)
     from ncarrara.bftq_pydial.tools.policies import HandcraftedSlotFillingEnv
 
-    hdc_policy = HandcraftedSlotFillingEnv(safeness=1.0)
+    hdc_policy = HandcraftedSlotFillingEnv(e=e,safeness=1.0)
 
     for _ in range(10):
         hdc_policy.reset()

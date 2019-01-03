@@ -19,44 +19,50 @@ class Policy:
 
 
 class HandcraftedSlotFillingEnv(Policy):
-    def __init__(self, safeness, system_actions):
+    def __init__(self, e,safeness=0.5):
         self.safeness = safeness
-        self.system_actions = system_actions
+        self.e = e
+
+    def ask(self, recos_status):
+        not_valid_idx = []
+        for idx_reco, reco in enumerate(recos_status):
+            if reco is None or reco < 0.75:
+                not_valid_idx.append(idx_reco)
+        if len(not_valid_idx) == 0:
+            return "SUMMARIZE_AND_INFORM"
+
+        else:
+            idx_ask = np.random.choice(not_valid_idx)
+            if np.random.rand() < self.safeness:
+                return "ASK_ORAL({})".format(idx_ask)
+            else:
+                return "ASK_NUM_PAD({})".format(idx_ask)
 
     def execute(self, s, action_mask=None, info=None):
-        user_action = None if len(s["user_acts"]) == 0 else s["user_acts"][-1]
-        if user_action is None:
-            action = "ASK_NEXT"
+        turn = s["turn"]
+        act = None
+        if turn == 0:
+            act = self.ask(s["recos_status"])
         else:
-            if s["overflow_slots"]:
-                if s["reco"] > 0.5:
-                    action = "SUMMARIZE_AND_INFORM"
-                else:
-                    if np.random.rand() < self.safeness:
-                        action = "REPEAT_ORAL"
+            usr_action = s['str_usr_actions'][s["turn"] - 1]
+            if usr_action == "DENY_SUMMARIZE":
+                min_reco = np.inf
+                min_idx_reco = 0
+                for ireco, reco in enumerate(s["recos_status"]):
+                    if reco is None:
+                        min_idx_reco = ireco
+                        break
                     else:
-                        action = "REPEAT_NUMERIC_PAD"
+                        if reco < min_reco:
+                            min_idx_reco = ireco
+                            min_reco = reco
+                if np.random.rand() < self.safeness:
+                    act = "ASK_ORAL({})".format(min_idx_reco)
+                else:
+                    act = "ASK_NUM_PAD({})".format(min_idx_reco)
             else:
-                if user_action == "INFORM_CURRENT":
-                    if s["reco"] > 0.5:
-                        action = "ASK_NEXT"
-                    elif s["reco"] >= 0.0:
-                        if np.random.rand() < self.safeness:
-                            action = "REPEAT_ORAL"
-                        else:
-                            action = "REPEAT_NUMERIC_PAD"
-                    else:
-                        raise Exception("reco < 0")
-                elif user_action == "DENY_SUMMMARIZE":
-                    action = "ASK_NEXT"
-                elif user_action == "U_NONE":
-                    action = "ASK_NEXT"
-                elif user_action == "WTF":
-                    action = "ASK_NEXT"
-                else:
-                    raise Exception("This is not possible (user_action={})".format(user_action))
-        i_action = self.system_actions.index(action)
-        return i_action,None,{}
+                act = self.ask(s["recos_status"])
+        return self.e.system_actions.index(act), False, info
 
 
 class RandomPolicy(Policy):

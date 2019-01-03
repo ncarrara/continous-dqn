@@ -4,24 +4,17 @@ import numpy as np
 from collections import namedtuple
 import logging
 
+import re
+
 logger = logging.getLogger(__name__)
 
-UserObservation = namedtuple('UserObservation',
-                             ["overflow_slots", "overflow_max_traj", "i_slot", "current_slot", "errs", "user_acts",
-                              "machine_acts", "t"])
 
-State = namedtuple('State',
-                   ["t", "overflow_slots", "overflow_max_traj", 'reco', 'reco_by_slot', "i_slot", "current_slot",
-                    "user_acts",
-                    "machine_acts",
-                    'others'])
 
-CONS_ERROR = -1
-CONS_VALID = 1
-CONS_MISSING = 0
 
 
 class SlotFillingEnv(object):
+    CONS_ERROR = 0
+    CONS_VALID = 1
 
     def seed(self, seed):
         random.seed(seed)
@@ -30,31 +23,31 @@ class SlotFillingEnv(object):
     ID = "slot_filling_env_v0"
 
     def __init__(self, user_params={"cerr": -1, "cok": 1, "ser": 0.3, "cstd": 0.2, "proba_hangup": 0.3},
-                 max_size=None,
+                 max_turn=15,
                  size_constraints=3,
-                 stop_if_summarize=True,
-                 reward_if_fail=0.,
-                 reward_by_turn=0.,
-                 reward_if_summarize_and_fail=0.,
-                 reward_if_max_trajectory=0.,
-                 reward_if_uaction_is_wtf=0.,
+                 penalty_if_bye=0.,
+                 penalty_if_hangup=0.,
+                 penalty_by_turn=-5.,
+                 penalty_if_max_turn=0.,
                  reward_if_sucess=100.):
-        self.reward_if_sucess = reward_if_sucess
-        self.size_constraints = size_constraints
-        self.reward_if_max_trajectory = reward_if_max_trajectory
-        from ncarrara.utils_rl.environments.slot_filling_env.user.handcrafted_user import HandcraftedUser
-        self.__user = HandcraftedUser(**user_params)
-        self.reward_if_fail = reward_if_fail
-        self.reward_by_turn = reward_by_turn
-        self.max_size = max_size
-        self.reward_if_summarize_and_fail = reward_if_summarize_and_fail
-        self.stop_if_summarize = stop_if_summarize
-        self.reward_if_uaction_is_wtf = reward_if_uaction_is_wtf
 
-        self.system_actions = ["REPEAT_NUMERIC_PAD", "REPEAT_ORAL", "SUMMARIZE_AND_INFORM"]
+        self.penalty_if_bye = penalty_if_bye
+        self.penalty_if_max_turn = penalty_if_max_turn
+        self.penalty_if_hangup = penalty_if_hangup
+        self.pernalty_by_turn = penalty_by_turn
+        self.reward_if_sucess = reward_if_sucess
+
+        self.size_constraints = size_constraints
+        self.user_params = user_params
+
+        self.max_turn = max_turn
+        self.system_actions = ["SUMMARIZE_AND_INFORM", "BYE"]
+        for cons in range(size_constraints):
+            self.system_actions.append("ASK_ORAL({})".format(cons))
+            self.system_actions.append("ASK_NUM_PAD({})".format(cons))
         self.action_space = Discrete(len(self.system_actions))
         self.action_space_str = self.system_actions
-        self.user_actions = ["INFORM_CURRENT", "HANGUP", "WTF", "THANKS_BYE", "DENY_SUMMARIZE"]
+        self.user_actions = ["INFORM", "HANGUP", "DENY_SUMMARIZE"]
 
     def _get_user_(self):
         return self.__user
@@ -72,198 +65,125 @@ class SlotFillingEnv(object):
         return str(self.__user)
 
     def reset(self):
-        logger.info(("--------------- new dialogue -------------"))
-        self.__user.reset()
-        self.t = 0
-        self.recos = []
-        self.reco_by_slot = self.size_constraints * [None]
-        reco = None
-        self.errs = []
-        self.user_acts = []
-        self.machine_acts = []
-        self.slots = self.size_constraints * [CONS_MISSING]
-        self.current_slot = 0
-        self.i_slot = 0
-        self.will_overflow_slots = False
-        self.overflow_max_traj = False
-        self.state = State(self.t,
-                           self.will_overflow_slots,
-                           self.overflow_max_traj,
-                           reco,
-                           self.reco_by_slot,
-                           self.i_slot,
-                           self.current_slot,
-                           self.user_acts, self.machine_acts, {
-                               "state_is_absorbing": False,
-                               "errs": self.errs})
-        observation = self.state._asdict()
-        self.nb_reset_current_slot = 0
-        self.last_inform_reco = None
 
-        # logger.info("recos : [{}]".format("".join(["{:.2f} ".format(x) for x in self.recos])))
-        # logger.info("errs : [{}]".format("".join(["None " if x is None else "{:.2f} ".format(x) for x in self.errs])))
-        # logger.info("slots : [{}]".format("".join(["None " if x is None else "{:.2f} ".format(x) for x in self.slots])))
+        self.turn = 0
+        self.cons_status = [SlotFillingEnv.CONS_ERROR] * self.size_constraints
+        self.recos_status = [None] * self.size_constraints
+        self.recos = [None] * self.max_turn
+        self.str_sys_actions = [None] * self.max_turn
+        self.str_user_actions = [None] * self.max_turn
+        observation = {
+            "recos_status": self.recos_status,
+            "turn": self.turn,
+            "str_sys_actions": self.str_sys_actions,
+            "str_usr_actions": self.str_user_actions
 
+        }
         return observation
 
-    def increment_current_slot(self):
-        self.i_slot += 1
-        self.current_slot = self.i_slot % len(self.slots)
-        self.will_overflow_slots = self.current_slot == len(self.slots)
-
-    def reset_current_slot(self):
-        self.i_slot =0
-        self.will_overflow_slots = False  # "ON va overflow si on a asknext" et non "on a overflow"
-        self.current_slot = 0
-        self.nb_reset_current_slot += 1.
-        self.reco_by_slot = self.size_constraints * [0.]
-        self.last_inform_reco = None
-        self.slots = self.size_constraints * [CONS_MISSING]
-
     def step(self, action):
-        print("----")
-        logger.info("current slot : {}".format(self.current_slot))
-        logger.info("recos : [{}]".format("".join(["{:.2f} ".format(x) for x in self.recos])))
-        logger.info("errs : [{}]".format("".join(["None " if x is None else "{:.2f} ".format(x) for x in self.errs])))
-        logger.info("slots state: [{}]".format("".join(["None " if x is None else "{:.2f} ".format(x) for x in self.slots])))
-        action = self.system_actions[action]
-        logger.info("system says : {}".format(action))
-        reco = 1.
-        err = None
-        s_action = action
-        self.machine_acts.append(action)
-
+        if self.turn==0:
+            logger.info(("--------------- new dialogue -------------"))
+        logger.info("[TURN {}] cons_status : {}".format(self.turn, self.cons_status))
+        logger.info("[TURN {}] recos_status : [ {}]".format(self.turn,
+                                                            "".join([("None " if rec is None
+                                                                      else "{:.2f} ".format(rec)) for rec in
+                                                                     self.recos_status])))
+        if type(action) == str:
+            str_sys_action = action
+        else:
+            str_sys_action = self.system_actions[action]
+        logger.info("[TURN {}] system : \"{}\"".format(self.turn, str_sys_action))
+        str_user_action = None
         success = False
-        if s_action == "SUMMARIZE_AND_INFORM":
-            if np.all(np.asarray(self.slots) == CONS_VALID):
+        if str_sys_action == "SUMMARIZE_AND_INFORM":
+            if np.all(np.asarray(self.cons_status) == SlotFillingEnv.CONS_VALID):
                 success = True
-                u_action = "THANKS_BYE"
-            elif np.any(np.asarray(self.slots) == CONS_MISSING):
-                success = False
-                u_action = "DENY_SUMMARIZE"
             else:
-                success = False
-                u_action = "DENY_SUMMARIZE"
-            if not self.stop_if_summarize:
-                self.reset_current_slot()
-        elif self.current_slot == 0 and (s_action == "REPEAT_NUMERIC_PAD" or s_action == "REPEAT_ORAL"):
-            self.slots = self.size_constraints * [CONS_MISSING]
-            self.reco_by_slot = self.size_constraints * [0.]
-            self.reset_current_slot()
-            u_action = "WTF"
-        elif s_action == "ASK_NEXT" and self.will_overflow_slots:
-            u_action = "WTF"
+                str_user_action = "DENY_SUMMARIZE"
+        elif "ASK_NUM_PAD" in str_sys_action:
+            if np.random.rand() < self.user_params['proba_hangup']:
+                str_user_action = "HANGUP"
+            else:
+                str_user_action = "INFORM"
+        elif "ASK_ORAL" in str_sys_action:
+            str_user_action = "INFORM"
+        elif str_sys_action == "BYE":
+            pass
         else:
-            if s_action == "ASK_NEXT":
-                self.increment_current_slot()
+            raise Exception("Unknow action {}".format(str_sys_action))
 
-            obs = UserObservation(self.will_overflow_slots, self.overflow_max_traj, self.i_slot, self.current_slot,
-                                  self.errs, self.user_acts,
-                                  self.machine_acts, self.t)
-            u_action, other_info_user = self.__user.action(obs)
+        if str_user_action == "INFORM":
+            m = re.search('\(([0-9]+)\)', str_sys_action)
+            if m:
+                cons_id = int(m.group(1))
+            else:
+                raise Exception("Malformed action : {}".format(str_sys_action))
 
-        logger.info("user says : {}".format(u_action))
-
-        if u_action == "INFORM_CURRENT":
-
-            if s_action == "REPEAT_NUMERIC_PAD":
-                err = False
+            if "ASK_NUM_PAD" in str_sys_action:
+                there_is_an_error = False
                 reco = 1.
-            elif s_action == "REPEAT_ORAL":
-                err = np.random.rand() < self.__user.ser
-                reco = self.__gen_error_reco(err=err, cerr=self.__user.cerr, cok=self.__user.cok,
-                                             std=self.__user.cstd)
-            elif s_action == "ASK_NEXT":
-                err = np.random.rand() < self.__user.ser
-                reco = self.__gen_error_reco(err=err, cerr=self.__user.cerr, cok=self.__user.cok,
-                                             std=self.__user.cstd)
+            elif "ASK_ORAL" in str_sys_action:
+                reco, there_is_an_error = self.gen_error_reco(**self.user_params)
             else:
-                raise Exception("whhhat? {}".format(s_action))
-            self.reco_by_slot[self.current_slot] = reco
-            self.slots[self.current_slot] = CONS_ERROR if err else CONS_VALID
-
-        self.recos.append(reco)
-
-        self.errs.append(err)
-
-
-        fail = u_action == "HANGUP"
-        self.user_acts.append(u_action)
-
-        self.t += 1
-        end_from_max_trajectory = (self.max_size is not None and self.t >= self.max_size)
-        self.overflow_max_traj = (self.max_size is not None and self.t >= self.max_size - 1)
+                raise Exception("Malformed action : {}".format(str_sys_action))
+            if there_is_an_error:
+                self.cons_status[cons_id] = SlotFillingEnv.CONS_ERROR
+            else:
+                self.cons_status[cons_id] = SlotFillingEnv.CONS_VALID
+            self.recos_status[cons_id] = reco
 
         if success:
-            reward = self.reward_if_sucess
-        elif fail:
-            reward = self.reward_if_fail
-        elif end_from_max_trajectory:
-            reward = self.reward_if_max_trajectory
-        elif u_action == "WTF":
-            reward = self.reward_if_uaction_is_wtf
+            logger.info("[TURN {}] success !".format(self.turn))
+            return None, self.reward_if_sucess, True, {"c_": 0.}
+        elif str_sys_action == "BYE":
+            logger.info("[TURN {}] systeme ended dialogue premarturely !".format(self.turn))
+            return None, self.penalty_if_bye, True, {"c_": 0.}
+        elif self.turn >= self.max_turn:
+            logger.info("[TURN {}] max size reached !".format(self.turn))
+            return None, self.penalty_if_max_turn, True, {"c_": 0.}
+        elif str_user_action == "HANGUP":
+            logger.info("[TURN {}] user hang up !".format(self.turn))
+            return None, self.penalty_if_hangup, True, {"c_": 1.}
         else:
-            if self.machine_acts[-1] == "SUMMARIZE_AND_INFORM":
-                reward = self.reward_if_summarize_and_fail
-            else:
-                reward = self.reward_by_turn
-            self.__user.update(self)
+            logger.info("[TURN {}] user : \"{}\"".format(self.turn, str_user_action))
+            self.str_sys_actions[self.turn] = str_sys_action
+            self.str_user_actions[self.turn] = str_user_action
+            observation = {
+                "recos_status": self.recos_status,
+                "turn": self.turn + 1,
+                "str_sys_actions": self.str_sys_actions,
+                "str_usr_actions": self.str_user_actions
 
-        if self.stop_if_summarize:
-            done = u_action == "WTF" or end_from_max_trajectory or success or fail or (
-                    self.machine_acts[-1] == "SUMMARIZE_AND_INFORM" and not success)
-        else:
-            done = end_from_max_trajectory or success or fail  # TODO REDO
+            }
+            self.turn += 1
+            return observation, self.pernalty_by_turn, False, {"c_": 0.}
 
-        if self.t > 1000:
-            logger.warning("[WARNING] dialogue size is {} with user {}".format(self.t, self.__user))
-
-        if done:
-            observation = None
-        else:
-            observation = State(self.t,
-                                self.will_overflow_slots,
-                                self.overflow_max_traj, reco,
-                                self.reco_by_slot,
-                                self.i_slot,
-                                self.current_slot,
-                                self.user_acts,
-                                self.machine_acts,
-                                {"errs": self.errs})._asdict()
-
-        if success:
-            logger.info("Dialogue is a sucess !")
-
-        info = {"success": success,
-                "state_is_absorbing": done,
-                "fail": fail,
-                "c_": 1. if u_action == "HANGUP" else 0.
-                }
-
-        return observation, reward, done, info
-
-    def __gen_error_reco(self, err, cerr=-1, cok=1, std=0.2):
-
-        reco_err = 1. / (1 + np.exp(-np.random.normal(cerr, std)))
-        reco_sucess = 1. / (1 + np.exp(-np.random.normal(cok, std)))
-        ret = reco_err if err else reco_sucess
-        return ret.tolist()
+    def gen_error_reco(self, cerr, cok, ser, cstd, **kwargs):
+        there_is_an_error = np.random.rand() < ser
+        reco_err = 1. / (1 + np.exp(-np.random.normal(cerr, cstd)))
+        reco_sucess = 1. / (1 + np.exp(-np.random.normal(cok, cstd)))
+        reco = reco_err if there_is_an_error else reco_sucess
+        return reco.tolist(), there_is_an_error
 
 
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
-    e = SlotFillingEnv(user_params={"cerr": -1, "cok": 1, "ser": 0.3, "cstd": 0.2, "proba_hangup": 0.3})
+    e = SlotFillingEnv(user_params={"cerr": -1, "cok": 1, "ser": 0.5, "cstd": 0.2, "proba_hangup": 0.3})
     e.seed(1)
     from ncarrara.bftq_pydial.tools.policies import HandcraftedSlotFillingEnv
 
-    hdc_policy = HandcraftedSlotFillingEnv(safeness=0., system_actions=e.system_actions)
+    hdc_policy = HandcraftedSlotFillingEnv(safeness=1.0)
 
     for _ in range(10):
         hdc_policy.reset()
         s_ = e.reset()
         done = False
+        rr = 0
         while not done:
             s = s_
             a, _, _ = hdc_policy.execute(s)
             s_, r, done, info = e.step(a)
+            rr += r
+        logger.info("reward : {}".format(rr))

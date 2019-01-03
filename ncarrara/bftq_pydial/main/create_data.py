@@ -18,7 +18,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 def main():
-
     logger = logging.getLogger(__name__)
     logger.setLevel(C.logging_level)
 
@@ -65,7 +64,7 @@ def main():
         for sample in trajectory:
             rm.push(*sample)
         if C["create_data"]["handcrafted_greedy_policy"]:
-            pi_greedy = HandcraftedSlotFillingEnv(safeness=0.5, system_actions=e.system_actions)
+            pi_greedy = HandcraftedSlotFillingEnv(e=e, safeness=0.5)
         else:
             if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
                 logger.info("------------------------------------------------------------------")

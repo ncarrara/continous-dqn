@@ -1,8 +1,8 @@
 from ncarrara.bftq_pydial.main import compare_ftq_vs_bftq, create_data
 from ncarrara.bftq_pydial.tools.configuration import C
 import logging
-# logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel("WARNING")
-# logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.user.handcrafted_user").setLevel("WARNING")
+logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel("WARNING")
+logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.user.handcrafted_user").setLevel("WARNING")
 logging.getLogger("ncarrara.utils.os").setLevel("ERROR")
 
 # C.load("config_main_pydial/test2.json")#.create_fresh_workspace()

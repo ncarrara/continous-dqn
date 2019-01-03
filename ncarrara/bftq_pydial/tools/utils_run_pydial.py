@@ -58,9 +58,7 @@ def print_results(results):
     print(pp + " " + p)
 
 
-def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, print_dial=False):
-    if print_dial:
-        print('---------------------------------')
+def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
     dialogue = []
     pi.reset()
 
@@ -70,7 +68,6 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
         rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
         i = 0
         s_, r_, end, info_env = env.step(a)
-        if print_dial: print(a)
         turn = (s, a, r_, s_, end, info_env)
         dialogue.append(turn)
         info_env = {}
@@ -95,13 +92,12 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
             action_mask = [0.] * env.action_space.n
         info_pi = merge_two_dicts(info_pi, info_env)
         a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)
-        if print_dial: print(a)
         if env.ID == "gym_pydial":
             s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         else:
             s_, r_, end, info_env = env.step(a)
         c_ = info_env["c_"]
-        turn = (s, int(a), r_, s_, end, info_env)
+        turn = (s, a if type(a) is str else int(a), r_, s_, end, info_env)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)
@@ -112,13 +108,12 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0, pri
     return dialogue, rew_r, rew_c, ret_r, ret_c
 
 
-def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., print_dial=False):
+def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., ):
     dialogues = []
     result = np.zeros((N_dialogues, 4))
     turn = 0
     for d in range(N_dialogues):
-        dialogue, rew_r, rew_c, ret_r, ret_c = execute_policy_one_dialogue(env, pi, gamma_r, gamma_c, beta,
-                                                                           print_dial=print_dial)
+        dialogue, rew_r, rew_c, ret_r, ret_c = execute_policy_one_dialogue(env, pi, gamma_r, gamma_c, beta)
         dialogues.append(dialogue)
         result[d] = np.array([rew_r, rew_c, ret_r, ret_c])
         turn += len(dialogue)

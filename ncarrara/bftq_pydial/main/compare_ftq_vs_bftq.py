@@ -42,8 +42,7 @@ def main(lambda_):
     _, results = urpy.execute_policy(e, pi,
                                      C["gamma"],
                                      C["gamma_c"],
-                                     N_dialogues=C["main"]["N_trajs"],
-                                     print_dial=True)
+                                     N_dialogues=C["main"]["N_trajs"])
     urpy.print_results(results)
 
     # policy_network_bftq = pbftq.NetBFTQ(size_state=size_state,

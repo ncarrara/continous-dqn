@@ -88,19 +88,38 @@ def feature_pydial(s, e):
 import numpy as np
 
 
+# def feature_slot_filling(s, e):
+#     offset = e.size_constraints * (e.size_constraints + 1) / 2
+#     feat = np.zeros(offset + len(e.user_actions) - 1)
+#     current_slot = s["current_slot"]
+#     if current_slot >= 0 and s["user_acts"][-1] == 0:  # INFORM_CURRENT
+#         i = 0 if current_slot == 0 else current_slot * (current_slot + 1) / 2
+#         i_ = i + current_slot + 1
+#         recos = s["reco_by_slot"][0:current_slot + 1]
+#         feat[i:i_] = recos
+#     else:
+#         feat[offset + s["user_acts"][-1].id - 1] = 1.
+#     rez = np.concatenate((np.array([1.]), feat))
+#     xxx = ""
+#     for ss in rez:
+#         xxx += " {:.2f}".format(ss)
+#     return rez
+
 def feature_slot_filling(s, e):
-    offset = e.size_constraints * (e.size_constraints + 1) / 2
-    feat = np.zeros(offset + len(e.user_actions) - 1)
-    current_slot = s["current_slot"]
-    if current_slot >= 0 and s["user_acts"][-1] == 0:  # INFORM_CURRENT
-        i = 0 if current_slot == 0 else current_slot * (current_slot + 1) / 2
-        i_ = i + current_slot + 1
-        recos = s["reco_by_slot"][0:current_slot + 1]
-        feat[i:i_] = recos
+    if s is None:
+        return None
     else:
-        feat[offset + s["user_acts"][-1].id - 1] = 1.
-    rez = np.concatenate((np.array([1.]), feat))
-    xxx = ""
-    for ss in rez:
-        xxx += " {:.2f}".format(ss)
-    return rez
+        one_hot_usr_act = [0.] * len(e.user_actions)
+        if s["turn"] == 0:
+            recos_status = [0.] * e.size_constraints
+        else:
+            recos_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float)).tolist()
+            if len(s["str_usr_actions"]) > 0:
+                one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"]-1])] = 1.
+
+        turn = s["turn"] / e.max_turn
+        feat = recos_status + one_hot_usr_act + [turn]
+        # print(feat)
+        # if np.sum(np.where(np.asarray(feat)==None))>0:
+        #     raise Exception("None in there s={} feat={}".format(s,feat))
+        return feat

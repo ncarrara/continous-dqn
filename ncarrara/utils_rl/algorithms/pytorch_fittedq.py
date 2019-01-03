@@ -173,6 +173,12 @@ class PytorchFittedQ:
         self._action_batch = torch.cat(batch.a)
         self._reward_batch = torch.cat(batch.r_)
 
+    def q(self, s):
+        # feat = [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+        # import torch
+        q = self._policy_network(torch.tensor([[s]], device=self.device, dtype=torch.float))
+        return q.detach().numpy()
+
     def fit(self, transitions):
         self._construct_batch(transitions)
         self._policy_network.reset()
@@ -187,6 +193,8 @@ class PytorchFittedQ:
 
             if self.disp and self.process_between_epoch is not None:
                 def pi(state, action_mask):
+                    if not type(action_mask) == type(np.zeros(1)):
+                        action_mask = np.asarray(action_mask)
                     action_mask[action_mask == 1.] = np.infty
                     action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
                     s = torch.tensor([[state]], device=self.device, dtype=torch.float)
@@ -204,7 +212,7 @@ class PytorchFittedQ:
                 fig, ax = plt.subplots(1, 1, figsize=(4, 4), tight_layout=True)
                 ax.plot(range(self._id_ftq_epoch + 1), rewards, label="reward")
                 plt.savefig(self.workspace + '/' + "reward_between_epoch.png")
-                if self._id_ftq_epoch == self._max_ftq_epoch-1 or self.delta <= self.delta_stop:
+                if self._id_ftq_epoch == self._max_ftq_epoch - 1 or self.delta <= self.delta_stop:
                     plt.show()
                 plt.close()
 
@@ -218,10 +226,26 @@ class PytorchFittedQ:
                 torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
 
         def pi(state, action_mask):
+            # print("-------------------")
+            # print("state ",state)
+
+            # q = self.q(state)[0]
+            # system_actions = ['SUMMARIZE_AND_INFORM', 'BYE', 'ASK_ORAL(0)', 'ASK_NUM_PAD(0)', 'ASK_ORAL(1)',
+            #                   'ASK_NUM_PAD(1)', 'ASK_ORAL(2)', 'ASK_NUM_PAD(2)']
+
+            # print("action mask(before) :", action_mask)
+            if not type(action_mask)==type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
             action_mask[action_mask == 1.] = np.infty
+
+            # print("action_mask(after) : ",action_mask)
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([[state]], device=self.device, dtype=torch.float)
             a = final_network(s).sub(action_mask).max(1)[1].view(1, 1).item()
+
+            # print("".join(["{} -> {:.2f}\n".format(system_actions[iy], y) for iy, y in enumerate(q)]))
+            # print("action chosen",a)
+
             return a
 
         return pi

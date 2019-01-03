@@ -6,6 +6,8 @@ import logging
 
 import re
 
+from ncarrara.utils_rl.environments.slot_filling_env.utils import plot_ctop_cbot
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,6 +33,7 @@ class SlotFillingEnv(object):
                  penalty_if_max_turn=0.,
                  reward_if_sucess=100.):
 
+        plot_ctop_cbot(**user_params)
         self.penalty_if_bye = penalty_if_bye
         self.penalty_if_max_turn = penalty_if_max_turn
         self.penalty_if_hangup = penalty_if_hangup
@@ -42,9 +45,11 @@ class SlotFillingEnv(object):
 
         self.max_turn = max_turn
         self.system_actions = ["SUMMARIZE_AND_INFORM", "BYE"]
+
         for cons in range(size_constraints):
             self.system_actions.append("ASK_ORAL({})".format(cons))
             self.system_actions.append("ASK_NUM_PAD({})".format(cons))
+        logger.info("system actions : {}".format(self.system_actions))
         self.action_space = Discrete(len(self.system_actions))
         self.action_space_str = self.system_actions
         self.user_actions = ["INFORM", "HANGUP", "DENY_SUMMARIZE"]
@@ -73,10 +78,10 @@ class SlotFillingEnv(object):
         self.str_sys_actions = [None] * self.max_turn
         self.str_user_actions = [None] * self.max_turn
         observation = {
-            "recos_status": self.recos_status,
+            "recos_status": self.recos_status.copy(),
             "turn": self.turn,
-            "str_sys_actions": self.str_sys_actions,
-            "str_usr_actions": self.str_user_actions
+            "str_sys_actions": self.str_sys_actions.copy(),
+            "str_usr_actions": self.str_user_actions.copy()
 
         }
         return observation
@@ -150,10 +155,10 @@ class SlotFillingEnv(object):
             self.str_sys_actions[self.turn] = str_sys_action
             self.str_user_actions[self.turn] = str_user_action
             observation = {
-                "recos_status": self.recos_status,
+                "recos_status": self.recos_status.copy(),
                 "turn": self.turn + 1,
-                "str_sys_actions": self.str_sys_actions,
-                "str_usr_actions": self.str_user_actions
+                "str_sys_actions": self.str_sys_actions.copy(),
+                "str_usr_actions": self.str_user_actions.copy()
 
             }
             self.turn += 1

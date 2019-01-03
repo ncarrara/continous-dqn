@@ -1,27 +1,7 @@
-from env.env import *
 import logging
 import numpy as np
-from env.slot_filling_2.env_slot_filling import EnvSlotFilling
 
 
-def create_mock_env(size_constraints):
-    mock_env = EnvSlotFilling(None,
-                              reward_by_turn=None,
-                              max_size=None,
-                              size_constraints=size_constraints)
-
-    return mock_env
-
-
-def pretty_print_trajectory(trajectory):
-    print("------------------------")
-    user_acts = trajectory[-1].s_.user_acts
-    machine_acts = trajectory[-1].s_.machine_acts
-    for i in range(0, len(user_acts)):
-        print ('system says : {}'.format(machine_acts[i]))
-        print ('user says : {}'.format(user_acts[i]))
-    if len(machine_acts) > len(user_acts):
-        print ('system says : {}'.format(machine_acts[-1]))
 
 
 def generate_proba_hangup(mean, std, k=0):
@@ -37,3 +17,23 @@ def generate_proba_hangup(mean, std, k=0):
         else:
             return generate_proba_hangup(mean + (1. - mean / 2.), std / 2., k=k + 1)
     return xx
+
+def sucess(cok=1, std=0.2):
+    reco_sucess = 1. / (1 + np.exp(-np.random.normal(cok, std)))
+    return reco_sucess
+
+
+def error(cerr=-1, std=0.2):
+    reco_err = 1. / (1 + np.exp(-np.random.normal(cerr, std)))
+    return reco_err
+
+
+def plot_ctop_cbot(cerr, cok, cstd, **kwargs):
+    import matplotlib.pyplot as plt
+    succ = [sucess(cok, cstd) for _ in range(0, 1000)]
+    err = [error(cerr, cstd) for _ in range(0, 1000)]
+    plt.hist(succ,500,alpha=0.50)
+    plt.hist(err,500,alpha=0.50)
+    plt.title("choose ctop, cbottom")
+    plt.show()
+    plt.close()

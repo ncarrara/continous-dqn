@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 def main():
     logger = logging.getLogger(__name__)
-    logger.setLevel(C.logging_level)
+    # logger.setLevel(C.logging_level)
 
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
@@ -29,7 +29,7 @@ def main():
     def process_between_epoch(pi):
         logger.info("process_between_epoch ...")
         pi = PytorchFittedPolicy(pi, e, feature)
-        _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], 10, 1., False)
+        _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], 10, 1.)
         return np.mean(results, axis=0)
 
     size_state = len(feature(e.reset(), e))

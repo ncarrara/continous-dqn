@@ -270,6 +270,8 @@ import torch
 
 
 def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
+    if not type(action_mask) == type(np.zeros(1)):
+        action_mask = np.asarray(action_mask)
     # print betas
     N_OK_actions = int(len(action_mask) - np.sum(action_mask))
 

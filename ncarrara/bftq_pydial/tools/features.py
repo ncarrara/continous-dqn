@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger(__name__)
+
+
 def feature_factory(feature_str):
     if feature_str == "feature_pydial":
         return feature_pydial
@@ -106,25 +111,55 @@ import numpy as np
 #     return rez
 
 def feature_slot_filling(s, e):
+    logger.info("[feature_slot_filling] ----------------------")
     if s is None:
+        logger.info("\n\nNone\n")
+        logger.info("[feature_slot_filling] None")
         return None
     else:
+        import pprint
+        logger.info("\n\n" + pprint.pformat(s) + "\n")
+
         one_hot_usr_act = [0.] * len(e.user_actions)
+        one_hot_sys_act = [0.] * len(e.system_actions)
         if s["turn"] == 0:
             recos_status = [0.] * e.size_constraints
         else:
             recos_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float)).tolist()
-            if len(s["str_usr_actions"]) > 0:
-                one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"]-1])] = 1.
+            if s["turn"] >= 1:
+                one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"] - 1])] = 1.
+                one_hot_sys_act[e.system_actions.index(s["str_sys_actions"][s["turn"] - 1])] = 1.
 
-        # turn = [s["turn"] / e.max_turn]
+        turn = [0] * e.max_turn
+        turn[s["turn"]] = 1
 
-        turn = [0]*e.max_turn
-        turn[s["turn"]]=1
+        feat = recos_status + one_hot_usr_act + one_hot_sys_act + turn
 
+        logger.info("[feature_slot_filling] recos_status=[ {}] usr_act={} sys_act={} turn={}"
+                    .format("".join(["{:.2f} ".format(x) for x in recos_status]), one_hot_usr_act,one_hot_sys_act, turn))
 
-        feat = recos_status + one_hot_usr_act + turn
-        # print(feat)
-        # if np.sum(np.where(np.asarray(feat)==None))>0:
-        #     raise Exception("None in there s={} feat={}".format(s,feat))
         return feat
+
+# def feature_slot_filling(s, e):
+#     if s is None:
+#         return None
+#     else:
+#         one_hot_usr_act = [0.] * len(e.user_actions)
+#         if s["turn"] == 0:
+#             recos_status = [0.] * e.size_constraints
+#         else:
+#             recos_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float)).tolist()
+#             if len(s["str_usr_actions"]) > 0:
+#                 one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"]-1])] = 1.
+#
+#         # turn = [s["turn"] / e.max_turn]
+#
+#         turn = [0]*e.max_turn
+#         turn[s["turn"]]=1
+#
+#
+#         feat = recos_status + one_hot_usr_act + turn
+#         logger.info("[feature] recos_status=[ {}] usr_act={} turn={}"
+#                     .format("".join(["{:.2f} ".format(x) for x in recos_status]),one_hot_usr_act,turn))
+#
+#         return feat

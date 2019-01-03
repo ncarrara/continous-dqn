@@ -28,10 +28,14 @@ class HandcraftedSlotFillingEnv(Policy):
         for idx_reco, reco in enumerate(recos_status):
             if reco is None or reco < 0.75:
                 not_valid_idx.append(idx_reco)
-        if len(not_valid_idx) == 0:
-            return "SUMMARIZE_AND_INFORM"
 
+
+        if len(not_valid_idx) == 0 :
+            return "SUMMARIZE_AND_INFORM"
         else:
+            # if np.random.rand() < 0.1:  # force some randomness just to see
+            #     return "SUMMARIZE_AND_INFORM"
+
             idx_ask = np.random.choice(not_valid_idx)
             if np.random.rand() < self.safeness:
                 return "ASK_ORAL({})".format(idx_ask)

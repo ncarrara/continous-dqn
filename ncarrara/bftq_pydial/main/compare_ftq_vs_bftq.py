@@ -4,14 +4,15 @@ from ncarrara.bftq_pydial.tools.features import feature_factory
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy
+from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy, \
+    HandcraftedSlotFillingEnv
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 import logging
 
 
 def main(lambda_):
     logger = logging.getLogger(__name__)
-    logger.setLevel(C.logging_level)
+    # logger.setLevel(C.logging_level)
 
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
@@ -35,15 +36,48 @@ def main(lambda_):
     transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                  lambda_,
                                                                  C["main"]["normalize_reward"])
+    # exit()
+
+    # logging.getLogger("ncarrara.bftq_pydial.tools.features").setLevel("INFO")
 
     ftq.reset(C["main"]["reset_weight"])
     pi = ftq.fit(transitions_ftq)
     pi = PytorchFittedPolicy(pi, e, feature)
+
+
+
     _, results = urpy.execute_policy(e, pi,
                                      C["gamma"],
                                      C["gamma_c"],
                                      N_dialogues=C["main"]["N_trajs"])
+    print("FTQ rez")
     urpy.print_results(results)
+
+    # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel("WARNING")
+
+
+
+    # feats = [
+    #     [1.00, 0.0, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    #     [0.35, 1.00, 0.80, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 1., 0],
+    #     [0.3, 0.1, 0.8, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 1., 0],
+    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 1., 0, 0, 0]
+    # ]
+    # for feat in feats:
+    #     print(feat)
+    #     q = ftq.q(feat)[0]
+    #     print("".join(["{} -> {:.2f}\n".format(e.system_actions[iy], y) for iy, y in enumerate(q)]))
 
     # policy_network_bftq = pbftq.NetBFTQ(size_state=size_state,
     #                                     layers=C["net_params"]["intra_layers"] + [2 * action_space.n],

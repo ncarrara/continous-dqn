@@ -143,6 +143,8 @@ class DQN:
     def pi(self, state, action_mask):
 
         with torch.no_grad():
+            if not type(action_mask) == type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
             action_mask[action_mask == 1.] = np.infty
             action_mask = torch.tensor([action_mask], device=C.device, dtype=torch.float)
             s = torch.tensor([[state]], device=C.device, dtype=torch.float)

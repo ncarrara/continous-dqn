@@ -54,7 +54,7 @@
   "generate_envs": {
     "envs_str": "slot_filling_env_v0",
     "envs_params": {
-      "user_params": [{"cerr": -0.5,"cok": 0.5,"ser": 0.5,"cstd": 0.6,"proba_hangup": 0.1}],
+      "user_params": [{"cerr": -0.5,"cok": 0.5,"ser": 0.3,"cstd": 0.5,"proba_hangup": 0.1}],
       "max_turn":[15],
       "size_constraints":[3],
       "penalty_if_bye":[0.0],
@@ -83,7 +83,7 @@
     "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 500
+    "N_trajs": 20
   },
   "bftq_params": {
     "loss_function_c": "l2",

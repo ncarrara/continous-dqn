@@ -335,6 +335,8 @@ class PytorchBudgetedFittedQ:
                                              id="state_final_hulls_" + id, disp=True)
 
         def pi(state, beta, action_mask):
+            if not type(action_mask)==type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
             hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32), Q=final_network,
                                      action_mask=action_mask,
                                      id="run_" + str(state), disp=False)
@@ -558,6 +560,8 @@ class PytorchBudgetedFittedQ:
         return loss.detach().item()
 
     def convexe_hull(self, s, action_mask, Q, id, disp):
+        if not type(action_mask) == type(np.zeros(1)):
+            action_mask = np.asarray(action_mask)
         hull, colinearity = concave_utils.compute_interest_points_NN(
             s=s,
             Q=Q,

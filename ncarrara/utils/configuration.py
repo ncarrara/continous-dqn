@@ -11,8 +11,6 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch import set_device
 
 
-
-
 class Configuration(object):
 
     def __init__(self, *args, **kwargs):
@@ -43,7 +41,6 @@ class Configuration(object):
         os.system("rm -rf {}".format(self.workspace))
         return self
 
-
     def load(self, path_config):
         with open(path_config, 'r') as infile:
             self.dict = json.load(infile)
@@ -51,12 +48,16 @@ class Configuration(object):
         self.id = self.dict["general"]["id"]
         self.workspace = self.dict["general"]["workspace"]
 
-
-
-        self.logging_level = self.dict["general"]["level"]
+        # self.logging_level = self.dict["general"]["level"]
+        # self.logging_format = self.dict["general"]["format"]
         self.seed = self.dict["general"]["seed"]
-
-        logging.basicConfig(level=logging.getLevelName(self.logging_level))
+        # print(self.logging_format)
+        # logging.basicConfig(
+        #     # format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+        #     level=logging.getLevelName(self.logging_level)
+        # )
+        import logging.config as config
+        config.dictConfig(self.dict["general"]["dictConfig"])
 
         if self.seed is not None:
             set_seed(self.seed)

@@ -75,19 +75,19 @@ def main():
                                                                              C["create_data"]["normalize_reward"])
                 logger.info("[LEARNING FTQ PI GREEDY] #samples={}".format(len(transitions_ftq)))
 
-                ftq.reset(C["create_data"]["reset_weight"])
+                ftq.reset(True)
                 pi = ftq.fit(transitions_ftq)
                 pi_greedy = PytorchFittedPolicy(pi, e, feature)
                 logger.info("------------------------------------------------------------------")
                 logger.info("------------------------------------------------------------------")
-    rm.save_memory(C.workspace, C.id + ".data")
+    rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"])
     np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,
                                  gamma_r=C["gamma"], gamma_c=C["gamma_c"],
                                  beta=1.0, N_dialogues=100)
     print("greedy results")
-    urpy.print_results(rez)
+    print(urpy.format_results(rez))
 
 
 if __name__ == "__main__":

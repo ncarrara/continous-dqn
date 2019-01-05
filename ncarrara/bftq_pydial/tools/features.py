@@ -6,8 +6,10 @@ logger = logging.getLogger(__name__)
 def feature_factory(feature_str):
     if feature_str == "feature_pydial":
         return feature_pydial
-    elif feature_str == "feature_slot_filling":
-        return feature_slot_filling
+    elif feature_str == "feature_gaussian":
+        return feature_gaussian
+    elif feature_str == "feature_simple":
+        return feature_simple
 
 
 def feature_pydial(s, e):
@@ -48,69 +50,27 @@ def feature_pydial(s, e):
         return rez
 
 
-# def feature_slot_filling(s, e):
-#     if s is None:
-#         return None
-#     reco = s["reco_by_slot"]
-#     one_hot_current_slot = [0.] * e.size_constraints
-#     one_hot_current_slot[s["current_slot"]] = 1.
-#
-#     one_hot_sys_act = [0.] * len(e.system_actions)
-#     if len(s["machine_acts"]) > 0:
-#         one_hot_sys_act[e.system_actions.index(s["machine_acts"][-1])] = 1.
-#
-#     one_hot_usr_act = [0.] * len(e.user_actions)
-#     if len(s["user_acts"]) > 0:
-#         one_hot_usr_act[e.user_actions.index(s["user_acts"][-1])] = 1.
-#
-#     feat = reco + one_hot_current_slot + one_hot_sys_act + one_hot_usr_act
-#     # print(feat)
-#     print("reco={} current_slot={} sys_act={} usr_act={}".format("".join(["{:.2f}".format(x) for x in reco]),
-#           one_hot_current_slot, one_hot_sys_act, one_hot_usr_act))
-#     return feat
-
-# def feature_slot_filling(s, e):
-#     if s is None:
-#         return None
-#     else:
-#         one_hot_current_slot = [0.] * e.size_constraints
-#         current_slot = s["current_slot"]
-#         if s["current_slot"] is not None and s["current_slot"] >= 0:
-#             one_hot_current_slot[current_slot] = 1.
-#
-#         reco = 0.0 if s["reco"] is None else s["reco"]
-#         overflow = s["overflow_slots"]
-#
-#         one_hot_usr_act = [0.] * len(e.user_actions)
-#         if len(s["user_acts"]) > 0:
-#             one_hot_usr_act[e.user_actions.index(s["user_acts"][-1])] = 1.
-#
-#         feat = [reco] + [overflow] + one_hot_usr_act + one_hot_current_slot
-#         # print("reco={:.2f} overflow={} one_hot_usr_act={} one_hot_current_slot={} ".format(reco, overflow,
-#         #                                                                                    one_hot_usr_act,
-#         #                                                                                    one_hot_current_slot))
-#         return feat
 import numpy as np
 
+import itertools
 
-# def feature_slot_filling(s, e):
-#     offset = e.size_constraints * (e.size_constraints + 1) / 2
-#     feat = np.zeros(offset + len(e.user_actions) - 1)
-#     current_slot = s["current_slot"]
-#     if current_slot >= 0 and s["user_acts"][-1] == 0:  # INFORM_CURRENT
-#         i = 0 if current_slot == 0 else current_slot * (current_slot + 1) / 2
-#         i_ = i + current_slot + 1
-#         recos = s["reco_by_slot"][0:current_slot + 1]
-#         feat[i:i_] = recos
-#     else:
-#         feat[offset + s["user_acts"][-1].id - 1] = 1.
-#     rez = np.concatenate((np.array([1.]), feat))
-#     xxx = ""
-#     for ss in rez:
-#         xxx += " {:.2f}".format(ss)
-#     return rez
+def lambda_rbf_quick(s, centers, sigma):
+    exp = -1. / 2. * np.power(np.linalg.norm(np.array(s) - np.array(centers), axis=1) / sigma, 2)
+    gauss = (1. / (sigma * np.sqrt(2. * np.pi))) * np.exp(exp)
+    return gauss
 
-def feature_slot_filling(s, e):
+
+def create_coding(n):
+    return np.array([seq for seq in itertools.product((0.,0.75,0.5,0.25,1.), repeat=n)])
+
+
+def feature_simple(s,e):
+    return feature_slot_filling(s,e,False)
+
+def feature_gaussian(s,e):
+    return feature_slot_filling(s,e,True)
+
+def feature_slot_filling(s, e,gaussian_reco):
     logger.info("[feature_slot_filling] ----------------------")
     if s is None:
         logger.info("\n\nNone\n")
@@ -125,41 +85,61 @@ def feature_slot_filling(s, e):
         if s["turn"] == 0:
             recos_status = [0.] * e.size_constraints
         else:
-            recos_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float)).tolist()
+            recos_status_numpy = np.nan_to_num(np.array(s["recos_status"], dtype=np.float))
+            recos_status = recos_status_numpy.tolist()
             if s["turn"] >= 1:
                 one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"] - 1])] = 1.
                 one_hot_sys_act[e.system_actions.index(s["str_sys_actions"][s["turn"] - 1])] = 1.
 
-        turn = [0] * e.max_turn
-        turn[s["turn"]] = 1
+        one_hot_turn = [0] * e.max_turn
+        one_hot_turn[s["turn"]] = 1
 
-        feat = recos_status + one_hot_usr_act + one_hot_sys_act + turn
+        if gaussian_reco:
+            coding = create_coding(e.size_constraints)
+            if s["turn"] == 0:
+                feat_reco = [0.] * len(coding)
+            else:
 
-        logger.info("[feature_slot_filling] recos_status=[ {}] usr_act={} sys_act={} turn={}"
-                    .format("".join(["{:.2f} ".format(x) for x in recos_status]), one_hot_usr_act,one_hot_sys_act, turn))
+                feat_reco = lambda_rbf_quick(recos_status_numpy, coding, 0.5).tolist()
+        else:
+            one_hot_min_reco = [0.] * e.size_constraints
+            min_value = np.inf
+            min_index = None
+            for ireco, reco in enumerate(s["recos_status"]):
+                if reco is None or reco < min_value:
+                    min_value = reco
+                    min_index = ireco
+                    if reco is None:
+                        break
+
+            if min_index is not None:
+                one_hot_min_reco[min_index] = 1.
+                # min_reco[min_index] *= recos_status[min_index]
+
+            all_slots_asked = 1.
+            for reco in s["recos_status"]:
+                if reco is None:
+                    all_slots_asked = 0
+                    break
+
+            feat_reco = [all_slots_asked] + one_hot_min_reco + recos_status
+
+
+        feat = feat_reco + one_hot_usr_act +one_hot_turn #+ one_hot_sys_act + one_hot_turn
+        logger.info("[feature_slot_filling] feat_reco usr_act={} sys_act={} turn={}"
+                    .format("".join(["{:.2f} ".format(x) for x in feat_reco]),
+                            one_hot_usr_act,
+                            one_hot_sys_act,
+                            one_hot_turn))
 
         return feat
 
-# def feature_slot_filling(s, e):
-#     if s is None:
-#         return None
-#     else:
-#         one_hot_usr_act = [0.] * len(e.user_actions)
-#         if s["turn"] == 0:
-#             recos_status = [0.] * e.size_constraints
-#         else:
-#             recos_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float)).tolist()
-#             if len(s["str_usr_actions"]) > 0:
-#                 one_hot_usr_act[e.user_actions.index(s["str_usr_actions"][s["turn"]-1])] = 1.
-#
-#         # turn = [s["turn"] / e.max_turn]
-#
-#         turn = [0]*e.max_turn
-#         turn[s["turn"]]=1
-#
-#
-#         feat = recos_status + one_hot_usr_act + turn
-#         logger.info("[feature] recos_status=[ {}] usr_act={} turn={}"
-#                     .format("".join(["{:.2f} ".format(x) for x in recos_status]),one_hot_usr_act,turn))
-#
-#         return feat
+
+if __name__=="__main__":
+    coding = np.array(create_coding(3))
+    print(coding)
+    print(len(coding))
+    s= np.array([0.,0.5,0.])
+    feat_reco = lambda_rbf_quick(s, coding, 0.1).tolist()
+    for i,code in enumerate(coding):
+        print(s,code,feat_reco[i])

@@ -1,7 +1,7 @@
 {
   "general": {
     "id": "test_slot_filling",
-    "seed": 0,
+    "seed": 1,
     "workspace": "tmp/test_slot_filling",
     "dictConfig": {
       "version": 1,
@@ -23,7 +23,7 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -32,6 +32,14 @@
           ],
           "level": "WARN",
           "propagate": false
+        },
+        "ncarrara.utils_rl.algorithms.pytorch_fittedq":{
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
           "handlers": [
@@ -67,23 +75,21 @@
   "gamma": 1.0,
   "gamma_c": 1.0,
   "create_data": {
+    "filename_data":"samples.data",
     "handcrafted_greedy_policy":false,
     "trajs_by_ftq_batch": 100,
-    "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 1000,
+    "N_trajs": 2000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.005
+      "decay": 0.0025
     }
   },
   "main": {
-    "path_sample_data": "tmp/test_slot_filling/test_slot_filling.data",
-    "reset_weight": false,
-    "lambda_": 0,
+    "filename_data": "samples.data",
     "normalize_reward": true,
-    "N_trajs": 500
+    "N_trajs": 1000
   },
   "bftq_params": {
     "loss_function_c": "l2",
@@ -100,14 +106,13 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      128,
       64,
-      32,
-      16
+      32
 
     ]
   },
   "ftq_params": {
-    "disp": true,
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 200,
     "optimizer": "ADAM",
@@ -116,7 +121,7 @@
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0,
+    "weight_decay": 0.01,
     "batch_size_experience_replay": "ALL_BATCH",
     "workspace": "tmp/test_slot_filling/ftq"
   }

@@ -13,12 +13,15 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms
+import logging
 
 OptimalPolicy = namedtuple('OptimalPolicy',
                            ('id_action_inf', 'id_action_sup', 'proba_inf', 'proba_sup', 'budget_inf', 'budget_sup'))
 
 TransitionBFTQ = namedtuple('TransitionBFTQ',
-                            ('state', 'action',  'reward', "next_state",'constraint', 'beta', "hull_id"))
+                            ('state', 'action', 'reward', "next_state", 'constraint', 'beta', "hull_id"))
+
+logger = logging.getLogger(__name__)
 
 
 def optimal_pia_pib(beta, hull, statistic):
@@ -82,7 +85,6 @@ class PytorchBudgetedFittedQ:
                  gamma_c=0.99,
                  learning_rate=0.001, weight_decay=0.001,
                  reset_policy_each_ftq_epoch=True,
-                 disp=False,
                  delta_stop=0.,
                  batch_size_experience_replay=50,
                  nn_loss_stop_condition=0.0,
@@ -100,7 +102,6 @@ class PytorchBudgetedFittedQ:
         self.disp_states = disp_states
         self.disp_states_ids = disp_states_ids
         self.do_dynamic_disp_state = not self.disp_states
-        self.disp = disp
         self.workspace = workspace
         self.N_actions = N_actions
         if actions_str is None:
@@ -147,19 +148,8 @@ class PytorchBudgetedFittedQ:
         self.min_print_q = -0.1
         self.max_print_q = 1
         self.memory = Memory(class_transition=TransitionBFTQ)
-        self.step_occ = 11
-        if self.disp:
-            self.repartitions_c = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            # self.repartitions_c[0] = self.step_occ*np.ones(self.step_occ+2)
-            self.repartitions_r = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            # self.repartitions_r[0] = self.step_occ*np.ones(self.step_occ + 2)
-            self.repartitions_c_b4_opti = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            self.repartitions_r_b4_opti = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            self.repartitions_c_a4_opti = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            self.repartitions_r_a4_opti = np.zeros((self._MAX_FTQ_EPOCH, self.step_occ + 2))
-            # self.path_historgrams = self.workspace + "/histograms"
-            # if not os.path.exists(self.path_historgrams): os.mkdir(self.path_historgrams)
         self.reset()
+
     def reset(self, reset_weight=True):
         self.memory.reset()
         if reset_weight:
@@ -175,8 +165,8 @@ class PytorchBudgetedFittedQ:
         self._states_for_hulls = None
 
     def _construct_batch(self, transitions):
-        if self.disp: print("[epoch_bftq={:02}][_construct_batch] constructing batch ...".format(self._id_ftq_epoch))
-        if self.disp and self.do_dynamic_disp_state:
+        logger.info("[epoch_bftq={:02}][_construct_batch] constructing batch ...".format(self._id_ftq_epoch))
+        if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
             self.disp_states_ids = []
             self.disp_next_states_ids = []
             self.disp_next_states = []
@@ -188,8 +178,9 @@ class PytorchBudgetedFittedQ:
         hull_keys = {}
         for i_t, t in enumerate(transitions):
             hull_key = str(t.next_state)
-            if self.disp and it % np.ceil(len(transitions) / 10) == 0: print(
-                "[epoch_bftq={:02}][_construct_batch] {} transitions proceeded".format(self._id_ftq_epoch, it))
+            if it % np.ceil(len(transitions) / 10) == 0:
+                logger.info("[epoch_bftq={:02}][_construct_batch] {} transitions proceeded"
+                            .format(self._id_ftq_epoch, it))
             if hull_key in hull_keys:
                 hull_id = hull_keys[hull_key]
             else:
@@ -208,11 +199,11 @@ class PytorchBudgetedFittedQ:
                 state = torch.tensor([[t.state]], device=C.device, dtype=torch.float)
                 beta = torch.tensor([[[beta]]], device=C.device, dtype=torch.float)
 
-                self.memory.push(state, action, reward,next_state, constraint, beta, hull_id)
+                self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
             key = str(t.state) + str(t.action)
             key_states.add(str(t.next_state))
-            if self.disp and self.do_dynamic_disp_state:
+            if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
                 self.disp_states_ids.append(len(self.disp_states))
                 self.disp_states.append(t.next_state)
                 self.disp_next_states_ids.append(len(self.disp_next_states))
@@ -230,11 +221,10 @@ class PytorchBudgetedFittedQ:
         # print(len(self.disp_next_states))
         # exit()
         self.nb_unique_hull_to_compute = lastkeyid
-        if self.disp: print("nbhull to compute : {}".format(lastkeyid))
+        logger.info("nbhull to compute : {}".format(lastkeyid))
 
-        if self.disp: print(
-            "[epoch_bftq={:02}][_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}" \
-                .format(self._id_ftq_epoch, len(self.memory), len(means)))
+        logger.info("[epoch_bftq={:02}][_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}"
+                    .format(self._id_ftq_epoch, len(self.memory), len(means)))
 
         zipped = TransitionBFTQ(*zip(*self.memory.memory))
         beta_batch = torch.cat(zipped.beta)
@@ -243,11 +233,11 @@ class PytorchBudgetedFittedQ:
         mean = torch.mean(state_beta_batch, 0)
         std = torch.std(state_beta_batch, 0)
         self._policy_network.set_normalization_params(mean, std)
-        if self.disp: print(
-            "[epoch_bftq={:02}][_construct_batch] constructiong batch ... end".format(self._id_ftq_epoch))
+        logger.info("[epoch_bftq={:02}][_construct_batch] constructiong batch ... end"
+                    .format(self._id_ftq_epoch))
 
     def _sample_batch(self):
-        if self.disp: print("[epoch_bftq={:02}][_sample_batch] sampling mini batch ...".format(self._id_ftq_epoch))
+        logger.info("[epoch_bftq={:02}][_sample_batch] sampling mini batch ...".format(self._id_ftq_epoch))
         if self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ADAPTATIVE:
             self.size_mini_batch = len(self.memory) / 10
         elif self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ALL_BATCH:
@@ -260,11 +250,9 @@ class PytorchBudgetedFittedQ:
         self._action_batch = torch.cat(zipped.action)
         self._reward_batch = torch.cat(zipped.reward)
         self._constraint_batch = torch.cat(zipped.constraint)
-        if self.disp: print(
-            "[epoch_bftq={:02}] nb constraint : {}".format(self._id_ftq_epoch, self._constraint_batch.sum()))
-        if self.disp: print("[epoch_bftq={:02}] nb reward : {}".format(self._id_ftq_epoch,
-                                                                       self._reward_batch[
-                                                                           self._reward_batch >= 1.].sum()))
+        logger.info("[epoch_bftq={:02}] nb constraint : {}".format(self._id_ftq_epoch, self._constraint_batch.sum()))
+        logger.info("[epoch_bftq={:02}] nb reward : {}"
+                    .format(self._id_ftq_epoch, self._reward_batch[self._reward_batch >= 1.].sum()))
         self._beta_batch = torch.cat(zipped.beta)
         self._state_batch = torch.cat(zipped.state)
         self._next_state_batch = torch.cat(zipped.next_state)
@@ -272,29 +260,31 @@ class PytorchBudgetedFittedQ:
         self._state_beta_batch = torch.cat((self._state_batch, self._beta_batch), dim=2)
         # print self._state_beta_batch
         # exit()
-        if self.disp: print(
-            "[epoch_bftq={:02}][_sample_batch] size mini batch ={}".format(self._id_ftq_epoch, self.size_mini_batch))
-        if self.disp: print("[epoch_bftq={:02}][_sample_batch] sampling mini batch ... done".format(self._id_ftq_epoch))
+        logger.info("[epoch_bftq={:02}][_sample_batch] size mini batch ={}"
+                    .format(self._id_ftq_epoch, self.size_mini_batch))
+        logger.info("[epoch_bftq={:02}][_sample_batch] sampling mini batch ... done"
+                    .format(self._id_ftq_epoch))
 
     def fit(self, transitions):
         self._id_ftq_epoch = 0
-        if self.disp: print("[fit] reseting network ....")
+        logger.info("[fit] reseting network ....")
         self._policy_network.reset()
 
         self._construct_batch(transitions)
-        dispstateidsrand = np.random.random_integers(0, len(self.disp_states)-1, 10)
+        if logger.getEffectiveLevel() is logging.INFO:
+            dispstateidsrand = np.random.random_integers(0, len(self.disp_states) - 1, 10)
         # print(dispstateidsrand)
         self.delta = np.inf
         while self._id_ftq_epoch < self._MAX_FTQ_EPOCH and self.delta > self.DELTA:
-            if self.disp: print("[epoch_bftq={:02}] ---------".format(self._id_ftq_epoch))
+            logger.info("[epoch_bftq={:02}] ---------".format(self._id_ftq_epoch))
             # print tu.get_gpu_memory_map()
             self._sample_batch()
-            if self.disp: print("[epoch_bftq={:02}] #batch={}".format(self._id_ftq_epoch, len(self._state_beta_batch)))
+            logger.info("[epoch_bftq={:02}] #batch={}".format(self._id_ftq_epoch, len(self._state_beta_batch)))
             losses = self._ftq_epoch()
             self._id_ftq_epoch += 1
 
-            if self.disp: print("[epoch_bftq={:02}] delta={}".format(self._id_ftq_epoch, self.delta))
-            if self.disp :
+            logger.info("[epoch_bftq={:02}] delta={}".format(self._id_ftq_epoch, self.delta))
+            if logger.getEffectiveLevel() is logging.INFO:
                 for i_s in dispstateidsrand:
                     state = self.disp_next_states[i_s]
                     id = str(self.disp_next_states_ids[i_s])
@@ -309,7 +299,7 @@ class PytorchBudgetedFittedQ:
 
         final_network = copy.deepcopy(self._policy_network)
 
-        if self.disp :
+        if logger.getEffectiveLevel() is logging.INFO:
             for i_s in dispstateidsrand:
                 state = self.disp_next_states[i_s]
                 id = str(self.disp_next_states_ids[i_s])
@@ -335,7 +325,7 @@ class PytorchBudgetedFittedQ:
                                              id="state_final_hulls_" + id, disp=True)
 
         def pi(state, beta, action_mask):
-            if not type(action_mask)==type(np.zeros(1)):
+            if not type(action_mask) == type(np.zeros(1)):
                 action_mask = np.asarray(action_mask)
             hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32), Q=final_network,
                                      action_mask=action_mask,
@@ -374,8 +364,9 @@ class PytorchBudgetedFittedQ:
             # print( i
 
             stats = {}
-            if self.disp and i % np.ceil((len(self.mini_batch) / 5)) == 0: print(
-                "[epoch_bftq={:02}][_ftq_epoch] processing optimal pia pib {}".format(self._id_ftq_epoch, i))
+            if i % np.ceil((len(self.mini_batch) / 5)) == 0:
+                logger.info("[epoch_bftq={:02}][_ftq_epoch] processing optimal pia pib {}"
+                            .format(self._id_ftq_epoch, i))
             if self._is_terminal_state(next_state):
                 pass
             else:
@@ -397,7 +388,7 @@ class PytorchBudgetedFittedQ:
                     dim=2)
 
             i += 1
-        if self.disp: print("[epoch_bftq={:02}][compute_opts] status : {} for {} transitions. Len(hull)={}".format(
+        logger.info("[epoch_bftq={:02}][compute_opts] status : {} for {} transitions. Len(hull)={}".format(
             self._id_ftq_epoch,
             status,
             i_non_terminal,
@@ -410,42 +401,40 @@ class PytorchBudgetedFittedQ:
         next_state_rewards = torch.zeros(self.size_mini_batch, device=C.device)
         next_state_constraints = torch.zeros(self.size_mini_batch, device=C.device)
         i = 0
-        if self.disp:
-            i_non_terminal = 0
-            found = False
-            warning_qc_negatif = 0.
-            warning_qc__negatif = 0.
-            next_state_c_neg = 0.
+        i_non_terminal = 0
+        found = False
+        warning_qc_negatif = 0.
+        warning_qc__negatif = 0.
+        next_state_c_neg = 0.
         for _, _, _, next_state, _, _, hull_id in self.mini_batch:
-            if self.disp and i % np.ceil((len(self.mini_batch) / 5)) == 0:
-                print("[epoch_bftq={:02}][_ftq_epoch] processing mini batch {}".format(self._id_ftq_epoch, i))
+            if i % np.ceil((len(self.mini_batch) / 5)) == 0:
+                logger.info("[epoch_bftq={:02}][_ftq_epoch] processing mini batch {}".format(self._id_ftq_epoch, i))
             if self._is_terminal_state(next_state):
                 next_state_rewards[i] = 0.
                 next_state_constraints[i] = 0.
             else:
-                if self.disp: i_non_terminal += 1
+                i_non_terminal += 1
                 opt = opts[i]
                 qr_ = Q[i * 2][opt.id_action_inf]
                 qr = Q[i * 2 + 1][opt.id_action_sup]
                 qc_ = Q[i * 2][self.N_actions + opt.id_action_inf]
                 qc = Q[i * 2 + 1][self.N_actions + opt.id_action_sup]
-                if self.disp:
-                    if qc < 0:
-                        warning_qc_negatif += 1.
-                    if qc_ < 0:
-                        warning_qc__negatif += 1.
+
+                if qc < 0:
+                    warning_qc_negatif += 1.
+                if qc_ < 0:
+                    warning_qc__negatif += 1.
 
                 next_state_rewards[i] = opt.proba_inf * qr_ + opt.proba_sup * qr
                 next_state_constraints[i] = opt.proba_inf * qc_ + opt.proba_sup * qc
 
-                if self.disp:
-                    if next_state_constraints[i] < 0:
-                        next_state_c_neg += 1.
-                    found = found or False
+                if next_state_constraints[i] < 0:
+                    next_state_c_neg += 1.
+                found = found or False
 
             i += 1
 
-        if self.disp:
+        if logger.getEffectiveLevel() is logging.INFO:
             print("\n[compute_next_values] Q(s') sur le batch")
             create_Q_histograms("Qr(s')_e={}".format(self._id_ftq_epoch),
                                 values=next_state_rewards.cpu().numpy().flat,
@@ -479,7 +468,7 @@ class PytorchBudgetedFittedQ:
         expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
         losses = self._optimize_model(expected_state_action_rewards, expected_state_action_constraints)
 
-        if self.disp:
+        if logger.getEffectiveLevel() is logging.INFO:
             print("Creating histograms ...")
             QQ = self._policy_network(self._state_beta_batch)
             state_action_rewards = QQ.gather(1, self._action_batch)
@@ -503,8 +492,8 @@ class PytorchBudgetedFittedQ:
     def _optimize_model(self, expected_state_action_rewards, expected_state_action_constraints):
         self.delta = self._compute_loss(expected_state_action_rewards, expected_state_action_constraints,
                                         with_weight=False).item()
-        if self.disp: print("[epoch_bftq={:02}][optimize Q] reset neural network ? {}".format(self._id_ftq_epoch,
-                                                                                              self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
+        logger.info("[epoch_bftq={:02}][optimize Q] reset neural network ? {}".format(self._id_ftq_epoch,
+                                                                                      self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
         if self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH:
             self._policy_network.reset()
         stop = False
@@ -515,21 +504,21 @@ class PytorchBudgetedFittedQ:
         while not stop:
             loss = self._gradient_step(expected_state_action_rewards, expected_state_action_constraints)
             losses.append(loss)
-            if self.disp and (min(last_loss, loss) / max(last_loss, loss) < 0.5 or nn_epoch in [0, 1, 2, 3]):
-                print("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}".format(self._id_ftq_epoch, nn_epoch, loss))
+            if (min(last_loss, loss) / max(last_loss, loss) < 0.5 or nn_epoch in [0, 1, 2, 3]):
+                logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+                            .format(self._id_ftq_epoch, nn_epoch, loss))
             last_loss = loss
             cvg = loss < self.NN_LOSS_STOP_CONDITION
-            if self.disp and cvg: print(
-                "[epoch_bftq={:02}][epoch_nn={:03}] early stopping [loss={}]".format(self._id_ftq_epoch,
-                                                                                     nn_epoch,
-                                                                                     loss))
+            if cvg:
+                logger.info("[epoch_bftq={:02}][epoch_nn={:03}] early stopping [loss={}]"
+                            .format(self._id_ftq_epoch, nn_epoch, loss))
             nn_epoch += 1
             stop = nn_epoch > self._MAX_NN_EPOCH or cvg
 
-        if self.disp and not cvg:
+        if not cvg:
             for i in range(3):
-                print("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}".format(self._id_ftq_epoch,
-                                                                              nn_epoch - 3 + i, losses[-3 + i]))
+                logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+                            .format(self._id_ftq_epoch, nn_epoch - 3 + i, losses[-3 + i]))
         del expected_state_action_rewards
         del expected_state_action_constraints
         torch.set_grad_enabled(False)
@@ -574,7 +563,7 @@ class PytorchBudgetedFittedQ:
         return hull
 
     def compute_hulls(self, states, hull_ids, Q, disp):
-        if self.disp: print(("[epoch_bftq={:02}] computing hulls ...".format(self._id_ftq_epoch)))
+        logger.info(("[epoch_bftq={:02}] computing hulls ...".format(self._id_ftq_epoch)))
         hulls = np.array([None] * len(states))
         # hulls_already_computed = {}
         k = 0
@@ -586,8 +575,8 @@ class PytorchBudgetedFittedQ:
             hull = computed_hulls[hull_id]
             if hull is None and not self._is_terminal_state(state):
 
-                if self.disp and i_computation % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-                    print("[epoch_bftq={:02}] hull computed : {}".format(
+                if i_computation % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
+                    logger.info("[epoch_bftq={:02}] hull computed : {}".format(
                         self._id_ftq_epoch,
                         # i_s,
                         i_computation))
@@ -599,10 +588,9 @@ class PytorchBudgetedFittedQ:
                 computed_hulls[hull_id] = hull
                 i_computation += 1
             hulls[i_s] = hull
-        if self.disp:
-            print(("[epoch_bftq={:02}] hulls actually computed : {}".format(self._id_ftq_epoch, i_computation)))
-            print(("[epoch_bftq={:02}] total hulls (=next_states) : {}".format(self._id_ftq_epoch, len(states))))
-            print(("[epoch_bftq={:02}] computing hulls [DONE]".format(self._id_ftq_epoch)))
+        logger.info(("[epoch_bftq={:02}] hulls actually computed : {}".format(self._id_ftq_epoch, i_computation)))
+        logger.info(("[epoch_bftq={:02}] total hulls (=next_states) : {}".format(self._id_ftq_epoch, len(states))))
+        logger.info(("[epoch_bftq={:02}] computing hulls [DONE]".format(self._id_ftq_epoch)))
 
         return hulls
 

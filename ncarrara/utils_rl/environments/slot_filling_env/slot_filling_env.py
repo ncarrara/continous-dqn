@@ -27,14 +27,14 @@ class SlotFillingEnv(object):
     def __init__(self, user_params={"cerr": -1, "cok": 1, "ser": 0.3, "cstd": 0.2, "proba_hangup": 0.3},
                  max_turn=15,
                  size_constraints=3,
-                 penalty_if_bye=0.,
+                 # penalty_if_bye=0.,
                  penalty_if_hangup=0.,
                  penalty_by_turn=-5.,
                  penalty_if_max_turn=0.,
                  reward_if_sucess=100.):
 
         plot_ctop_cbot(**user_params)
-        self.penalty_if_bye = penalty_if_bye
+        # self.penalty_if_bye = penalty_if_bye
         self.penalty_if_max_turn = penalty_if_max_turn
         self.penalty_if_hangup = penalty_if_hangup
         self.pernalty_by_turn = penalty_by_turn
@@ -44,7 +44,7 @@ class SlotFillingEnv(object):
         self.user_params = user_params
 
         self.max_turn = max_turn
-        self.system_actions = ["SUMMARIZE_AND_INFORM", "BYE"]
+        self.system_actions = ["SUMMARIZE_AND_INFORM"]#, "BYE"]
 
         for cons in range(size_constraints):
             self.system_actions.append("ASK_ORAL({})".format(cons))
@@ -89,6 +89,7 @@ class SlotFillingEnv(object):
     def step(self, action):
         if self.turn==0:
             logger.info(("--------------- new dialogue -------------"))
+        logger.info("[TURN {}] ---------------".format(self.turn))
         logger.info("[TURN {}] cons_status : {}".format(self.turn, self.cons_status))
         logger.info("[TURN {}] recos_status : [ {}]".format(self.turn,
                                                             "".join([("None " if rec is None
@@ -141,9 +142,9 @@ class SlotFillingEnv(object):
         if success:
             logger.info("[TURN {}] success !".format(self.turn))
             return None, self.reward_if_sucess, True, {"c_": 0.}
-        elif str_sys_action == "BYE":
-            logger.info("[TURN {}] systeme ended dialogue premarturely !".format(self.turn))
-            return None, self.penalty_if_bye, True, {"c_": 0.}
+        # elif str_sys_action == "BYE":
+        #     logger.info("[TURN {}] systeme ended dialogue premarturely !".format(self.turn))
+        #     return None, self.penalty_if_bye, True, {"c_": 0.}
         elif self.turn >= self.max_turn-1:
             logger.info("[TURN {}] max size reached !".format(self.turn))
             return None, self.penalty_if_max_turn, True, {"c_": 0.}

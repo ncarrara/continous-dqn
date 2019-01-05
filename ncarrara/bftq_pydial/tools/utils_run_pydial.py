@@ -2,6 +2,7 @@ import numpy as np
 
 import ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq as pbf
 from ncarrara.utils.datastructure import merge_two_dicts
+from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.transition.transition import Transition
 
 import logging
@@ -44,18 +45,18 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
     return transitions_ftq, transitions_bftq
 
 
-def print_results(results):
+def format_results(results):
     N = len(results)
     rew_r, rew_c, ret_r, ret_c = np.mean(results, axis=0)
     std_rew_r, std_rew_c, std_ret_r, std_ret_c = np.std(results, axis=0)
     p = "R={:.2f}+/-{:.2f} C={:.2f}+/-{:.2f} , return : R={:.2f}+/-{:.2f} C={:.2f}+/-{:.2f}".format(
         rew_r, std_rew_r, rew_c, std_rew_c, ret_r, std_ret_r, ret_c, std_ret_c)
-    confidence_r = 2 * (std_rew_r / np.sqrt(N))
+    confidence_r = 1.96 * (std_rew_r / np.sqrt(N))
     confidence_r_str = "[{:.2f};{:.2f}]".format(rew_r - confidence_r, rew_r + confidence_r)
-    confidence_c = 2 * (std_rew_c / np.sqrt(N))
+    confidence_c = 1.96 * (std_rew_c / np.sqrt(N))
     confidence_c_str = "[{:.2f};{:.2f}]".format(rew_c - confidence_c, rew_c + confidence_c)
     pp = "R=" + confidence_r_str + " C=" + confidence_c_str
-    print(pp + " " + p)
+    return (pp + " " + p)
 
 
 def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
@@ -110,7 +111,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
     return dialogue, rew_r, rew_c, ret_r, ret_c
 
 
-def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., ):
+def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., save_path=None):
     dialogues = []
     result = np.zeros((N_dialogues, 4))
     turn = 0
@@ -119,5 +120,8 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., )
         dialogues.append(dialogue)
         result[d] = np.array([rew_r, rew_c, ret_r, ret_c])
         turn += len(dialogue)
-    logger.info("[execute_policy] mean turn : {}".format( turn / float(N_dialogues)))
+    logger.info("[execute_policy] mean turn : {}".format(turn / float(N_dialogues)))
+    if save_path is not None:
+        logger.info("[execute_policy] saving results at : {}".format(save_path))
+        np.savetxt(save_path, result)
     return dialogues, result

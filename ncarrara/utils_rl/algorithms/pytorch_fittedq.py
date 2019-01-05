@@ -81,7 +81,6 @@ class PytorchFittedQ:
                  delta_stop=0,
                  batch_size_experience_replay=50,
                  nn_loss_stop_condition=0.0,
-                 disp=True,
                  disp_states=[],
                  workspace="tmp",
                  device=None,
@@ -121,7 +120,6 @@ class PytorchFittedQ:
         else:
             raise Exception("unknow loss {}".format(self.loss_function))
         self.disp_states = disp_states
-        self.disp = disp
         self.statistiques = None
         self.memory = Memory(class_transition=Transition)
         self.reset()
@@ -191,7 +189,7 @@ class PytorchFittedQ:
             losses = self._ftq_epoch()
             self.logger.info("loss {}".format(losses[-1]))
 
-            if self.disp and self.process_between_epoch is not None:
+            if self.logger.getEffectiveLevel() is logging.INFO and self.process_between_epoch is not None:
                 def pi(state, action_mask):
                     if not type(action_mask) == type(np.zeros(1)):
                         action_mask = np.asarray(action_mask)
@@ -228,7 +226,7 @@ class PytorchFittedQ:
         def pi(state, action_mask):
             # print("-------------------")
             # print("state ",state)
-
+            #
             # q = self.q(state)[0]
             # system_actions = ['SUMMARIZE_AND_INFORM', 'BYE', 'ASK_ORAL(0)', 'ASK_NUM_PAD(0)', 'ASK_ORAL(1)',
             #                   'ASK_NUM_PAD(1)', 'ASK_ORAL(2)', 'ASK_NUM_PAD(2)']
@@ -263,7 +261,7 @@ class PytorchFittedQ:
 
         losses = self._optimize_model()
 
-        if self.disp:
+        if self.logger.getEffectiveLevel() is logging.INFO:
             self.logger.info("Creating histograms ...")
             QQ = self._policy_network(self._state_batch)
             state_action_rewards = QQ.gather(1, self._action_batch)

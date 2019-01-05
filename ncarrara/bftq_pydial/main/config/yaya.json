@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test_slot_filling",
+    "id": "yaya",
     "seed": 1,
-    "workspace": "tmp/test_slot_filling",
+    "workspace": "tmp/yaya",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -33,13 +33,19 @@
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils_rl.algorithms.pytorch_fittedq":{
+        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
-
+        },
+        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
           "handlers": [
@@ -58,27 +64,45 @@
       }
     }
   },
-  "feature_str": "feature_slot_filling",
+  "feature_str": "feature_gaussian",
   "generate_envs": {
     "envs_str": "slot_filling_env_v0",
     "envs_params": {
-      "user_params": [{"cerr": -0.5,"cok": 0.5,"ser": 0.5,"cstd": 0.6,"proba_hangup": 0.1}],
-      "max_turn":[15],
-      "size_constraints":[3],
-      "penalty_if_bye":[0.0],
-      "penalty_if_hangup":[0.0],
-      "penalty_by_turn":[-5.0],
-      "penalty_if_max_turn":[0.0],
-      "reward_if_sucess":[100.0]
+      "user_params": [
+        {
+          "cerr": -0.5,
+          "cok": 0.5,
+          "ser": 0.5,
+          "cstd": 0.6,
+          "proba_hangup": 0.3
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ]
     }
   },
-  "gamma": 1.0,
+  "gamma": 0.9,
   "gamma_c": 1.0,
   "create_data": {
-    "filename_data":"samples.data",
-    "handcrafted_greedy_policy":false,
+    "filename_data": "samples.data",
+    "handcrafted_greedy_policy": false,
     "trajs_by_ftq_batch": 100,
-    "reset_weight": false,
     "lambda_": 0,
     "normalize_reward": true,
     "N_trajs": 2000,
@@ -89,21 +113,27 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "reset_weight": false,
     "normalize_reward": true,
-    "N_trajs": 1000
+    "N_trajs": 500
   },
   "bftq_params": {
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 200,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [
       1.0,
       1.0
     ]
   },
-  "net_bftq_params": {
-    "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 1
-  },
+  "nb_betas": 21,
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
@@ -111,21 +141,32 @@
       128,
       64,
       32
-
     ]
+  },
+  "bftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      512,
+      256,
+      128,
+      64,
+      32
+    ],
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 20
   },
   "ftq_params": {
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 200,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 16,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
     "weight_decay": 0.0,
-    "batch_size_experience_replay": "ALL_BATCH",
-    "workspace": "tmp/test_slot_filling/ftq"
+    "batch_size_experience_replay": "ALL_BATCH"
   }
 }
 

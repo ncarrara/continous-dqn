@@ -37,7 +37,7 @@ def main(data_paths):
                                          edgecolor=colors[ipath],
                                          fill=True,
                                          facecolor=(1, 0, 0, 0.0), zorder=0)
-                # ax.add_patch(rect)
+                ax.add_patch(rect)
                 plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                 xs.append(ret_c)
                 ys.append(ret_r)

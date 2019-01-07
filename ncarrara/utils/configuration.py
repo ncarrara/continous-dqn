@@ -21,10 +21,18 @@ class Configuration(object):
             raise Exception("please load the configuration file")
 
     def create_fresh_workspace(self):
-        self.__check__()
-        self.__clean_workspace()
-        from ncarrara.utils.os import makedirs
-        makedirs(self.workspace)
+        r = ''
+        while r!='y' and r!='n':
+            r = input("are you sure you want to erase workspace {} [y/n] ?".format(self.workspace))
+            from ncarrara.utils.os import makedirs
+            if r=='y':
+                self.__check__()
+                self.__clean_workspace()
+
+            elif  r=='n':
+                makedirs(self.workspace)
+            else:
+                print("Only [y/n]")
         return self
 
     def __clean_workspace(self):
@@ -73,5 +81,5 @@ class Configuration(object):
         import torch
         _device = set_device()
         self.device = torch.device("cuda:" + str(_device) if torch.cuda.is_available() else "cpu")
-        self.logger.info("DEVICE : ", self.device)
+        self.logger.info("DEVICE : {}".format(self.device))
         return self

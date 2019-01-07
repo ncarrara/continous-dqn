@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "yoyo",
+    "id": "yeye",
     "seed": 1,
-    "workspace": "tmp/yoyo",
+    "workspace": "tmp/yeye",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -44,7 +44,7 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -70,8 +70,8 @@
     "envs_params": {
       "user_params": [
         {
-          "cerr": -0.5,
-          "cok": 0.5,
+          "cerr": -0.25,
+          "cok": 0.25,
           "ser": 0.5,
           "cstd": 0.6,
           "proba_hangup": 0.3
@@ -157,6 +157,7 @@
     "beta_encoder_type": "LINEAR",
     "size_beta_encoder": 20
   },
+  "nb_trajs_between_peoch":100,
   "ftq_params": {
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 200,
@@ -165,7 +166,7 @@
     "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
+    "delta_stop": 0.05,
     "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH"
   }

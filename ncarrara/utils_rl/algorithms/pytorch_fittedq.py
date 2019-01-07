@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import Transition
-from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions
+from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
+    fast_create_Q_histograms_for_actions
 import logging
 
 
@@ -203,12 +204,16 @@ class PytorchFittedQ:
                 if self._id_ftq_epoch == 0:
                     self.statistiques = stats
                     rewards = self.statistiques[0]
+                    returns = self.statistiques[2]
                 else:
                     self.statistiques = np.vstack((self.statistiques, stats))
                     rewards = self.statistiques[:, 0]
+                    returns = self.statistiques[:, 2]
                 plt.clf()
                 fig, ax = plt.subplots(1, 1, figsize=(4, 4), tight_layout=True)
                 ax.plot(range(self._id_ftq_epoch + 1), rewards, label="reward")
+                ax.plot(range(self._id_ftq_epoch + 1), returns, label="returns")
+                # plt.legend()
                 plt.savefig(self.workspace + '/' + "reward_between_epoch.png")
                 if self._id_ftq_epoch == self._max_ftq_epoch - 1 or self.delta <= self.delta_stop:
                     plt.show()
@@ -272,7 +277,7 @@ class PytorchFittedQ:
                                 labels=["target", "prediction"])
 
             mask_action = np.zeros(len(QQ[0]))
-            create_Q_histograms_for_actions(title="actions_Q(s)_pred_target_e={}".format(self._id_ftq_epoch),
+            fast_create_Q_histograms_for_actions(title="actions_Q(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                             QQ=QQ.cpu().numpy(),
                                             path=self.workspace + "/histogram",
                                             labels=self.action_str,

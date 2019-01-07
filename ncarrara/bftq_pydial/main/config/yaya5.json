@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "yoyo",
+    "id": "yaya5",
     "seed": 1,
-    "workspace": "tmp/yoyo",
+    "workspace": "tmp/yaya5",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -37,7 +37,7 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
@@ -64,7 +64,7 @@
       }
     }
   },
-  "feature_str": "feature_gaussian",
+  "feature_str": "feature_basic",
   "generate_envs": {
     "envs_str": "slot_filling_env_v0",
     "envs_params": {
@@ -113,7 +113,7 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data":null,
+    "path_data":"tmp/yoyo",
     "normalize_reward": true,
     "N_trajs": 500
   },
@@ -134,7 +134,8 @@
       1.0
     ]
   },
-  "nb_betas": 21,
+  "nb_trajs_between_epoch":100,
+  "betas":"np.linspace(0.,1.0,6)",
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
@@ -148,11 +149,9 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      512,
       256,
       128,
-      64,
-      32
+      64
     ],
     "beta_encoder_type": "LINEAR",
     "size_beta_encoder": 20

@@ -11,7 +11,7 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 
 
-def create_Q_histograms(title, values, path, labels,inf=-1.5,sup=1.5):
+def create_Q_histograms(title, values, path, labels,inf=-1.,sup=1.):
     makedirs(path)
     plt.clf()
     maxfreq = 0.
@@ -29,6 +29,39 @@ def create_Q_histograms(title, values, path, labels,inf=-1.5,sup=1.5):
     plt.savefig(path + "/" + title)
     plt.close()
 
+
+
+def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.,sup=1.):
+    makedirs(path)
+
+    if mask_action is None:
+        mask_action = np.zeros(len(QQ[0]))
+    labs = []
+    for i, label in enumerate(labels):
+        # labels[i] = label[0:6]
+        if mask_action[i] != 1:
+            # labs.append(label[0:6])
+            labs.append(label)
+    Nact = len(mask_action)
+    values = []
+    for act in range(Nact):
+        if mask_action[act] != 1:
+            value = []
+            for i in range(len(QQ)):
+                value.append(QQ[i][act])
+            values.append(value)
+    fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
+    ax.hist(values, bins = np.linspace(inf, sup, 100), alpha=1.0, stacked=True)
+    plt.grid(axis='y', alpha=0.75)
+    plt.legend(labels)
+    plt.title(title)
+    # plt.show()
+    if not os.path.exists(path):
+        os.mkdir(path)
+    plt.savefig(path + "/" + title)
+    plt.close()
+
+
 def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.5,sup=1.5):
     makedirs(path)
     #
@@ -43,7 +76,7 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,in
         if mask_action[i] != 1:
             # labs.append(label[0:6])
             labs.append(label)
-    Nact = len(QQ[0])
+    Nact = len(mask_action)
     values = []
     for act in range(Nact):
         if mask_action[act] != 1:
@@ -61,6 +94,8 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,in
     cols=[]
     hats =[]
     for i,lab in enumerate(labels):
+        # print("---------------------")
+        # print(lab)
         cols.append(colors[i%len(colors)])
         hats.append(hatchs[i%len(hatchs)])
 

@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "yoyo",
+    "id": "yiyi",
     "seed": 1,
-    "workspace": "tmp/yoyo",
+    "workspace": "tmp/yiyi",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -37,7 +37,7 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
@@ -70,8 +70,8 @@
     "envs_params": {
       "user_params": [
         {
-          "cerr": -0.5,
-          "cok": 0.5,
+          "cerr": -0.25,
+          "cok": 0.25,
           "ser": 0.5,
           "cstd": 0.6,
           "proba_hangup": 0.3
@@ -113,7 +113,7 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data":null,
+    "path_data": null,
     "normalize_reward": true,
     "N_trajs": 500
   },
@@ -134,7 +134,18 @@
       1.0
     ]
   },
-  "nb_betas": 21,
+  "bftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      256,
+      128,
+      64
+    ],
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 20
+  },
+  "nb_betas": 5,
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
@@ -144,19 +155,7 @@
       32
     ]
   },
-  "bftq_net_params": {
-    "activation_type": "RELU",
-    "reset_type": "XAVIER",
-    "intra_layers": [
-      512,
-      256,
-      128,
-      64,
-      32
-    ],
-    "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 20
-  },
+  "nb_trajs_between_peoch": 100,
   "ftq_params": {
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 200,

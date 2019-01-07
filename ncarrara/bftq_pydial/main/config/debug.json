@@ -97,6 +97,7 @@
       ]
     }
   },
+  "betas":"[0.0,1.0]",
   "gamma": 0.9,
   "gamma_c": 1.0,
   "create_data": {
@@ -113,6 +114,7 @@
   },
   "main": {
     "filename_data": "samples.data",
+    "path_data": null,
     "normalize_reward": true,
     "N_trajs": 2
   },
@@ -133,6 +135,7 @@
       1.0
     ]
   },
+  "nb_trajs_between_peoch": 1,
   "nb_betas": 2,
   "net_params": {
     "activation_type": "RELU",

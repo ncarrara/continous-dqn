@@ -5,11 +5,12 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 import logging
 
+
 logger = logging.getLogger(__name__)
 
 
 def main(data_paths):
-    colors=["r","g","b"]
+    colors=["r","g","b","purple","grey","black","yellow",'orange']
     fig, ax = plt.subplots(1, figsize=(6, 5))
     for ipath,data_path in enumerate(data_paths):
         logger.info("processing {}".format(data_path))
@@ -36,7 +37,7 @@ def main(data_paths):
                                          edgecolor=colors[ipath],
                                          fill=True,
                                          facecolor=(1, 0, 0, 0.0), zorder=0)
-                ax.add_patch(rect)
+                # ax.add_patch(rect)
                 plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                 xs.append(ret_c)
                 ys.append(ret_r)
@@ -44,6 +45,8 @@ def main(data_paths):
                 logger.warning("Malformed file : {}".format(file))
 
         plt.scatter(xs, ys, color=colors[ipath], label=r"$data_path$", zorder=2)
+    plt.legend(data_paths)
+    # plt.title(C["general"]["id"])
     plt.show()
     plt.savefig(data_path + "results.png")
     plt.close()

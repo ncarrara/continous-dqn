@@ -29,7 +29,7 @@ def main():
     def process_between_epoch(pi):
         logger.info("process_between_epoch ...")
         pi = PytorchFittedPolicy(pi, e, feature)
-        _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], 10, 1.)
+        _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], C["nb_trajs_between_peoch"], 1.)
         return np.mean(results, axis=0)
 
     size_state = len(feature(e.reset(), e))

@@ -29,12 +29,14 @@ class SlotFillingEnv(object):
                  size_constraints=3,
                  # penalty_if_bye=0.,
                  penalty_if_hangup=0.,
+                 penalty_if_summarize_fail=0.,
                  penalty_by_turn=-5.,
                  penalty_if_max_turn=0.,
                  reward_if_sucess=100.):
 
         plot_ctop_cbot(**user_params)
         # self.penalty_if_bye = penalty_if_bye
+        self.penalty_if_summarize_fail = penalty_if_summarize_fail
         self.penalty_if_max_turn = penalty_if_max_turn
         self.penalty_if_hangup = penalty_if_hangup
         self.pernalty_by_turn = penalty_by_turn
@@ -102,11 +104,13 @@ class SlotFillingEnv(object):
         logger.info("[TURN {}] system : \"{}\"".format(self.turn, str_sys_action))
         str_user_action = None
         success = False
+        summarize_failed=False
         if str_sys_action == "SUMMARIZE_AND_INFORM":
             if np.all(np.asarray(self.cons_status) == SlotFillingEnv.CONS_VALID):
                 success = True
             else:
                 str_user_action = "DENY_SUMMARIZE"
+                summarize_failed= True
         elif "ASK_NUM_PAD" in str_sys_action:
             if np.random.rand() < self.user_params['proba_hangup']:
                 str_user_action = "HANGUP"
@@ -142,6 +146,7 @@ class SlotFillingEnv(object):
         if success:
             logger.info("[TURN {}] success !".format(self.turn))
             return None, self.reward_if_sucess, True, {"c_": 0.}
+
         # elif str_sys_action == "BYE":
         #     logger.info("[TURN {}] systeme ended dialogue premarturely !".format(self.turn))
         #     return None, self.penalty_if_bye, True, {"c_": 0.}
@@ -163,7 +168,12 @@ class SlotFillingEnv(object):
 
             }
             self.turn += 1
-            return observation, self.pernalty_by_turn, False, {"c_": 0.}
+
+            reward = self.pernalty_by_turn
+            if summarize_failed:
+                reward+=self.penalty_if_summarize_fail
+
+            return observation, reward, False, {"c_": 0.}
 
     def gen_error_reco(self, cerr, cok, ser, cstd, **kwargs):
         there_is_an_error = np.random.rand() < ser

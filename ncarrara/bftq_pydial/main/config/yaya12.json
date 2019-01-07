@@ -1,0 +1,177 @@
+{
+  "general": {
+    "id": "12",
+    "seed": 1,
+    "workspace": "tmp/yaya12",
+    "dictConfig": {
+      "version": 1,
+      "disable_existing_loggers": false,
+      "formatters": {
+        "standard": {
+          "format": "[%(levelname)s] %(message)s"
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler"
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": true
+        },
+        "ncarrara.bftq_pydial.tools.features": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.os": {
+          "handlers": [
+            "default"
+          ],
+          "level": "ERROR",
+          "propagate": false
+        }
+      }
+    }
+  },
+  "feature_str": "feature_basic",
+  "generate_envs": {
+    "envs_str": "slot_filling_env_v0",
+    "envs_params": {
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.5
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],"penalty_if_summarize_fail": [
+        50.0
+      ],
+      "penalty_by_turn": [
+        -10.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ]
+    }
+  },
+  "gamma": 0.999,
+  "gamma_c": 1.0,
+  "create_data": {
+    "filename_data": "samples.data",
+    "handcrafted_greedy_policy": false,
+    "trajs_by_ftq_batch": 100,
+    "lambda_": 0,
+    "normalize_reward": true,
+    "N_trajs": 2000,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.0025
+    }
+  },
+  "main": {
+    "filename_data": "samples.data",
+    "path_data":null,
+    "normalize_reward": true,
+    "N_trajs": 500
+  },
+  "bftq_params": {
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 200,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH",
+    "loss_function_c": "l2",
+    "weights_losses": [
+      1.0,
+      1.0
+    ]
+  },
+  "nb_trajs_between_epoch":100,
+  "lambdas":"[0.,2.5,5.,7.5,10.,12.5,15.,17.5,20.,25.,50.,75.,100.,125.,150.,175.,200.,225.,250.,500.]",
+  "betas":"np.linspace(0.,1.0,21)",
+  "betas_test":"np.linspace(0.,1.0,21)",
+  "net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      256,
+      128,
+      64
+    ]
+  },
+  "bftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      512,
+      256,
+      128
+    ],
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 50
+  },
+  "ftq_params": {
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 200,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH"
+  }
+}
+
+

@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "12",
-    "seed": 0,
-    "workspace": "tmp/yaya12",
+    "id": "12.2",
+    "seed": 2,
+    "workspace": "tmp/yaya12.2",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

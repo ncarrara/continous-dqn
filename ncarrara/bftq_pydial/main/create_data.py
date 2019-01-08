@@ -15,10 +15,11 @@ from gym_pydial.env.env_pydial import EnvPydial
 import logging
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 def main():
-    logger = logging.getLogger(__name__)
+    print(logger)
     # logger.setLevel(C.logging_level)
 
     envs, params = generate_envs(**C["generate_envs"])
@@ -47,6 +48,7 @@ def main():
     pi_greedy = None
 
     decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=C["create_data"]["N_trajs"], show=True)
+    logger.info("decays={}".format(decays))
 
     pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0])
     pi_greedy = RandomPolicy()
@@ -67,8 +69,6 @@ def main():
             pi_greedy = HandcraftedSlotFillingEnv(e=e, safeness=0.5)
         else:
             if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
-                logger.info("------------------------------------------------------------------")
-                logger.info("------------------------------------------------------------------")
 
                 transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                              C["create_data"]["lambda_"],
@@ -78,8 +78,6 @@ def main():
                 ftq.reset(True)
                 pi = ftq.fit(transitions_ftq)
                 pi_greedy = PytorchFittedPolicy(pi, e, feature)
-                logger.info("------------------------------------------------------------------")
-                logger.info("------------------------------------------------------------------")
     rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"])
     np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 

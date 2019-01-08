@@ -37,14 +37,14 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -147,6 +147,7 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      1024,
       512,
       256,
       128,

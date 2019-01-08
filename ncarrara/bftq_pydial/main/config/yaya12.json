@@ -86,7 +86,7 @@
       "penalty_if_hangup": [
         0.0
       ],"penalty_if_summarize_fail": [
-        50.0
+        -50.0
       ],
       "penalty_by_turn": [
         -10.0

@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "12.2",
-    "seed": 2,
-    "workspace": "tmp/yaya12.2",
+    "id": "17.0",
+    "seed": 0,
+    "workspace": "tmp/17.0",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -74,7 +74,7 @@
           "cok": 0.25,
           "ser": 0.6,
           "cstd": 0.6,
-          "proba_hangup": 0.5
+          "proba_hangup": 0.25
         }
       ],
       "max_turn": [
@@ -83,13 +83,16 @@
       "size_constraints": [
         3
       ],
+      "penalty_if_bye":[
+        0.0
+      ],
       "penalty_if_hangup": [
         0.0
       ],"penalty_if_summarize_fail": [
-        -50.0
+        0.0
       ],
       "penalty_by_turn": [
-        -10.0
+        0.0
       ],
       "penalty_if_max_turn": [
         0.0
@@ -99,23 +102,23 @@
       ]
     }
   },
-  "gamma": 0.999,
+  "gamma": 1.0,
   "gamma_c": 1.0,
   "create_data": {
     "filename_data": "samples.data",
-    "handcrafted_greedy_policy": false,
-    "trajs_by_ftq_batch": 100,
+    "handcrafted_greedy_policy": true,
+    "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 2000,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0025
+      "decay": 0.00001
     }
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data":null,
+    "path_data":"tmp/14",
     "normalize_reward": true,
     "N_trajs": 500
   },
@@ -136,26 +139,30 @@
       1.0
     ]
   },
-  "nb_trajs_between_epoch":100,
-  "lambdas":"[0.,2.5,5.,7.5,10.,12.5,15.,17.5,20.,25.,50.,75.,100.,125.,150.,175.,200.,225.,250.,500.]",
-  "betas":"np.linspace(0.,1.0,21)",
-  "betas_test":"np.linspace(0.,1.0,21)",
+  "nb_trajs_between_epoch":10,
+  "lambdas":"[0.,5.,10.,25.,50.,100.,500.]",
+  "betas":"np.linspace(0.,1.0,31)",
+  "betas_test":"np.linspace(0.,1.0,31)",
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      512,
       256,
       128,
-      64
+      64,
+      32
     ]
   },
   "bftq_net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      1024,
       512,
       256,
-      128
+      128,
+      64
     ],
     "beta_encoder_type": "LINEAR",
     "size_beta_encoder": 50

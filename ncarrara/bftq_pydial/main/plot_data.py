@@ -5,14 +5,13 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 import logging
 
-
 logger = logging.getLogger(__name__)
 
 
 def main(data_paths):
-    colors=["r","g","b","purple","grey","black","yellow",'orange']
+    colors = ["r", "g", "b", "purple", "grey", "black", "yellow", 'orange']
     fig, ax = plt.subplots(1, figsize=(6, 5))
-    for ipath,data_path in enumerate(data_paths):
+    for ipath, data_path in enumerate(data_paths):
         logger.info("processing {}".format(data_path))
         files = os.listdir(data_path)
         params = []
@@ -37,8 +36,8 @@ def main(data_paths):
                                          edgecolor=colors[ipath],
                                          fill=True,
                                          facecolor=(1, 0, 0, 0.0), zorder=0)
-                # ax.add_patch(rect)
-                # plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
+                ax.add_patch(rect)
+                plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                 xs.append(ret_c)
                 ys.append(ret_r)
             else:
@@ -48,5 +47,36 @@ def main(data_paths):
     plt.legend(data_paths)
     # plt.title(C["general"]["id"])
     plt.show()
-    plt.savefig(data_path + "results.png")
+    plt.savefig(data_path + "/results.png")
     plt.close()
+
+
+if __name__ == "__main__":
+    # main([
+    #
+    #     "tmp/14/bftq/results",
+    #     "tmp/14/hdc/results",
+    #     "tmp/14/ftq/results",
+    #
+    # ])
+    main([
+        "tmp/16/hdc/results",
+        "tmp/16/ftq/results",
+        "tmp/16/bftq/results",
+
+    ])
+
+    # for v in [7.2,11,12]:
+    #
+    #     main([
+    #
+    #         "tmp/yaya{}.2/bftq/results".format(v),
+    #         "tmp/yaya{}.2/hdc/results".format(v),
+    #         "tmp/yaya{}.2/ftq/results".format(v),
+    #
+    #         "tmp/yaya{}/bftq/results".format(v),
+    #         "tmp/yaya{}/hdc/results".format(v),
+    #         "tmp/yaya{}/ftq/results".format(v),
+    #
+    #
+    #     ])

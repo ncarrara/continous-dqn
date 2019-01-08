@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "12.2",
-    "seed": 2,
-    "workspace": "tmp/yaya12.2",
+    "id": "yaya13",
+    "seed": 0,
+    "workspace": "tmp/yaya13",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -74,7 +74,7 @@
           "cok": 0.25,
           "ser": 0.6,
           "cstd": 0.6,
-          "proba_hangup": 0.5
+          "proba_hangup": 0.75
         }
       ],
       "max_turn": [
@@ -86,10 +86,10 @@
       "penalty_if_hangup": [
         0.0
       ],"penalty_if_summarize_fail": [
-        -50.0
+        0.0
       ],
       "penalty_by_turn": [
-        -10.0
+        0.0
       ],
       "penalty_if_max_turn": [
         0.0
@@ -99,11 +99,11 @@
       ]
     }
   },
-  "gamma": 0.999,
+  "gamma": 0.7,
   "gamma_c": 1.0,
   "create_data": {
     "filename_data": "samples.data",
-    "handcrafted_greedy_policy": false,
+    "handcrafted_greedy_policy": true,
     "trajs_by_ftq_batch": 100,
     "lambda_": 0,
     "normalize_reward": true,
@@ -138,7 +138,7 @@
   },
   "nb_trajs_between_epoch":100,
   "lambdas":"[0.,2.5,5.,7.5,10.,12.5,15.,17.5,20.,25.,50.,75.,100.,125.,150.,175.,200.,225.,250.,500.]",
-  "betas":"np.linspace(0.,1.0,21)",
+  "betas":"np.linspace(0.,1.0,11)",
   "betas_test":"np.linspace(0.,1.0,21)",
   "net_params": {
     "activation_type": "RELU",

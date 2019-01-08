@@ -11,7 +11,7 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 
 
-def create_Q_histograms(title, values, path, labels,inf=-1.,sup=1.):
+def create_Q_histograms(title, values, path, labels,inf=-1.2,sup=1.2):
     makedirs(path)
     plt.clf()
     maxfreq = 0.
@@ -31,7 +31,7 @@ def create_Q_histograms(title, values, path, labels,inf=-1.,sup=1.):
 
 
 
-def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.,sup=1.):
+def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.2,sup=1.2):
     makedirs(path)
 
     if mask_action is None:

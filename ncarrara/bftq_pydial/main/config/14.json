@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "12.2",
-    "seed": 2,
-    "workspace": "tmp/yaya12.2",
+    "id": "14",
+    "seed": 0,
+    "workspace": "tmp/14",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -74,7 +74,7 @@
           "cok": 0.25,
           "ser": 0.6,
           "cstd": 0.6,
-          "proba_hangup": 0.5
+          "proba_hangup": 0.25
         }
       ],
       "max_turn": [
@@ -83,13 +83,16 @@
       "size_constraints": [
         3
       ],
+      "penalty_if_bye":[
+        0.0
+      ],
       "penalty_if_hangup": [
         0.0
       ],"penalty_if_summarize_fail": [
-        -50.0
+        0.0
       ],
       "penalty_by_turn": [
-        -10.0
+        0.0
       ],
       "penalty_if_max_turn": [
         0.0
@@ -99,7 +102,7 @@
       ]
     }
   },
-  "gamma": 0.999,
+  "gamma": 0.7,
   "gamma_c": 1.0,
   "create_data": {
     "filename_data": "samples.data",
@@ -115,7 +118,7 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data":null,
+    "path_data":"tmp/14",
     "normalize_reward": true,
     "N_trajs": 500
   },
@@ -137,8 +140,8 @@
     ]
   },
   "nb_trajs_between_epoch":100,
-  "lambdas":"[0.,2.5,5.,7.5,10.,12.5,15.,17.5,20.,25.,50.,75.,100.,125.,150.,175.,200.,225.,250.,500.]",
-  "betas":"np.linspace(0.,1.0,21)",
+  "lambdas":"[0.]",
+  "betas":"[0.,0.05,0.1,0.15,0.20,0.25,0.50,0.75,1.0]",
   "betas_test":"np.linspace(0.,1.0,21)",
   "net_params": {
     "activation_type": "RELU",

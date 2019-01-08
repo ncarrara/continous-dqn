@@ -22,7 +22,7 @@ def main(safenesses):
                                     N_dialogues=C["main"]["N_trajs"],
                                     save_path="{}/safeness={}.results".format(C.path_hdc_results, safeness)
                                     )
-        logger.info("HDC({}) : {} ".format(safeness, format_results(results)))
+        print("HDC({}) : {} ".format(safeness, format_results(results)))
 
 
 if __name__ == "__main__":

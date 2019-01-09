@@ -17,10 +17,10 @@ from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq,
 # create_data.main()
 # torch.cuda.empty_cache()
 #
-# run_hdc.main(safenesses=np.linspace(0, 1, 10))
+run_hdc.main(safenesses=np.linspace(0, 1, 10))
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
 
-run_hdc.main(safenesses=[0.])
+# run_hdc.main(safenesses=[0.])
 
 betas_test = eval(C["betas_test"])
 learn_bftq.main()

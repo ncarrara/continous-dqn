@@ -13,9 +13,9 @@ else:
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data
 
-logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
-create_data.main()
-torch.cuda.empty_cache()
+# logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
+# create_data.main()
+# torch.cuda.empty_cache()
 #
 # run_hdc.main(safenesses=np.linspace(0, 1, 10))
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)

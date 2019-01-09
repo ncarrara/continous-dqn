@@ -89,12 +89,14 @@ if __name__ == "__main__":
     # ])
 
     main([
-        ["tmp/23.0/hdc/results"],
-        ["tmp/23.0/ftq/results"],
-        ["tmp/23.0/bftq/results"],
-        ["tmp/24.0/bftq/results"],
+        # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],
+        # ["tmp/camera_ready_0/ftq/results","tmp/camera_ready_1/ftq/results"],
+         ["tmp/23.0/ftq/results"],
+        ["camera_ready_0/bftq/results"],
 
     ])
+
+    main([["camera_ready_1/bftq/results"]])
 
     #
     # main([

@@ -37,14 +37,14 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {

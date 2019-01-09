@@ -9,10 +9,11 @@ import logging
 if len(sys.argv) > 1:
     C.load_matplotlib('agg').load("config/{}.json".format(sys.argv[1])).create_fresh_workspace()
 else:
-    C.load("config/23.0.json")#.create_fresh_workspace()
+    C.load("config/camera_ready_0.json")#.create_fresh_workspace()
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data
 
+logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 create_data.main()
 torch.cuda.empty_cache()
 #

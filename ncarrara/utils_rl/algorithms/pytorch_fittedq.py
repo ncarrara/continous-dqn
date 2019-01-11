@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import Transition
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
-    fast_create_Q_histograms_for_actions
+    fast_create_Q_histograms_for_actions, plot
 import logging
 
 
@@ -86,11 +86,11 @@ class PytorchFittedQ:
                  workspace="tmp",
                  device=None,
                  action_str=None,
-                 process_between_epoch=None
+                 test_policy=None
                  ):
         self.logger = logging.getLogger(__name__)
         self.device = device
-        self.process_between_epoch = process_between_epoch
+        self.test_policy = test_policy
         self.action_str = action_str
         self.workspace = workspace
         self.nn_stop_loss_condition = nn_loss_stop_condition
@@ -183,41 +183,31 @@ class PytorchFittedQ:
         self._policy_network.reset()
         self.delta = np.inf
         self._id_ftq_epoch = 0
+        rewards=[]
+        returns=[]
         while self._id_ftq_epoch < self._max_ftq_epoch and self.delta > self.delta_stop:
             self.logger.info("[epoch_ftq={}] ---------".format(self._id_ftq_epoch))
             self._sample_batch()
             self.logger.info("[epoch_ftq={}] #batch={}".format(self._id_ftq_epoch, len(self._state_batch)))
             losses = self._ftq_epoch()
+
             self.logger.info("loss {}".format(losses[-1]))
 
-            if self.logger.getEffectiveLevel() is logging.INFO and self.process_between_epoch is not None:
-                def pi(state, action_mask):
-                    if not type(action_mask) == type(np.zeros(1)):
-                        action_mask = np.asarray(action_mask)
-                    action_mask[action_mask == 1.] = np.infty
-                    action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
-                    s = torch.tensor([[state]], device=self.device, dtype=torch.float)
-                    a = self._policy_network(s).sub(action_mask).max(1)[1].view(1, 1).item()
-                    return a
-
-                stats = self.process_between_epoch(pi)
-                if self._id_ftq_epoch == 0:
-                    self.statistiques = stats
-                    rewards = self.statistiques[0]
-                    returns = self.statistiques[2]
-                else:
-                    self.statistiques = np.vstack((self.statistiques, stats))
-                    rewards = self.statistiques[:, 0]
-                    returns = self.statistiques[:, 2]
+            if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
+                title="epoch={}.png".format(self._id_ftq_epoch)
+                stats = self.test_policy(self.construct_pi(self._policy_network))
+                rewards.append(stats[0])
+                returns.append(stats[2])
                 plt.clf()
-                fig, ax = plt.subplots(1, 1, figsize=(4, 4), tight_layout=True)
-                ax.plot(range(self._id_ftq_epoch + 1), rewards, label="reward")
-                ax.plot(range(self._id_ftq_epoch + 1), returns, label="returns")
-                # plt.legend()
-                plt.savefig(self.workspace + '/' + "reward_between_epoch.png")
-                if self._id_ftq_epoch == self._max_ftq_epoch - 1 or self.delta <= self.delta_stop:
-                    plt.show()
+                plt.plot(range(len(rewards)), rewards, label="reward",marker='o')
+                plt.plot(range(len(returns)), returns, label="returns",marker='o')
+                plt.legend()
+                plt.title(title)
+                plt.grid()
+                plt.savefig(self.workspace + '/' + title)
+                plt.show()
                 plt.close()
+
 
             self._id_ftq_epoch += 1
             self.logger.info("[epoch_ftq={}] delta={}".format(self._id_ftq_epoch, self.delta))
@@ -228,29 +218,20 @@ class PytorchFittedQ:
             self.logger.info("Q({})={}".format(state, self._policy_network(
                 torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
 
-        def pi(state, action_mask):
-            # print("-------------------")
-            # print("state ",state)
-            #
-            # q = self.q(state)[0]
-            # system_actions = ['SUMMARIZE_AND_INFORM', 'BYE', 'ASK_ORAL(0)', 'ASK_NUM_PAD(0)', 'ASK_ORAL(1)',
-            #                   'ASK_NUM_PAD(1)', 'ASK_ORAL(2)', 'ASK_NUM_PAD(2)']
+        pi = self.construct_pi(final_network)
 
-            # print("action mask(before) :", action_mask)
-            if not type(action_mask)==type(np.zeros(1)):
+        return pi
+
+    def construct_pi(self,network):
+        def pi(state, action_mask):
+            if not type(action_mask) == type(np.zeros(1)):
                 action_mask = np.asarray(action_mask)
             action_mask[action_mask == 1.] = np.infty
-
-            # print("action_mask(after) : ",action_mask)
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([[state]], device=self.device, dtype=torch.float)
-            a = final_network(s).sub(action_mask).max(1)[1].view(1, 1).item()
-
-            # print("".join(["{} -> {:.2f}\n".format(system_actions[iy], y) for iy, y in enumerate(q)]))
-            # print("action chosen",a)
+            a = network(s).sub(action_mask).max(1)[1].view(1, 1).item()
 
             return a
-
         return pi
 
     def _ftq_epoch(self):
@@ -274,14 +255,16 @@ class PytorchFittedQ:
                                 values=[self.expected_state_action_values.cpu().numpy(),
                                         state_action_rewards.cpu().numpy().flat],
                                 path=self.workspace + "/histogram",
-                                labels=["target", "prediction"])
+                                labels=["target", "prediction"],
+                                inf=-2, sup=2)
 
             mask_action = np.zeros(len(QQ[0]))
             fast_create_Q_histograms_for_actions(title="actions_Q(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                             QQ=QQ.cpu().numpy(),
                                             path=self.workspace + "/histogram",
                                             labels=self.action_str,
-                                            mask_action=mask_action)
+                                            mask_action=mask_action,
+                                                 inf=-2, sup=2)
 
         return losses
 
@@ -293,17 +276,47 @@ class PytorchFittedQ:
         nn_epoch = 0
         losses = []
         torch.set_grad_enabled(True)
+        rewards=[]
+        returns=[]
         while not stop:
             loss = self._gradient_step()
             losses.append(loss)
+            if nn_epoch%500==0:
+                self.logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+                                 .format(self._id_ftq_epoch, nn_epoch, loss))
+                # if nn_epoch>1:
+                #     print("delta loss = {:.5f}".format(np.abs(losses[-1] - losses[-2])))
+                if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
+                    stats = self.test_policy(self.construct_pi(self._policy_network))
+                    rewards.append(stats[0])
+                    returns.append(stats[2])
             cvg = loss < self.nn_stop_loss_condition
             if cvg:
                 self.logger.info(
                     "[epoch_ftq={:02}][epoch_nn={:03}] early stopping [loss={}]".format(self._id_ftq_epoch, nn_epoch,
                                                                                         loss))
+
             nn_epoch += 1
             stop = nn_epoch > self._max_nn_epoch or cvg
+
+        if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None and len(rewards)>0:
+            plt.clf()
+            title="neural_network_optimisation_epoch_ftq={}".format(self._id_ftq_epoch)
+            plt.plot(np.asarray(range(len(rewards)))*500, rewards, label="reward",marker='o')
+            plt.plot(np.asarray(range(len(rewards)))*500, returns, label="returns",marker='o')
+            plt.title(title)
+            plt.grid()
+            plt.savefig(self.workspace + '/' + title)
+            plt.show()
+            plt.close()
+
         torch.set_grad_enabled(False)
+        self.logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+                             .format(self._id_ftq_epoch, nn_epoch, loss))
+        if self.logger.getEffectiveLevel() is logging.INFO:
+            plot(losses,
+                 title="losses_epoch={}".format(self._id_ftq_epoch),
+                 path_save=self.workspace + "/losses_epoch={}".format(self._id_ftq_epoch))
         return losses
 
     def _compute_loss(self):

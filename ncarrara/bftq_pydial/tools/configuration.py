@@ -5,8 +5,8 @@ class ConfigurationBFTQ_PYDIAL(Configuration):
     import logging
     logger = logging.getLogger(__name__)
 
-    def create_fresh_workspace(self):
-        super(ConfigurationBFTQ_PYDIAL, self).create_fresh_workspace()
+    def create_fresh_workspace(self,force):
+        super(ConfigurationBFTQ_PYDIAL, self).create_fresh_workspace(force)
         from ncarrara.utils.os import makedirs
         makedirs(self.path_bftq)
         makedirs(self.path_bftq_results)
@@ -15,8 +15,8 @@ class ConfigurationBFTQ_PYDIAL(Configuration):
         makedirs(self.path_hdc)
         makedirs(self.path_hdc_results)
 
-    def load(self, path_config):
-        super(ConfigurationBFTQ_PYDIAL, self).load(path_config)
+    def load(self, config,seed):
+        super(ConfigurationBFTQ_PYDIAL, self).load(config,seed)
         self.path_hdc_results = self.workspace + "/hdc/results"
         self.path_hdc = self.workspace + "/hdc"
         self.path_ftq_results = self.workspace + "/ftq/results"

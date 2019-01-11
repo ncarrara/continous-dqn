@@ -11,6 +11,17 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 
 
+def plot(values,title="no title",path_save=None):
+    plt.clf()
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4), tight_layout=True)
+    ax.plot(range(len(values)), values)
+    # ax.plot([1,2,3],[1,2,3])
+    plt.title(title)
+    fig.show()
+    if path_save is not None:
+        fig.savefig(path_save)
+    plt.close()
+
 def create_Q_histograms(title, values, path, labels,inf=-1.2,sup=1.2):
     makedirs(path)
     plt.clf()
@@ -27,6 +38,7 @@ def create_Q_histograms(title, values, path, labels,inf=-1.2,sup=1.2):
     if not os.path.exists(path):
         os.mkdir(path)
     plt.savefig(path + "/" + title)
+    plt.show()
     plt.close()
 
 
@@ -59,6 +71,7 @@ def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=No
     if not os.path.exists(path):
         os.mkdir(path)
     plt.savefig(path + "/" + title)
+    plt.show()
     plt.close()
 
 

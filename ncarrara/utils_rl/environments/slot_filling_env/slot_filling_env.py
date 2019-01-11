@@ -50,6 +50,7 @@ class SlotFillingEnv(object):
 
         for cons in range(size_constraints):
             self.system_actions.append("ASK_ORAL({})".format(cons))
+        for cons in range(size_constraints):
             self.system_actions.append("ASK_NUM_PAD({})".format(cons))
         logger.info("system actions : {}".format(self.system_actions))
         self.action_space = Discrete(len(self.system_actions))

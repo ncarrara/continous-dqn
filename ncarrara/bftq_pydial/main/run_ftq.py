@@ -37,7 +37,7 @@ def main(lambdas_, empty_previous_test=False):
         return np.mean(results, axis=0)
 
     ftq = PytorchFittedQ(
-        process_between_epoch=process_between_epoch,
+        test_policy=process_between_epoch,
         workspace=C.path_ftq,
         action_str=e.action_space_str,
         policy_network=policy_network,

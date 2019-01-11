@@ -54,3 +54,6 @@ def create_arrangements(nb_elements, size_arr, current_size_arr=0, arrs=None):
                                    size_arr=size_arr,
                                    current_size_arr=current_size_arr + 1,
                                    arrs=new_arrs)
+
+if __name__=="__main__":
+    epsilon_decay(1.0,0.0005,10000,show=True)

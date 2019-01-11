@@ -20,10 +20,13 @@ class Configuration(object):
         if not self.dict:
             raise Exception("please load the configuration file")
 
-    def create_fresh_workspace(self):
+    def create_fresh_workspace(self,force=False):
         r = ''
         while r!='y' and r!='n':
-            r = input("are you sure you want to erase workspace {} [y/n] ?".format(self.workspace))
+            if force:
+                r='y'
+            else:
+                r = input("are you sure you want to erase workspace {} [y/n] ?".format(self.workspace))
             from ncarrara.utils.os import makedirs
             if r=='y':
                 self.__check__()
@@ -41,22 +44,32 @@ class Configuration(object):
         os.system("rm -rf {}".format(self.workspace))
         return self
 
-    def load(self, path_config):
+    def load(self, config, seed=None):
         if self.plt is None:
             import matplotlib.pyplot as plt
             self.plt = plt
-        with open(path_config, 'r') as infile:
-            import json
-            self.dict = json.load(infile)
+        if type(config) == type(""):
+            self.logger.info("reading config file at {}".format(config))
+            with open(config, 'r') as infile:
+                import json
+                self.dict = json.load(infile)
+        elif type(config) == type({}):
+            self.dict = config
+        else:
+            raise TypeError("Wrong type for configuration, must be a path or a dict")
 
         self.id = self.dict["general"]["id"]
         self.workspace = self.dict["general"]["workspace"]
 
-        self.seed = self.dict["general"]["seed"]
+
 
         import logging.config as config
         config.dictConfig(self.dict["general"]["dictConfig"])
 
+        if seed is not None:
+            self.logger.warning("overriding seed")
+        self.seed = seed if seed is not None else self.dict["general"]["seed"]
+        self.workspace = self.workspace+"/seed={}".format(self.seed)
         if self.seed is not None:
             from ncarrara.utils.math import set_seed
             set_seed(self.seed)

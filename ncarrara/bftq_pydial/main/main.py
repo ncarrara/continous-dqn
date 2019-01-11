@@ -7,32 +7,38 @@ import numpy as np
 import logging
 
 if len(sys.argv) > 1:
-    C.load_matplotlib('agg').load("config/{}.json".format(sys.argv[1])).create_fresh_workspace()
+    config_file = sys.argv[1]
+    seed_start= int(sys.argv[2])
+    number_seeds= int(sys.argv[3])
+    seeds = range(seed_start,seed_start+number_seeds)
+    C.load_matplotlib('agg')
 else:
-    C.load("config/camera_ready_0.json")#.create_fresh_workspace()
+    config_file = "config/final.json"
+    seeds = [0]
+
+# logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
+# logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
+
+print("seeds = {}".format(seeds))
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data
 
-# logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
-# create_data.main()
-# torch.cuda.empty_cache()
-#
-run_hdc.main(safenesses=np.linspace(0, 1, 10))
-# logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
+with open(config_file, 'r') as infile:
+    import json
+    dict = json.load(infile)
+print(json.dumps(dict, indent=4, sort_keys=True))
 
-# run_hdc.main(safenesses=[0.])
-
-betas_test = eval(C["betas_test"])
-learn_bftq.main()
-torch.cuda.empty_cache()
-test_bftq.main(betas_test=betas_test)
-torch.cuda.empty_cache()
-lambdas = eval(C["lambdas"])
-run_ftq.main(lambdas_=lambdas)
-
-# plot_data.main([
-#     # "tmp/16/hdc/results",
-#     # "tmp/16/ftq/results",
-#     "tmp/23.0/bftq/results",
-#
-# ])
+for seed in seeds:
+    C.load(dict,seed).create_fresh_workspace(force=True)
+    create_data.main()
+    torch.cuda.empty_cache()
+    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # betas_test = eval(C["betas_test"])
+    # learn_bftq.main()
+    # torch.cuda.empty_cache()
+    # test_bftq.main(betas_test=betas_test)
+    # torch.cuda.empty_cache()
+    lambdas = eval(C["lambdas"])
+    run_ftq.main(lambdas_=lambdas)
+    torch.cuda.empty_cache()
+    plot_data.main([["final2/seed=0/ftq/results"]])

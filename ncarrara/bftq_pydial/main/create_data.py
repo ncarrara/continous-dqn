@@ -42,7 +42,7 @@ def main():
         device=C.device,
         action_str=e.action_space_str,
         policy_network=policy_network,
-        process_between_epoch=process_between_epoch, **C["ftq_params"]
+        test_policy=process_between_epoch, **C["ftq_params"]
     )
 
     pi_greedy = None

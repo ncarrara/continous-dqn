@@ -41,8 +41,8 @@ def main(data_paths):
                                              edgecolor=colors[ipath],
                                              fill=True,
                                              facecolor=(1, 0, 0, 0.0), zorder=0)
-                    # ax.add_patch(rect)
-                    # plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
+                    ax.add_patch(rect)
+                    plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                     xs.append(ret_c)
                     ys.append(ret_r)
                 else:
@@ -89,14 +89,23 @@ if __name__ == "__main__":
     # ])
 
     main([
-        # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],
-        # ["tmp/camera_ready_0/ftq/results","tmp/camera_ready_1/ftq/results"],
-         ["tmp/23.0/ftq/results"],
-        ["camera_ready_0/bftq/results"],
-
+        # ["super_test_2/bftq/results"],
+        ["final2/seed=0/ftq/results"],
+        # ["super_test_2/hdc/results"],
+        # ["super_test_3/bftq/results"],
+        # ["super_test_3/ftq/results"],
+        # ["super_test_3/hdc/results"],
     ])
 
-    main([["camera_ready_1/bftq/results"]])
+    # main([
+    #     # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],
+    #     # ["tmp/camera_ready_0/ftq/results","tmp/camera_ready_1/ftq/results"],
+    #      ["tmp/23.0/ftq/results"],
+    #     ["camera_ready_0/bftq/results"],
+    #
+    # ])
+    #
+    # main([["camera_ready_1/bftq/results"]])
 
     #
     # main([

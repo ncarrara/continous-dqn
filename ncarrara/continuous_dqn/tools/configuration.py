@@ -16,8 +16,8 @@ class ConfigurationContinuousDQN(Configuration):
         makedirs(self.path_models)
         makedirs(self.path_targets)
 
-    def load(self, path_config):
-        super(ConfigurationContinuousDQN,self).load(path_config)
+    def load(self, config):
+        super(ConfigurationContinuousDQN,self).load(config)
         self.path_sources = self.workspace + "/" + "sources"
         self.path_samples = self.path_sources + "/" + "samples"
         self.path_sources_params = self.path_sources + "/" + "params.json"

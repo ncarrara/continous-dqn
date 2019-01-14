@@ -8,6 +8,9 @@ def build_feature_autoencoder(info):
         return feature_autoencoder_identity
     elif feature_str == "feature_autoencoder_pydial":
         return lambda transition: feature_autoencoder_pydial(transition, info["action_str"])
+    elif feature_str == "feature_autoencoder_slot_filling":
+        return lambda transition: feature_autoencoder_slot_filling(transition, info["e"])
+
     else:
         raise Exception("Unknown feature : {}".format(feature_str))
 
@@ -31,6 +34,13 @@ def feature_autoencoder_identity(transition):
         s_ = [0.0] * len(s)
     rez = s + [a] + [r] + s_
     return rez
+
+from ncarrara.bftq_pydial.tools.features import feature_basic
+def feature_autoencoder_slot_filling(transition, e):
+    s, a, r, s_, done, info = transition
+    s=feature_basic(s)
+    s_=feature_basic(s_)
+    return s + [a] + [r] + s_
 
 
 def feature_autoencoder_pydial(transition, action_space_str):

@@ -14,11 +14,11 @@ if len(sys.argv) > 1:
     seeds = range(seed_start, seed_start + number_seeds)
     C.load_matplotlib('agg')
 else:
-    config_file = "config/final2.json"
+    config_file = "config/final.json"
     seeds = [0]
 
 C.load_matplotlib('agg')
-
+#
 # logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
 
@@ -39,13 +39,24 @@ with open(config_file, 'r') as infile:
 #     'ftq_params.learning_rate': [0.01, 0.001]
 # }
 
+# param_grid = {
+#     'net_params.intra_layers': [[64,32]],
+#     'ftq_params.weight_decay': [0.001],
+#     'ftq_params.optimizer': ["ADAM"],
+#     'ftq_params.learning_rate': [0.01],
+#     'ftq_params.max_nn_epoch':[10000],
+#     'ftq_params.reset_policy_each_ftq_epoch':[True,False],
+#     'general.seed': seeds,
+
+# }
+
 param_grid = {
     'net_params.intra_layers': [[64,32]],
     'ftq_params.weight_decay': [0.001],
-    'ftq_params.optimizer': ["ADAM"],
+    'ftq_params.optimizer': ["RMS_PROP"],
     'ftq_params.learning_rate': [0.01],
-    'ftq_params.max_nn_epoch':[10000],
-    'ftq_params.reset_policy_each_ftq_epoch':[True,False],
+    'ftq_params.max_nn_epoch':[1000],
+    'ftq_params.reset_policy_each_ftq_epoch':[False],
     'general.seed': seeds,
 
 }
@@ -62,7 +73,6 @@ with open(workspace + "/params", 'a') as infile:
     infile.write(str_params)
 
 for i_config,params in enumerate(grid):
-    # print(params)
     for k, v in params.items():
         keys = k.split('.')
 
@@ -70,25 +80,18 @@ for i_config,params in enumerate(grid):
         for ik in range(len(keys) - 1):
             tochange = tochange[keys[ik]]
         tochange[keys[-1]] = v
-
-    print("------------------------------------------------------")
-    print("------------------------------------------------------")
-
-    print("------------------------------------------------------")
-    print("------------------------------------------------------")
-    dict["general"]["workspace"] = workspace + "/test5/" + str(i_config)
-    C.load(dict).create_fresh_workspace(force=True)
+    dict["general"]["workspace"] = workspace + "/"+ str(i_config)
+    C.load(dict).create_fresh_workspace(force=False)
+    print("workspace : {}".format(C.workspace))
     create_data.main()
     torch.cuda.empty_cache()
-    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # betas_test = eval(C["betas_test"])
-    # learn_bftq.main()
-    # torch.cuda.empty_cache()
-    # test_bftq.main(betas_test=betas_test)
-    # torch.cuda.empty_cache()
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas)
     torch.cuda.empty_cache()
-    # plot_data.main([["final/seed=0/ftq/results"]])
-
+    run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    betas_test = eval(C["betas_test"])
+    learn_bftq.main()
+    torch.cuda.empty_cache()
+    test_bftq.main(betas_test=betas_test)
+    torch.cuda.empty_cache()
 

@@ -5,20 +5,14 @@ from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, PytorchBudgetedFittedPolicy, \
-    HandcraftedSlotFillingEnv
+from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 import logging
 import os
 import numpy as np
 
 
-def main(lambdas_, empty_previous_test=False): #,intra_layers=None,weight_decay=None):
-    # if intra_layers is not None:
-    #     C["net_params"]["intra_layers"]=intra_layers
-    # if weight_decay is not None:
-    #     C["ftq_params"]["weight_decay"] = weight_decay
-
+def main(lambdas_, empty_previous_test=False):
 
     logger = logging.getLogger(__name__)
     if empty_previous_test:
@@ -48,6 +42,7 @@ def main(lambdas_, empty_previous_test=False): #,intra_layers=None,weight_decay=
 
 
     ftq = PytorchFittedQ(
+        device=C.device,
         test_policy=process_between_epoch,
         workspace=C.path_ftq,
         action_str=e.action_space_str,
@@ -60,7 +55,6 @@ def main(lambdas_, empty_previous_test=False): #,intra_layers=None,weight_decay=
     else:
         path_data = C["main"]["path_data"] + "/" + C["main"]["filename_data"]
     rm.load_memory(path_data)
-    # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel("INFO")
     makedirs(C.path_ftq_results)
     for lambda_ in lambdas_:
         transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
@@ -82,27 +76,3 @@ def main(lambdas_, empty_previous_test=False): #,intra_layers=None,weight_decay=
 if __name__ == "__main__":
     C.load("config/test_slot_filling.json")
     main(lambda_=[0])
-
-    # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel("WARNING")
-
-    # feats = [
-    #     [1.00, 0.0, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    #     [0.35, 1.00, 0.80, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 1., 0],
-    #     [0.3, 0.1, 0.8, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 0, 0, 1., 0],
-    #     [1.00, 1.00, 1.00, 1.0, 0.0, 0.0, 0, 0, 0, 1, 0, 0, 1., 0, 0, 0]
-    # ]
-    # for feat in feats:
-    #     print(feat)
-    #     q = ftq.q(feat)[0]
-    #     print("".join(["{} -> {:.2f}\n".format(e.system_actions[iy], y) for iy, y in enumerate(q)]))

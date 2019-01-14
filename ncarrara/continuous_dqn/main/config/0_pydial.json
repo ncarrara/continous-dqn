@@ -1,7 +1,66 @@
 {
   "general": {
     "id": "0_pydial",
-    "level": "INFO",
+     "dictConfig": {
+      "version": 1,
+      "disable_existing_loggers": false,
+      "formatters": {
+        "standard": {
+          "format": "[%(levelname)s] %(message)s"
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler"
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": true
+        },
+        "ncarrara.bftq_pydial.tools.features": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.os": {
+          "handlers": [
+            "default"
+          ],
+          "level": "ERROR",
+          "propagate": false
+        }
+      }
+    },
     "workspace": "tmp/0_pydial",
     "seed": 0
   },

@@ -87,20 +87,16 @@ if __name__ == "__main__":
     #     ["tmp/17.0/bftq/results", "tmp/17.0/bftq/results"],
     #
     # ])
-    rez = []
-    img = []
-    for i in range(0,4):
-        # rez.append(["tmp/final2/{}/ftq/results".format(i)])
-        img.append("tmp/final2/test2/{}/ftq/epoch=10.png".format(i))
-    # for i in range(0,11):
-        # rez.append(["tmp/final3/{}/ftq/results".format(i)])
-    # main(rez)
-    import matplotlib.image as mpimg
-    for i,path in enumerate(img):
-        xaxa = mpimg.imread(path)
-        plt.imshow(xaxa)
-        plt.title(i)
-        plt.show()
+    # rez = []
+    # img = []
+    # for i in range(0,4):
+    #     img.append("tmp/final/test5/{}/ftq/epoch=11.png".format(i))
+    # import matplotlib.image as mpimg
+    # for i,path in enumerate(img):
+    #     xaxa = mpimg.imread(path)
+    #     plt.imshow(xaxa)
+    #     plt.title(i)
+    #     plt.show()
 
     # main([
     #     # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],
@@ -110,7 +106,7 @@ if __name__ == "__main__":
     #
     # ])
     #
-    # main([["camera_ready_1/bftq/results"]])
+    main([["tmp/final/test5/0/ftq/results"]])
 
     #
     # main([

@@ -71,6 +71,8 @@ class PytorchFittedQ:
 
     def __init__(self,
                  policy_network,
+                 device,
+
                  optimizer=None,
                  loss_function=None,
                  max_ftq_epoch=np.inf,
@@ -84,7 +86,6 @@ class PytorchFittedQ:
                  nn_loss_stop_condition=0.0,
                  disp_states=[],
                  workspace="tmp",
-                 device=None,
                  action_str=None,
                  test_policy=None
                  ):
@@ -281,7 +282,7 @@ class PytorchFittedQ:
         while not stop:
             loss = self._gradient_step()
             losses.append(loss)
-            if nn_epoch%500==0:
+            if nn_epoch%100==0:
                 self.logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
                                  .format(self._id_ftq_epoch, nn_epoch, loss))
                 # if nn_epoch>1:
@@ -302,8 +303,8 @@ class PytorchFittedQ:
         if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None and len(rewards)>0:
             plt.clf()
             title="neural_network_optimisation_epoch_ftq={}".format(self._id_ftq_epoch)
-            plt.plot(np.asarray(range(len(rewards)))*500, rewards, label="reward",marker='o')
-            plt.plot(np.asarray(range(len(rewards)))*500, returns, label="returns",marker='o')
+            plt.plot(np.asarray(range(len(rewards)))*100, rewards, label="reward",marker='o')
+            plt.plot(np.asarray(range(len(rewards)))*100, returns, label="returns",marker='o')
             plt.title(title)
             plt.grid()
             plt.savefig(self.workspace + '/' + title)

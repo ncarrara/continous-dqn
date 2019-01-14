@@ -76,6 +76,7 @@ class PytorchBudgetedFittedQ:
                  betas,
                  betas_for_discretisation,
                  N_actions,
+                 device,
                  actions_str=None,
                  optimizer=None,
                  loss_function=None,
@@ -94,7 +95,10 @@ class PytorchBudgetedFittedQ:
                  disp_states_ids=[],
                  workspace="tmp",
                  print_q_function=False,
+
                  ):
+
+        self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
         self.NN_LOSS_STOP_CONDITION = nn_loss_stop_condition
@@ -111,7 +115,7 @@ class PytorchBudgetedFittedQ:
             self.actions_str = actions_str
         self.betas = betas
         self.betas_for_discretisation = betas_for_discretisation
-        self._policy_network = policy_network.to(C.device)
+        self._policy_network = policy_network.to(self.device)
         self._policy_network.reset()
         self._MAX_FTQ_EPOCH = max_ftq_epoch
         self._MAX_NN_EPOCH = max_nn_epoch
@@ -185,20 +189,20 @@ class PytorchBudgetedFittedQ:
             if hull_key in hull_keys:
                 hull_id = hull_keys[hull_key]
             else:
-                hull_id = torch.tensor([[[lastkeyid]]], device=C.device, dtype=torch.long)
+                hull_id = torch.tensor([[[lastkeyid]]], device=self.device, dtype=torch.long)
                 lastkeyid += 1
                 hull_keys[hull_key] = hull_id
             for beta in self.betas:
                 if t.next_state is not None:
-                    next_state = torch.tensor([[t.next_state]], device=C.device, dtype=torch.float)
+                    next_state = torch.tensor([[t.next_state]], device=self.device, dtype=torch.float)
                 else:
-                    next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=C.device,
+                    next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=self.device,
                                               dtype=torch.float)
-                action = torch.tensor([[t.action]], device=C.device, dtype=torch.long)
-                reward = torch.tensor([t.reward], device=C.device, dtype=torch.float)
-                constraint = torch.tensor([t.constraint], device=C.device, dtype=torch.float)
-                state = torch.tensor([[t.state]], device=C.device, dtype=torch.float)
-                beta = torch.tensor([[[beta]]], device=C.device, dtype=torch.float)
+                action = torch.tensor([[t.action]], device=self.device, dtype=torch.long)
+                reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
+                constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
+                state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
+                beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
 
                 self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
@@ -293,7 +297,7 @@ class PytorchBudgetedFittedQ:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                        hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
+                        hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                                  Q=self._policy_network,
                                                  action_mask=np.zeros(self.N_actions),
                                                  id="next_state_" + id, disp=True)
@@ -308,7 +312,7 @@ class PytorchBudgetedFittedQ:
                     self.draw_Qr_and_Qc(state, self._policy_network,
                                         "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                    hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
+                    hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                              Q=self._policy_network,
                                              action_mask=np.zeros(self.N_actions),
                                              id="next_state_" + id, disp=True)
@@ -320,7 +324,7 @@ class PytorchBudgetedFittedQ:
                     self.draw_Qr_and_Qc(state, self._policy_network,
                                         "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                    hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32),
+                    hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                              Q=self._policy_network,
                                              action_mask=np.zeros(self.N_actions),
                                              id="state_final_hulls_" + id, disp=True)
@@ -328,7 +332,7 @@ class PytorchBudgetedFittedQ:
         pi = self.build_policy(self._policy_network)
 
         def pi_tmp(state, beta):
-            hull = self.convexe_hull(s=torch.tensor([state],device=C.device,
+            hull = self.convexe_hull(s=torch.tensor([state],device=self.device,
                                                     dtype=torch.float32),
                                      Q=copy.deepcopy(self._policy_network),
                                      action_mask=np.zeros(self.N_actions),
@@ -348,7 +352,7 @@ class PytorchBudgetedFittedQ:
     def load_policy(self):
         path = self.workspace + "/policy.pt"
         logger.info("loading bftq policy at {}".format(path))
-        network = torch.load(path, map_location=C.device)
+        network = torch.load(path, map_location=self.device)
         pi = self.build_policy(network)
         return pi
 
@@ -359,7 +363,7 @@ class PytorchBudgetedFittedQ:
             with torch.no_grad():
                 if not type(action_mask) == type(np.zeros(1)):
                     action_mask = np.asarray(action_mask)
-                hull = self.convexe_hull(s=torch.tensor([state], device=C.device, dtype=torch.float32), Q=final_network,
+                hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32), Q=final_network,
                                          action_mask=action_mask,
                                          id="run_" + str(state), disp=False)
                 opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
@@ -376,7 +380,7 @@ class PytorchBudgetedFittedQ:
 
     def compute_opts(self, hulls):
         next_state_beta = torch.zeros((self.size_mini_batch * 2, 1, self._policy_network.size_state + 1),
-                                      device=C.device)
+                                      device=self.device)
         i = 0
         opts = [None] * self.size_mini_batch
 
@@ -402,12 +406,12 @@ class PytorchBudgetedFittedQ:
                 status[stats["status"]] += 1
                 # print(next_state.shape)
                 # print(next_state)
-                # print(torch.tensor([[[opts[i].budget_inf]]], device=C.device, dtype=torch.float32).shape)
+                # print(torch.tensor([[[opts[i].budget_inf]]], device=self.device, dtype=torch.float32).shape)
                 next_state_beta[i * 2 + 0][0] = torch.cat(
-                    (next_state, torch.tensor([[[opts[i].budget_inf]]], device=C.device, dtype=torch.float32)),
+                    (next_state, torch.tensor([[[opts[i].budget_inf]]], device=self.device, dtype=torch.float32)),
                     dim=2)
                 next_state_beta[i * 2 + 1][0] = torch.cat(
-                    (next_state, torch.tensor([[[opts[i].budget_sup]]], device=C.device, dtype=torch.float32)),
+                    (next_state, torch.tensor([[[opts[i].budget_sup]]], device=self.device, dtype=torch.float32)),
                     dim=2)
 
             i += 1
@@ -421,8 +425,8 @@ class PytorchBudgetedFittedQ:
         return opts, next_state_beta
 
     def compute_next_values(self, Q, opts):
-        next_state_rewards = torch.zeros(self.size_mini_batch, device=C.device)
-        next_state_constraints = torch.zeros(self.size_mini_batch, device=C.device)
+        next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
+        next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
         i = 0
         i_non_terminal = 0
         found = False
@@ -485,8 +489,8 @@ class PytorchBudgetedFittedQ:
             Q_next = self._policy_network(next_state_beta)
             next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
         else:
-            next_state_rewards = torch.zeros(self.size_mini_batch, device=C.device)
-            next_state_constraints = torch.zeros(self.size_mini_batch, device=C.device)
+            next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
+            next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
 
         expected_state_action_rewards = self._reward_batch + (self._GAMMA * next_state_rewards)
         expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
@@ -595,7 +599,7 @@ class PytorchBudgetedFittedQ:
             Q=Q,
             action_mask=action_mask,
             betas=self.betas_for_discretisation,
-            device=C.device,
+            device=self.device,
             disp=disp,
             path=self.workspace,
             id=id)
@@ -644,7 +648,7 @@ class PytorchBudgetedFittedQ:
         yc = np.zeros((len(betas), self.N_actions))
         for idx, beta in enumerate(betas):
             # print( s
-            qrqc = Q(torch.tensor([[np.append(s, beta)]], device=C.device).float()).cpu().detach().numpy()
+            qrqc = Q(torch.tensor([[np.append(s, beta)]], device=self.device).float()).cpu().detach().numpy()
             # print( qrqc
             yr[idx] = qrqc[0][:self.N_actions]
             yc[idx] = qrqc[0][self.N_actions:]

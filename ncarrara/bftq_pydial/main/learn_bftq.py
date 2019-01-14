@@ -31,6 +31,7 @@ def main():
     betas = eval(C["betas"])
 
     bftq = PytorchBudgetedFittedQ(
+        device=C.device,
         workspace=C.path_bftq,
         betas=betas,
         betas_for_discretisation=betas,

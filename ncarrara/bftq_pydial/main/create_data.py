@@ -1,4 +1,6 @@
 # coding=utf-8
+from ncarrara.bftq_pydial.tools.configuration import C
+# C.load_matplotlib('agg')
 from ncarrara.bftq_pydial.tools.features import feature_factory
 from ncarrara.utils.math import epsilon_decay
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
@@ -7,7 +9,7 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, RandomPolicy, HandcraftedSlotFillingEnv
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
-from ncarrara.bftq_pydial.tools.configuration import C
+
 
 import numpy as np
 from gym_pydial.env.env_pydial import EnvPydial
@@ -42,7 +44,8 @@ def main():
         device=C.device,
         action_str=e.action_space_str,
         policy_network=policy_network,
-        test_policy=process_between_epoch, **C["ftq_params"]
+        test_policy=process_between_epoch,
+        **C["ftq_params"]
     )
 
     pi_greedy = None
@@ -89,5 +92,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/test_slot_filling.json")
+    C.load("config/final.json").create_fresh_workspace()
     main()

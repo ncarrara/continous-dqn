@@ -13,7 +13,13 @@ import os
 import numpy as np
 
 
-def main(lambdas_, empty_previous_test=False):
+def main(lambdas_, empty_previous_test=False): #,intra_layers=None,weight_decay=None):
+    # if intra_layers is not None:
+    #     C["net_params"]["intra_layers"]=intra_layers
+    # if weight_decay is not None:
+    #     C["ftq_params"]["weight_decay"] = weight_decay
+
+
     logger = logging.getLogger(__name__)
     if empty_previous_test:
         empty_directory(C.path_ftq_results)
@@ -21,10 +27,13 @@ def main(lambdas_, empty_previous_test=False):
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
+    print(e.action_space.n)
     feature =feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
     logger.info("neural net input size : {}".format(size_state))
+
+
 
     policy_network = NetFTQ(n_in=size_state,
                             n_out=e.action_space.n,
@@ -35,6 +44,8 @@ def main(lambdas_, empty_previous_test=False):
         pi = PytorchFittedPolicy(pi, e, feature)
         _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], C["nb_trajs_between_epoch"], 1.)
         return np.mean(results, axis=0)
+
+
 
     ftq = PytorchFittedQ(
         test_policy=process_between_epoch,

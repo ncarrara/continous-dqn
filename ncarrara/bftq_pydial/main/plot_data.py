@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(data_paths):
-    colors = ["r", "g", "b", "purple", "grey", "black", "yellow", 'orange']
+    # colors = ["r", "g", "b", "purple", "grey", "black", "yellow", 'orange']
     fig, ax = plt.subplots(1, figsize=(6, 5))
 
     for ipath, data_path_tuple in enumerate(data_paths):
@@ -38,7 +38,7 @@ def main(data_paths):
                                              2 * confidence_c,
                                              2 * confidence_r,
                                              linewidth=1.0,
-                                             edgecolor=colors[ipath],
+                                             # edgecolor=colors[ipath],
                                              fill=True,
                                              facecolor=(1, 0, 0, 0.0), zorder=0)
                     ax.add_patch(rect)
@@ -63,8 +63,8 @@ def main(data_paths):
             all_ys=np.mean(all_ys, 0)
         for i,param in enumerate(params):
             plt.annotate("{:.2f}".format(param), (all_xs[i], all_ys[i]))
-        plt.scatter(all_xs, all_ys, color=colors[ipath], label=r"$data_path$", zorder=2)
-    plt.legend(data_paths)
+        plt.scatter(all_xs, all_ys,  label=r"$data_path$", zorder=2)#,color=colors[ipath],)
+    # plt.legend(data_paths,loc='center left', bbox_to_anchor=(1, 0.5))
     # plt.title(C["general"]["id"])
     plt.show()
     plt.savefig(data_path + "/results.png")
@@ -87,15 +87,20 @@ if __name__ == "__main__":
     #     ["tmp/17.0/bftq/results", "tmp/17.0/bftq/results"],
     #
     # ])
-
-    main([
-        # ["super_test_2/bftq/results"],
-        ["final2/seed=0/ftq/results"],
-        # ["super_test_2/hdc/results"],
-        # ["super_test_3/bftq/results"],
-        # ["super_test_3/ftq/results"],
-        # ["super_test_3/hdc/results"],
-    ])
+    rez = []
+    img = []
+    for i in range(0,4):
+        # rez.append(["tmp/final2/{}/ftq/results".format(i)])
+        img.append("tmp/final2/test2/{}/ftq/epoch=10.png".format(i))
+    # for i in range(0,11):
+        # rez.append(["tmp/final3/{}/ftq/results".format(i)])
+    # main(rez)
+    import matplotlib.image as mpimg
+    for i,path in enumerate(img):
+        xaxa = mpimg.imread(path)
+        plt.imshow(xaxa)
+        plt.title(i)
+        plt.show()
 
     # main([
     #     # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],

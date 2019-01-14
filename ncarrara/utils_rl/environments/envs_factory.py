@@ -7,7 +7,7 @@ from ncarrara.utils_rl.environments.cart_pole_config_env import CartPoleConfigEn
 from ncarrara.utils_rl.environments.mountain_car_config_env import MountainCarConfigEnv
 from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
-
+import numpy as np
 logger = logging.getLogger(__name__)
 
 

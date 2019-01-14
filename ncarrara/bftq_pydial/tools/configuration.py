@@ -15,8 +15,8 @@ class ConfigurationBFTQ_PYDIAL(Configuration):
         makedirs(self.path_hdc)
         makedirs(self.path_hdc_results)
 
-    def load(self, config,seed):
-        super(ConfigurationBFTQ_PYDIAL, self).load(config,seed)
+    def load(self, config):
+        super(ConfigurationBFTQ_PYDIAL, self).load(config)
         self.path_hdc_results = self.workspace + "/hdc/results"
         self.path_hdc = self.workspace + "/hdc"
         self.path_ftq_results = self.workspace + "/ftq/results"

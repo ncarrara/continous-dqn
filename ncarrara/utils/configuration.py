@@ -44,7 +44,7 @@ class Configuration(object):
         os.system("rm -rf {}".format(self.workspace))
         return self
 
-    def load(self, config, seed=None):
+    def load(self, config):
         if self.plt is None:
             import matplotlib.pyplot as plt
             self.plt = plt
@@ -66,10 +66,9 @@ class Configuration(object):
         import logging.config as config
         config.dictConfig(self.dict["general"]["dictConfig"])
 
-        if seed is not None:
-            self.logger.warning("overriding seed")
-        self.seed = seed if seed is not None else self.dict["general"]["seed"]
-        self.workspace = self.workspace+"/seed={}".format(self.seed)
+        # if seed is not None:
+        #     self.logger.warning("overriding seed")
+        self.seed = self.dict["general"]["seed"]
         if self.seed is not None:
             from ncarrara.utils.math import set_seed
             set_seed(self.seed)

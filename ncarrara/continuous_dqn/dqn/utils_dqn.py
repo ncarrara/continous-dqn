@@ -5,7 +5,6 @@ import random
 import numpy as np
 import logging
 
-from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.utils.math import epsilon_decay, set_seed
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 
@@ -41,7 +40,7 @@ def run_dqn(env, autoencoders, ers, net_params, dqn_params, decay, N, seed, test
     dqn = DQN(policy_network=net, **dqn_params)
     dqn.reset()
     set_seed(seed=seed)
-    env.seed(C.seed)
+    env.seed(seed)
     rrr = []
     rrr_greedy = []
     epsilons = epsilon_decay(start=start_decay, decay=decay, N=N)

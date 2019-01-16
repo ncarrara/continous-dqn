@@ -106,7 +106,11 @@ if __name__ == "__main__":
     #
     # ])
     #
-    main([["tmp/final/test5/0/ftq/results"]])
+    main([
+        ["tmp/final/3/ftq/results"],
+        ["tmp/final/3/bftq/results"],
+        ["tmp/final/3/hdc/results"],
+          ])
 
     #
     # main([

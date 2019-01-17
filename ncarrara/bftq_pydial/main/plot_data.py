@@ -58,12 +58,12 @@ def main(data_paths):
 
         print(all_xs)
         print(all_ys)
-        if len(data_path_tuple)>1:
-            all_xs= np.mean(all_xs, 0)
-            all_ys=np.mean(all_ys, 0)
-        for i,param in enumerate(params):
+        if len(data_path_tuple) > 1:
+            all_xs = np.mean(all_xs, 0)
+            all_ys = np.mean(all_ys, 0)
+        for i, param in enumerate(params):
             plt.annotate("{:.2f}".format(param), (all_xs[i], all_ys[i]))
-        plt.scatter(all_xs, all_ys,  label=r"$data_path$", zorder=2)#,color=colors[ipath],)
+        plt.scatter(all_xs, all_ys, label=r"$data_path$", zorder=2)  # ,color=colors[ipath],)
     # plt.legend(data_paths,loc='center left', bbox_to_anchor=(1, 0.5))
     # plt.title(C["general"]["id"])
     plt.show()
@@ -106,7 +106,19 @@ if __name__ == "__main__":
     #
     # ])
     #
-    main([["tmp/final/test5/0/ftq/results"]])
+    todo = [[],[],[]]
+    for i in [0,5]:
+        main([
+            ["tmp/final/{}/ftq/results".format(i)],
+            ["tmp/final/{}/bftq/results".format(i)],
+            ["tmp/final/{}/hdc/results".format(i)]],
+
+        )
+
+        todo[0].append("tmp/final/{}/ftq/results".format(i))
+        todo[1].append("tmp/final/{}/bftq/results".format(i))
+        todo[2].append("tmp/final/{}/hdc/results".format(i))
+    main(todo)
 
     #
     # main([

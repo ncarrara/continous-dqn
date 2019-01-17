@@ -1,11 +1,14 @@
 # from ncarrara.bftq_pydial.main.plot_data import main
 import torch
 from sklearn.model_selection import ParameterGrid
-
+import os
 from ncarrara.bftq_pydial.tools.configuration import C
 import sys
 import numpy as np
 import logging
+import re
+
+from ncarrara.utils.os import makedirs
 
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
@@ -24,13 +27,14 @@ C.load_matplotlib('agg')
 
 print("seeds = {}".format(seeds))
 
-from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data
+from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
 
 with open(config_file, 'r') as infile:
     import json
 
     dict = json.load(infile)
     workspace = dict["general"]["workspace"]
+    makedirs(workspace)
 # param_grid = {
 #     'general.seed': seeds,
 #     'net_params.intra_layers': [[128, 256], [32, 64], [512, 256, 128, 64, 32], [32, 128, 256, 512], [64, 128]],
@@ -51,28 +55,37 @@ with open(config_file, 'r') as infile:
 # }
 
 param_grid = {
-    'net_params.intra_layers': [[64,32]],
-    'ftq_params.weight_decay': [0.001],
-    'ftq_params.optimizer': ["RMS_PROP"],
-    'ftq_params.learning_rate': [0.01],
-    'ftq_params.max_nn_epoch':[1000],
-    'ftq_params.reset_policy_each_ftq_epoch':[False],
+    # 'net_params.intra_layers': [[64,32]],
+    # 'ftq_params.weight_decay': [0.001],
+    # 'ftq_params.optimizer': ["RMS_PROP"],
+    # 'ftq_params.learning_rate': [0.01],
+    # 'ftq_params.max_nn_epoch':[1000],
+    # 'ftq_params.reset_policy_each_ftq_epoch':[True],
     'general.seed': seeds,
 
 }
 
 
 grid = ParameterGrid(param_grid)
-print(grid)
+
+if os.path.exists(workspace + "/params"):
+    with open(workspace + "/params", 'r') as infile:
+        lines = infile.readlines()
+        print(lines)
+        id_offset = re.match('^id=([0-9]+) ', lines[-1])
+    id_offset = int(id_offset.group(1))+1
+else:
+    id_offset=0
+
 str_params = ""
 for i_config,params in enumerate(grid):
-    str_params += "id=" + str(i_config) + ' ' + ''.join([k + "=" + str(v) + ' ' for k, v in params.items()]) + '\n'
-print(str_params)
+    str_params += "id=" + str(id_offset + i_config) + ' ' + ''.join([k + "=" + str(v) + ' ' for k, v in params.items()]) + '\n'
 
 with open(workspace + "/params", 'a') as infile:
     infile.write(str_params)
 
 for i_config,params in enumerate(grid):
+    i_config = id_offset + i_config
     for k, v in params.items():
         keys = k.split('.')
 
@@ -81,17 +94,20 @@ for i_config,params in enumerate(grid):
             tochange = tochange[keys[ik]]
         tochange[keys[-1]] = v
     dict["general"]["workspace"] = workspace + "/"+ str(i_config)
-    C.load(dict).create_fresh_workspace(force=False)
+    C.load(dict).create_fresh_workspace(force=True)
     print("workspace : {}".format(C.workspace))
-    create_data.main()
-    torch.cuda.empty_cache()
+
+    run_dqn.main()
+
+    # create_data.main()
+    # torch.cuda.empty_cache()
     lambdas = eval(C["lambdas"])
-    run_ftq.main(lambdas_=lambdas)
-    torch.cuda.empty_cache()
-    run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    betas_test = eval(C["betas_test"])
-    learn_bftq.main()
-    torch.cuda.empty_cache()
-    test_bftq.main(betas_test=betas_test)
-    torch.cuda.empty_cache()
+    run_ftq.main(lambdas_=lambdas,empty_previous_test=True)
+    # torch.cuda.empty_cache()
+    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # betas_test = eval(C["betas_test"])
+    # learn_bftq.main()
+    # torch.cuda.empty_cache()
+    # test_bftq.main(betas_test=betas_test)
+    # torch.cuda.empty_cache()
 

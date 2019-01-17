@@ -282,8 +282,8 @@ class PytorchFittedQ:
         while not stop:
             loss = self._gradient_step()
             losses.append(loss)
-            if nn_epoch%100==0:
-                self.logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+            if nn_epoch%500==0:
+                self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
                                  .format(self._id_ftq_epoch, nn_epoch, loss))
                 # if nn_epoch>1:
                 #     print("delta loss = {:.5f}".format(np.abs(losses[-1] - losses[-2])))
@@ -312,7 +312,7 @@ class PytorchFittedQ:
             plt.close()
 
         torch.set_grad_enabled(False)
-        self.logger.info("[epoch_bftq={:02}][epoch_nn={:03}] loss={:.4f}"
+        self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
                              .format(self._id_ftq_epoch, nn_epoch, loss))
         if self.logger.getEffectiveLevel() is logging.INFO:
             plot(losses,

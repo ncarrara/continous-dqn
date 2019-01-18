@@ -35,8 +35,13 @@ def main(empty_previous_test=False):
     e.seed(C["general"]["seed"])
     rrr = []
     rrr_greedy = []
+    ret_r_greedy=[]
+    ret_c_greedy=[]
+    rew_r_greedy=[]
+    rew_c_greedy=[]
     nb_samples = 0
     rm = Memory()
+    result = np.zeros((N, 4))
     for n in range(N):
         s = e.reset()
         done = False
@@ -87,6 +92,10 @@ def main(empty_previous_test=False):
         done = False
         rr = 0
         it = 0
+        rew_r = 0.
+        ret_r = 0.
+        rew_c = 0.
+        ret_c = 0.
         while not done:
             if hasattr(e, "action_space_executable"):
                 exec = e.action_space_executable()
@@ -98,7 +107,13 @@ def main(empty_previous_test=False):
                 a = dqn.pi(feature(s,e), np.zeros(e.action_space.n))
 
             s_, r_, done, info = e.step(a)
+            c_ = info["c_"]
+            rew_r += r_
+            rew_c += c_
+            ret_r += r_ * (C["gamma"] ** it)
+            ret_c += c_ * (C["gamma_c"] ** it)
             rr += r_
+
             s = s_
             it += 1
             if it % 100 == 0:
@@ -108,20 +123,23 @@ def main(empty_previous_test=False):
                 logger.warning("Max size trajectory reached")
                 break
         rrr_greedy.append(rr)
-        
+        result[n] = np.array([rew_r, rew_c, ret_r, ret_c])
+    logger.info("[execute_policy] saving results at : {}".format(C.path_dqn_results))
+    np.savetxt(C.path_dqn_results+"/greedy_lambda_=0.result", result)
         # if n%100 ==99 and n > 0:
-    nb_traj_packet = 100
-    a = np.reshape(rrr,(int(N/nb_traj_packet),-1))
-    a = np.mean(a,1)
-    x = np.asarray(range(len(a))) * nb_traj_packet
-    plt.plot(x, a)
-    a = np.reshape(rrr_greedy, (int(N/nb_traj_packet), -1))
-    a = np.mean(a, 1)
-    plt.plot(x, a)
-    plt.title("dqn results")
-    plt.show()
-    plt.savefig(C.workspace + '/' + "dqn_create_data")
-    plt.close()
+    if N>100:
+        nb_traj_packet = 100
+        a = np.reshape(rrr,(int(N/nb_traj_packet),-1))
+        a = np.mean(a,1)
+        x = np.asarray(range(len(a))) * nb_traj_packet
+        plt.plot(x, a)
+        a = np.reshape(rrr_greedy, (int(N/nb_traj_packet), -1))
+        a = np.mean(a, 1)
+        plt.plot(x, a)
+        plt.title("dqn results")
+        plt.show()
+        plt.savefig(C.workspace + '/' + "dqn_create_data")
+        plt.close()
     rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"])
 
 if __name__ == "__main__":

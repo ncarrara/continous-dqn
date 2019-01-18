@@ -107,7 +107,7 @@ if __name__ == "__main__":
     # ])
     #
     todo = [[],[],[]]
-    for i in [14]:
+    for i in [15,20]:
         main([
             ["tmp/final/{}/ftq/results".format(i)],
             ["tmp/final/{}/bftq/results".format(i)],

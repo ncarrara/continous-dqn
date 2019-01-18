@@ -17,8 +17,8 @@ if len(sys.argv) > 1:
     seeds = range(seed_start, seed_start + number_seeds)
     C.load_matplotlib('agg')
 else:
-    config_file = "config/final.json"
-    seeds = [0]
+    config_file = "config/test.json"
+    seeds = [0,1]
 
 C.load_matplotlib('agg')
 #
@@ -99,15 +99,15 @@ for i_config,params in enumerate(grid):
 
     run_dqn.main()
 
-    # create_data.main()
-    torch.cuda.empty_cache()
+    # # create_data.main()
+    # # torch.cuda.empty_cache()
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas,empty_previous_test=True)
-    torch.cuda.empty_cache()
-    run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    betas_test = eval(C["betas_test"])
-    learn_bftq.main()
-    torch.cuda.empty_cache()
-    test_bftq.main(betas_test=betas_test)
-    torch.cuda.empty_cache()
+    # # torch.cuda.empty_cache()
+    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # betas_test = eval(C["betas_test"])
+    # learn_bftq.main()
+    # # torch.cuda.empty_cache()
+    # test_bftq.main(betas_test=betas_test)
+    # # torch.cuda.empty_cache()
 

@@ -55,23 +55,15 @@ with open(config_file, 'r') as infile:
 # }
 
 param_grid = {
-    # 'net_params.intra_layers': [[64,32]],
-    # 'ftq_params.weight_decay': [0.001],
-    # 'ftq_params.optimizer': ["RMS_PROP"],
-    # 'ftq_params.learning_rate': [0.01],
-    # 'ftq_params.max_nn_epoch':[1000],
-    # 'ftq_params.reset_policy_each_ftq_epoch':[True],
     'general.seed': seeds,
-
 }
-
 
 grid = ParameterGrid(param_grid)
 
 if os.path.exists(workspace + "/params"):
     with open(workspace + "/params", 'r') as infile:
         lines = infile.readlines()
-        print(lines)
+        # print(lines)
         id_offset = re.match('^id=([0-9]+) ', lines[-1])
     id_offset = int(id_offset.group(1))+1
 else:
@@ -95,19 +87,21 @@ for i_config,params in enumerate(grid):
         tochange[keys[-1]] = v
     dict["general"]["workspace"] = workspace + "/"+ str(i_config)
     C.load(dict).create_fresh_workspace(force=True)
-    print("workspace : {}".format(C.workspace))
+    print("\n-------- i_config={} ----------\n".format(i_config))
 
+
+    # CREATE DATA DQN or FTQ #
     run_dqn.main()
-
-    # # create_data.main()
-    # # torch.cuda.empty_cache()
+    # create_data.main()
+    # HDC #
+    run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # FTQ #
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas,empty_previous_test=True)
-    # # torch.cuda.empty_cache()
-    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # betas_test = eval(C["betas_test"])
-    # learn_bftq.main()
-    # # torch.cuda.empty_cache()
-    # test_bftq.main(betas_test=betas_test)
-    # # torch.cuda.empty_cache()
+    # BFTQ #
+    betas_test = eval(C["betas_test"])
+    learn_bftq.main()
+    test_bftq.main(betas_test=betas_test)
+
+
 

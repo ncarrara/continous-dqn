@@ -294,33 +294,20 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
     x = np.zeros((N_OK_actions, len(betas)))
     y = np.zeros((N_OK_actions, len(betas)))
     i_beta = 0
-    torch.set_grad_enabled(False)
     for beta in betas:
-        # print s,beta
-        # print torch.tensor([[beta]],device=device,dtype=torch.float64)
-        b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
-        # xx=s.float()
-        # print s,b_
-        sb = torch.cat((s.float(), b_), 1)
-        sb = sb.unsqueeze(0)
-        # print sb
-        # exit()
-        QQ = Q(sb)[0]
-        # print QQ
-        # exit()
-        QQ = QQ.cpu().detach().numpy()
-        # print QQ
-        # exit()
-        # QQ = Q(x=torch.tensor([[np.append(s, beta)]],device=device).float()).cpu().data.numpy()[0]
+        with torch.no_grad():
+            b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
+            sb = torch.cat((s.float(), b_), 1)
+            sb = sb.unsqueeze(0)
+            QQ = Q(sb)[0]
+            QQ = QQ.cpu().detach().numpy()
         for i_a, mask in enumerate(action_mask):
             i_a_ok_act = 0
             if mask == 1:
                 pass
             else:
-                # Qr, Qc = Q(s, act, beta)  # Q_as[i_a](beta)
                 Qr = QQ[i_a]  # TODO c'est peut etre l'inverse ici
                 Qc = QQ[i_a + len(action_mask)]
-                # print Qr,Qc
                 x[i_a_ok_act][i_beta] = Qc
                 y[i_a_ok_act][i_beta] = Qr
                 if Qr > max_Qr:

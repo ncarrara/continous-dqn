@@ -41,8 +41,8 @@ def main(data_paths):
                                              # edgecolor=colors[ipath],
                                              fill=True,
                                              facecolor=(1, 0, 0, 0.0), zorder=0)
-                    ax.add_patch(rect)
-                    plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
+                    # ax.add_patch(rect)
+                    # plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                     xs.append(ret_c)
                     ys.append(ret_r)
                 else:
@@ -107,7 +107,8 @@ if __name__ == "__main__":
     # ])
     #
     todo = [[],[],[]]
-    for i in [15,20]:
+    # for i in [0,1,30]:
+    for i in [31]:
         main([
             ["tmp/final/{}/ftq/results".format(i)],
             ["tmp/final/{}/bftq/results".format(i)],

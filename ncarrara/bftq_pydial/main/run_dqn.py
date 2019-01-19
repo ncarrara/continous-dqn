@@ -21,7 +21,6 @@ def main(empty_previous_test=False):
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
-    print(e.action_space.n)
     feature = feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
@@ -35,10 +34,6 @@ def main(empty_previous_test=False):
     e.seed(C["general"]["seed"])
     rrr = []
     rrr_greedy = []
-    ret_r_greedy=[]
-    ret_c_greedy=[]
-    rew_r_greedy=[]
-    rew_c_greedy=[]
     nb_samples = 0
     rm = Memory()
     result = np.zeros((N, 4))
@@ -126,7 +121,6 @@ def main(empty_previous_test=False):
         result[n] = np.array([rew_r, rew_c, ret_r, ret_c])
     logger.info("[execute_policy] saving results at : {}".format(C.path_dqn_results))
     np.savetxt(C.path_dqn_results+"/greedy_lambda_=0.result", result)
-        # if n%100 ==99 and n > 0:
     if N>100:
         nb_traj_packet = 100
         a = np.reshape(rrr,(int(N/nb_traj_packet),-1))

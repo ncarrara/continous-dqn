@@ -360,17 +360,17 @@ class PytorchBudgetedFittedQ:
         final_network = copy.deepcopy(network)
 
         def pi(state, beta, action_mask):
-            with torch.no_grad():
-                if not type(action_mask) == type(np.zeros(1)):
-                    action_mask = np.asarray(action_mask)
-                hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32), Q=final_network,
-                                         action_mask=action_mask,
-                                         id="run_" + str(state), disp=False)
-                opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
-                rand = np.random.random()
-                a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
-                b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
-                return a, b
+            # with torch.no_grad():
+            if not type(action_mask) == type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
+            hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32), Q=final_network,
+                                     action_mask=action_mask,
+                                     id="run_" + str(state), disp=False)
+            opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
+            rand = np.random.random()
+            a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
+            b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
+            return a, b
 
         return pi
 
@@ -480,55 +480,53 @@ class PytorchBudgetedFittedQ:
         return next_state_rewards, next_state_constraints
 
     def _ftq_epoch(self):
+        with torch.no_grad():
+            if self._id_ftq_epoch > 0:
+                hulls = self.compute_hulls(self._next_state_batch, self._hull_id_batch, self._policy_network, disp=False)
+                piapib, next_state_beta = self.compute_opts(hulls)
+                # torch.set_grad_enabled(False)
 
-        if self._id_ftq_epoch > 0:
-            hulls = self.compute_hulls(self._next_state_batch, self._hull_id_batch, self._policy_network, disp=False)
-            piapib, next_state_beta = self.compute_opts(hulls)
-            # print tu.get_gpu_memory_map()
-            torch.set_grad_enabled(False)
-            Q_next = self._policy_network(next_state_beta)
-            next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
-        else:
-            next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
-            next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
+                Q_next = self._policy_network(next_state_beta)
+                next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
+            else:
+                next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
+                next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
 
-        expected_state_action_rewards = self._reward_batch + (self._GAMMA * next_state_rewards)
-        expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
+            expected_state_action_rewards = self._reward_batch + (self._GAMMA * next_state_rewards)
+            expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
+
         losses = self._optimize_model(expected_state_action_rewards, expected_state_action_constraints)
 
         if logger.getEffectiveLevel() is logging.INFO:
-            print("Creating histograms ...")
-            QQ = self._policy_network(self._state_beta_batch)
-            state_action_rewards = QQ.gather(1, self._action_batch)
-            state_action_constraints = QQ.gather(1, self._action_batch + self.N_actions)
-            # print(expected_state_action_rewards.cpu().numpy())
-            # print(expected_state_action_constraints.cpu().numpy())
-            # print(state_action_constraints.cpu().numpy().flat)
-            create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                values=[expected_state_action_rewards.cpu().numpy(),
-                                        state_action_rewards.cpu().numpy().flat],
-                                path=self.workspace + "/histogram",
-                                labels=["target", "prediction"])
-            create_Q_histograms(title="Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                values=[expected_state_action_constraints.cpu().numpy(),
-                                        state_action_constraints.cpu().numpy().flat],
-                                path=self.workspace + "/histogram",
-                                labels=["target", "prediction"])
+            with torch.no_grad():
+                logger.info("Creating histograms ...")
+                QQ = self._policy_network(self._state_beta_batch)
+                state_action_rewards = QQ.gather(1, self._action_batch)
+                state_action_constraints = QQ.gather(1, self._action_batch + self.N_actions)
+                create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
+                                    values=[expected_state_action_rewards.cpu().numpy(),
+                                            state_action_rewards.cpu().numpy().flat],
+                                    path=self.workspace + "/histogram",
+                                    labels=["target", "prediction"])
+                create_Q_histograms(title="Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
+                                    values=[expected_state_action_constraints.cpu().numpy(),
+                                            state_action_constraints.cpu().numpy().flat],
+                                    path=self.workspace + "/histogram",
+                                    labels=["target", "prediction"])
 
-            # QQ = self._policy_network(self._state_batch)
-            QQr = QQ[:, 0:self.N_actions]
-            QQc = QQ[:, self.N_actions:2 * self.N_actions]
-            mask_action = np.zeros(len(self.actions_str))
-            fast_create_Q_histograms_for_actions(title="actions_Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                                 QQ=QQr.cpu().numpy(),
-                                                 path=self.workspace + "/histogram",
-                                                 labels=self.actions_str,
-                                                 mask_action=mask_action)
-            fast_create_Q_histograms_for_actions(title="actions_Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                                 QQ=QQc.cpu().numpy(),
-                                                 path=self.workspace + "/histogram",
-                                                 labels=self.actions_str,
-                                                 mask_action=mask_action)
+                QQr = QQ[:, 0:self.N_actions]
+                QQc = QQ[:, self.N_actions:2 * self.N_actions]
+                mask_action = np.zeros(len(self.actions_str))
+                fast_create_Q_histograms_for_actions(title="actions_Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
+                                                     QQ=QQr.cpu().numpy(),
+                                                     path=self.workspace + "/histogram",
+                                                     labels=self.actions_str,
+                                                     mask_action=mask_action)
+                fast_create_Q_histograms_for_actions(title="actions_Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
+                                                     QQ=QQc.cpu().numpy(),
+                                                     path=self.workspace + "/histogram",
+                                                     labels=self.actions_str,
+                                                     mask_action=mask_action)
 
         return losses
 
@@ -543,7 +541,7 @@ class PytorchBudgetedFittedQ:
         nn_epoch = 0
         losses = []
         last_loss = np.inf
-        torch.set_grad_enabled(True)
+        # torch.set_grad_enabled(True)
         while not stop:
             loss = self._gradient_step(expected_state_action_rewards, expected_state_action_constraints)
             losses.append(loss)
@@ -564,7 +562,7 @@ class PytorchBudgetedFittedQ:
                             .format(self._id_ftq_epoch, nn_epoch - 3 + i, losses[-3 + i]))
         del expected_state_action_rewards
         del expected_state_action_constraints
-        torch.set_grad_enabled(False)
+        # torch.set_grad_enabled(False)
         return losses
 
     def _compute_loss(self, expected_state_action_rewards, expected_state_action_constraints, with_weight=True):

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def main():
-    print(logger)
+    # print(logger)
     # logger.setLevel(C.logging_level)
 
     envs, params = generate_envs(**C["generate_envs"])
@@ -81,8 +81,8 @@ def main():
                 ftq.reset(True)
                 pi = ftq.fit(transitions_ftq)
                 pi_greedy = PytorchFittedPolicy(pi, e, feature)
-    for sample in rm.memory:
-        print(sample)
+    # for sample in rm.memory:
+    #     print(sample)
     rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"])
     np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 

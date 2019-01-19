@@ -33,6 +33,13 @@
           "level": "WARN",
           "propagate": false
         },
+        "ncarrara.utils_rl.algorithms.dqn": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
             "default"

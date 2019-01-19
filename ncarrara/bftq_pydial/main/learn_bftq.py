@@ -22,7 +22,7 @@ def main():
     feature = feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
-    print("neural net input size :", size_state)
+    # print("neural net input size :", size_state)
 
     policy_network_bftq = NetBFTQ(size_state=size_state,
                                   layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],

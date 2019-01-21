@@ -21,7 +21,7 @@ def main(lambdas_, empty_previous_test=False):
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
-    print(e.action_space.n)
+    # print(e.action_space.n)
     feature =feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
@@ -70,7 +70,7 @@ def main(lambdas_, empty_previous_test=False):
                                          C["gamma_c"],
                                          N_dialogues=C["main"]["N_trajs"],
                                          save_path="{}/lambda_={}.results".format(C.path_ftq_results, lambda_))
-        logger.info("FTQ({}) : {} ".format(lambda_, urpy.format_results(results)))
+        print("FTQ({}) : {} ".format(lambda_, urpy.format_results(results)))
 
 
 if __name__ == "__main__":

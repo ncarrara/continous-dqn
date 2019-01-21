@@ -17,7 +17,7 @@ def main(betas_test):
     feature = feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
-    print("neural net input size :", size_state)
+    # print("neural net input size :", size_state)
 
     policy_network_bftq = NetBFTQ(size_state=size_state,
                                   layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
@@ -43,7 +43,7 @@ def main(betas_test):
 
     makedirs(C.path_bftq_results)
     for beta in betas_test:
-        print("Computing trajectory with beta={}".format(beta))
+        # print("Computing trajectory with beta={}".format(beta))
         _, results_bftq = urpy.execute_policy(e, pi_bftq,
                                               C["gamma"],
                                               C["gamma_c"],

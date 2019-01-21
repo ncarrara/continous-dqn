@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test",
+    "id": "camera_ready",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/camera_ready",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -30,49 +30,49 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.dqn": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils.math": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils.os": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "ERROR",
           "propagate": false
         }
       }
@@ -120,28 +120,28 @@
   "create_data": {
     "filename_data": "samples.data",
     "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 3,
+    "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 10,
+    "N_trajs": 15000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.00025
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 10
+    "N_trajs": 5000
   },
   "bftq_params": {
 
-    "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 10,
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -155,23 +155,25 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 5,
+    "size_beta_encoder": 50,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      128,
+      64,
       32
     ]
   },
-  "nb_trajs_between_epoch": 2,
-  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
-  "betas": "np.linspace(0.,1.,21)",
-  "betas_test": "np.linspace(0.,1.,21)",
+  "nb_trajs_between_epoch": 30,
+  "lambdas": "[0.,1.,2.,3.,4.,5.,10.,15.,20.,25.,50.,75.,100.,500.]",
+  "betas": "[0.0,0.05,0.1,0.25,0.5,0.75,1.0]",
+  "betas_test": "[0.,0.05,0.1,0.15,0.20,0.25,0.3,0.35,0.4,0.75,1.0]",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 10,
-    "optimizer": "ADAM",
+    "max_nn_epoch": 2000,
+    "optimizer": "RMS_PROP",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -182,6 +184,8 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      128,
+      64,
       32
     ]
   },

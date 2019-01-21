@@ -7,7 +7,9 @@ import torch.nn.functional as F
 from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
+import logging
 
+logger = logging.getLogger(__name__)
 
 class NetDQN(torch.nn.Module):
     DONT_NORMALIZE_YET = None
@@ -143,7 +145,6 @@ class DQN:
                                            if s is not None])
         self._state_batch = torch.cat(batch.s)
         self._action_batch = torch.cat(batch.a)
-        # print(batch.r_)
         reward_batch = torch.cat(batch.r_)
         state_action_values = self.policy_net(self._state_batch).gather(1, self._action_batch)
         next_state_values = torch.zeros(len(transitions), device=C.device)
@@ -178,12 +179,10 @@ class DQN:
         reward = torch.tensor([float(reward)], device=C.device, dtype=torch.float)
         self.memory.push(state, action, reward, next_state, done, info)
         self._optimize_model()
-        # print(next_state)
         if next_state is None:
-            # print("[DQN] trajectory done")
             self.i_episode += 1
             if self.i_episode % self.TARGET_UPDATE == 0:
-                print("[update][i_episode={}] copying weights to target network".format(self.i_episode))
+                logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.target_net.load_state_dict(self.policy_net.state_dict())
 
                 # if self.i_episode % 100 == 0:

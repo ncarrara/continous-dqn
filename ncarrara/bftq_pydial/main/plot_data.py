@@ -41,8 +41,8 @@ def main(data_paths):
                                              # edgecolor=colors[ipath],
                                              fill=True,
                                              facecolor=(1, 0, 0, 0.0), zorder=0)
-                    ax.add_patch(rect)
-                    plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
+                    # ax.add_patch(rect)
+                    # plt.annotate("{:.2f}".format(param), (ret_c, ret_r))
                     xs.append(ret_c)
                     ys.append(ret_r)
                 else:
@@ -107,17 +107,19 @@ if __name__ == "__main__":
     # ])
     #
     todo = [[],[],[]]
-    for i in [0,5]:
+    # for i in [0,1,30]:
+    folder="camera_ready_1"
+    for i in range(0,7):
         main([
-            ["tmp/final/{}/ftq/results".format(i)],
-            ["tmp/final/{}/bftq/results".format(i)],
-            ["tmp/final/{}/hdc/results".format(i)]],
+            ["tmp/{}/{}/ftq/results".format(folder,i)],
+            ["tmp/{}/{}/bftq/results".format(folder,i)],
+            ["tmp/{}/{}/hdc/results".format(folder,i)]],
 
         )
 
-        todo[0].append("tmp/final/{}/ftq/results".format(i))
-        todo[1].append("tmp/final/{}/bftq/results".format(i))
-        todo[2].append("tmp/final/{}/hdc/results".format(i))
+        todo[0].append("tmp/{}/{}/ftq/results".format(folder,i))
+        todo[1].append("tmp/{}/{}/bftq/results".format(folder,i))
+        todo[2].append("tmp/{}/{}/hdc/results".format(folder,i))
     main(todo)
 
     #

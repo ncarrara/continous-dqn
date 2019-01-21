@@ -86,7 +86,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
         s = s_
         action_mask = [0.] * env.action_space.n
         if hasattr(env, "action_space_executable"):
-            print("action_space_executable !!!")
+            # print("action_space_executable !!!")
             raise Exception("Remove this expection please")
             actions = env.action_space_executable()
             action_mask = np.zeros(env.action_space.n)

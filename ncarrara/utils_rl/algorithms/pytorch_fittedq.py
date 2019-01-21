@@ -225,14 +225,15 @@ class PytorchFittedQ:
 
     def construct_pi(self,network):
         def pi(state, action_mask):
-            if not type(action_mask) == type(np.zeros(1)):
-                action_mask = np.asarray(action_mask)
-            action_mask[action_mask == 1.] = np.infty
-            action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
-            s = torch.tensor([[state]], device=self.device, dtype=torch.float)
-            a = network(s).sub(action_mask).max(1)[1].view(1, 1).item()
+            with torch.no_grad():
+                if not type(action_mask) == type(np.zeros(1)):
+                    action_mask = np.asarray(action_mask)
+                action_mask[action_mask == 1.] = np.infty
+                action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
+                s = torch.tensor([[state]], device=self.device, dtype=torch.float)
+                a = network(s).sub(action_mask).max(1)[1].view(1, 1).item()
 
-            return a
+                return a
         return pi
 
     def _ftq_epoch(self):
@@ -276,7 +277,7 @@ class PytorchFittedQ:
         stop = False
         nn_epoch = 0
         losses = []
-        torch.set_grad_enabled(True)
+        # torch.set_grad_enabled(True)
         rewards=[]
         returns=[]
         while not stop:
@@ -285,8 +286,6 @@ class PytorchFittedQ:
             if nn_epoch%500==0:
                 self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
                                  .format(self._id_ftq_epoch, nn_epoch, loss))
-                # if nn_epoch>1:
-                #     print("delta loss = {:.5f}".format(np.abs(losses[-1] - losses[-2])))
                 if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
                     stats = self.test_policy(self.construct_pi(self._policy_network))
                     rewards.append(stats[0])
@@ -311,7 +310,7 @@ class PytorchFittedQ:
             plt.show()
             plt.close()
 
-        torch.set_grad_enabled(False)
+        # torch.set_grad_enabled(False)
         self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
                              .format(self._id_ftq_epoch, nn_epoch, loss))
         if self.logger.getEffectiveLevel() is logging.INFO:

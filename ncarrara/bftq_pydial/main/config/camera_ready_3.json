@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "final",
+    "id": "camera_ready_3",
     "seed": 0,
-    "workspace": "tmp/final",
+    "workspace": "tmp/camera_ready_3",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -24,9 +24,16 @@
             "default"
           ],
           "level": "WARN",
-          "propagate": true
+          "propagate": false
         },
         "ncarrara.bftq_pydial.tools.features": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.algorithms.dqn": {
           "handlers": [
             "default"
           ],
@@ -48,6 +55,13 @@
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.math": {
           "handlers": [
             "default"
           ],
@@ -109,19 +123,20 @@
     "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 3000,
+    "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0025
+      "decay": 0.0005
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 2000
+    "N_trajs": 10000
   },
   "bftq_params": {
+
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 2000,
     "optimizer": "ADAM",
@@ -139,24 +154,24 @@
     ]
   },
   "bftq_net_params": {
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 50,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
       128,
-      64
+      64,
+      32
     ]
   },
   "nb_trajs_between_epoch": 30,
-  "lambdas": "[0.,500.,5.,10.,100.,]",
-  "betas": "[0.0,0.05,0.1,0.25,0.5,0.75,1.0]",
-  "betas_test": "np.linspace(0.,1.,20)",
-  "beta_encoder_type": "LINEAR",
-  "size_beta_encoder": 50,
+  "lambdas": "[0.,1.,2.,3.,4.,5.,10.,15.,20.,25.,30,40.,50.,75.,100.,500.]",
+  "betas": "[0.,0.05,0.1,0.15,0.20,0.25,0.3,0.35,0.4,0.75,1.0]",
+  "betas_test": "[0.,0.05,0.1,0.15,0.20,0.25,0.3,0.35,0.4,0.75,1.0]",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 2000,
-    "optimizer": "RMS_PROP",
+    "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 12,
     "learning_rate": 0.001,

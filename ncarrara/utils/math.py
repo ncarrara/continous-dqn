@@ -23,7 +23,7 @@ def set_seed(seed):
 def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
     logger.info("Epsilons (decayed) : [{}]".format(''.join(["{:.2f} ".format(eps) for eps in decays])))
-    if show:
+    if logger.getEffectiveLevel() is logging.INFO:
         plt.plot(range(len(decays)),decays)
         plt.title("epsilon decays")
         plt.show()

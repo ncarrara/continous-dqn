@@ -1,13 +1,7 @@
 from sklearn.model_selection import ParameterGrid
-from ncarrara.utils_rl.environments.lunar_lander_config_env import LunarLanderConfigEnv
 import gym
 import logging
-from gym_pydial.env.env_pydial import EnvPydial
-from ncarrara.utils_rl.environments.cart_pole_config_env import CartPoleConfigEnv
-from ncarrara.utils_rl.environments.mountain_car_config_env import MountainCarConfigEnv
 from ncarrara.continuous_dqn.tools.configuration import C
-from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
-import numpy as np
 logger = logging.getLogger(__name__)
 
 
@@ -30,18 +24,23 @@ def generate_envs(envs_str, envs_params):
     envs = []
     rez_params = []
     for param in grid:
-        if envs_str == CartPoleConfigEnv.ID:
+        if envs_str == "CartPoleConfig-v0":
+            from ncarrara.utils_rl.environments.cart_pole_config_env import CartPoleConfigEnv
             env = CartPoleConfigEnv(**param)
-        elif envs_str == MountainCarConfigEnv.ID:
+        elif envs_str == "MountainCarConfig-v0":
+            from ncarrara.utils_rl.environments.mountain_car_config_env import MountainCarConfigEnv
             env = MountainCarConfigEnv(**param)
-        elif envs_str == LunarLanderConfigEnv.ID:
+        elif envs_str == "LunarLanderConfig-v0":
+            from ncarrara.utils_rl.environments.lunar_lander_config_env import LunarLanderConfigEnv
             env = LunarLanderConfigEnv(**param)
         elif envs_str == "gym_pydial":
-            env = EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
-        elif envs_str == SlotFillingEnv.ID:
+            env_pydial = __import__("gym_pydial.env.env_pydial")
+            env = env_pydial.EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
+        elif envs_str == "slot_filling_env_v0":
+            from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
             env = SlotFillingEnv(**param)
         elif envs_str == "highway-v0":
-            import highway_env
+            __import__("highway_env")
             env = gym.make(envs_str)
             env.configure(dict(**param))
         else:

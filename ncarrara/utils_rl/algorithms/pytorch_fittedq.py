@@ -255,7 +255,7 @@ class PytorchFittedQ:
             state_action_rewards = QQ.gather(1, self._action_batch)
             create_Q_histograms(title="Q(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                 values=[self.expected_state_action_values.cpu().numpy(),
-                                        state_action_rewards.cpu().numpy().flat],
+                                        state_action_rewards.detach().numpy().flat],
                                 path=self.workspace,
                                 labels=["target", "prediction"],
                                 inf=-2, sup=2)

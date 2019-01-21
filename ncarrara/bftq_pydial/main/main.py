@@ -94,7 +94,7 @@ for i_config,params in enumerate(grid):
     run_dqn.main()
     torch.cuda.empty_cache()
     # create_data.main()
-    BFTQ #
+    # BFTQ #
     print("learning bftq ...")
     betas_test = eval(C["betas_test"])
     learn_bftq.main()

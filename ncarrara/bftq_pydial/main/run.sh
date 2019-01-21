@@ -11,5 +11,5 @@ do
   seed=$(($(date +%s%N)/1000000))
   seed=${seed#"15480"}
   echo $seed
-  python main.py config/camera_ready_5.json $seed 1
+  python main.py config/camera_ready_6.json $seed 1
 done

@@ -18,7 +18,7 @@ else:
 
 # C.load_matplotlib('agg')
 
-from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
+from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data, run_dqn
 
 C.load(config_file).create_fresh_workspace(force=False)
 
@@ -42,7 +42,9 @@ print("learning and testing FTQ ...")
 torch.cuda.empty_cache()
 lambdas = eval(C["lambdas"])
 run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
-# plot_data.main()
-
-
-
+# plotting results #
+plot_data.main([
+    [C.path_bftq_results],
+    [C.path_ftq_results],
+    [C.path_hdc_results]
+])

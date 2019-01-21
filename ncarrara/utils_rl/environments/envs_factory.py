@@ -40,6 +40,10 @@ def generate_envs(envs_str, envs_params):
             env = EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
         elif envs_str == SlotFillingEnv.ID:
             env = SlotFillingEnv(**param)
+        elif envs_str == "highway-v0":
+            import highway_env
+            env = gym.make(envs_str)
+            env.configure(dict(**param))
         else:
             env = gym.make(envs_str)
             for k, v in param.items():

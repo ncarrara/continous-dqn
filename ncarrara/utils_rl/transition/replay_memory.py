@@ -2,6 +2,7 @@ import os
 import random
 import numpy as np
 import json
+import pickle
 
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.transition.transition import TransitionGym
@@ -31,20 +32,27 @@ class Memory(object):
         batch_size = len(self.memory) if batch_size > len(self.memory) else batch_size
         return random.sample(self.memory, batch_size)
 
-    def save_memory(self, path,filename, indent=0):
+    def save_memory(self, path, filename, indent=0, use_json=False):
         makedirs(path)
         memory = [t._asdict() for t in self.memory]
-        # print(memory)
-        if indent > 0:
-            json_str = json.dumps(memory, indent=indent)
+        if use_json:
+            with open(path + os.path.sep + filename, 'w') as f:
+                if indent > 0:
+                    json_str = json.dumps(memory, indent=indent)
+                else:
+                    json_str = json.dumps(memory)
+                f.write(json_str)
         else:
-            json_str = json.dumps(memory)
-        with open(path+os.path.sep+filename, 'w') as f:
-            f.write(json_str)
+            with open(path + os.path.sep + filename, 'wb') as f:
+                pickle.dump(memory, f)
 
-    def load_memory(self, path):
-        with open(path, 'r') as infile:
-            memory = json.load(infile)
+    def load_memory(self, path, use_json=False):
+        if use_json:
+            with open(path, 'r') as infile:
+                memory = json.load(infile)
+        else:
+            with open(path, 'rb') as infile:
+                memory = pickle.load(infile)
         self.reset()
         for idata, data in enumerate(memory):
             self.push(*data.values())

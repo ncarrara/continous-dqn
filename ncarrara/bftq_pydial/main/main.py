@@ -18,7 +18,7 @@ if len(sys.argv) > 1:
     C.load_matplotlib('agg')
 else:
     config_file = "config/test.json"
-    seeds = [0,1]
+    seeds = [0]
 
 # C.load_matplotlib('agg')
 #

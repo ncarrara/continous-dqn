@@ -12,8 +12,6 @@ from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
 
 
 import numpy as np
-from gym_pydial.env.env_pydial import EnvPydial
-
 import logging
 
 logging.basicConfig(level=logging.INFO)

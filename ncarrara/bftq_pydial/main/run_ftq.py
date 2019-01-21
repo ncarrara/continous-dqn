@@ -39,13 +39,13 @@ def main(lambdas_, empty_previous_test=False):
         _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], C["nb_trajs_between_epoch"], 1.)
         return np.mean(results, axis=0)
 
-
+    action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
 
     ftq = PytorchFittedQ(
         device=C.device,
         test_policy=process_between_epoch,
         workspace=C.path_ftq,
-        action_str=e.action_space_str,
+        action_str=action_str,
         policy_network=policy_network,
         **C["ftq_params"]
     )

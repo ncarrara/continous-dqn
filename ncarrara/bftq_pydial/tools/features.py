@@ -10,6 +10,8 @@ def feature_factory(feature_str):
         return feature_gaussian
     elif feature_str == "feature_simple":
         return feature_simple
+    elif feature_str == "feature_identity":
+        return feature_identity
     else:
         return eval(feature_str)
 
@@ -172,6 +174,10 @@ def feature_slot_filling(s, e, gaussian_reco):
                             one_hot_turn))
 
         return feat
+
+
+def feature_identity(s, e):
+    return s.flatten().tolist()
 
 
 if __name__ == "__main__":

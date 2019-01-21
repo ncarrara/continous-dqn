@@ -108,17 +108,18 @@ if __name__ == "__main__":
     #
     todo = [[],[],[]]
     # for i in [0,1,30]:
-    for i in [31]:
+    folder="camera_ready_3"
+    for i in [0,1,3]:
         main([
-            ["tmp/final/{}/ftq/results".format(i)],
-            ["tmp/final/{}/bftq/results".format(i)],
-            ["tmp/final/{}/hdc/results".format(i)]],
+            ["tmp/{}/{}/ftq/results".format(folder,i)],
+            ["tmp/{}/{}/bftq/results".format(folder,i)],
+            ["tmp/{}/{}/hdc/results".format(folder,i)]],
 
         )
 
-        todo[0].append("tmp/final/{}/ftq/results".format(i))
-        todo[1].append("tmp/final/{}/bftq/results".format(i))
-        todo[2].append("tmp/final/{}/hdc/results".format(i))
+        todo[0].append("tmp/{}/{}/ftq/results".format(folder,i))
+        todo[1].append("tmp/{}/{}/bftq/results".format(folder,i))
+        todo[2].append("tmp/{}/{}/hdc/results".format(folder,i))
     main(todo)
 
     #

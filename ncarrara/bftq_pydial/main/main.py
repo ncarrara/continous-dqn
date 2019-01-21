@@ -17,16 +17,15 @@ if len(sys.argv) > 1:
     seeds = range(seed_start, seed_start + number_seeds)
     C.load_matplotlib('agg')
 else:
-    config_file = "config/test.json"
+    config_file = "config/camera_ready_4.json"
     seeds = [0,1]
 
-C.load_matplotlib('agg')
+# C.load_matplotlib('agg')
 #
 # logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
 
-print("seeds = {}".format(seeds))
-
+print("seeds = {}".format([str(s) for s in seeds]))
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
 
 with open(config_file, 'r') as infile:
@@ -93,15 +92,15 @@ for i_config,params in enumerate(grid):
     # CREATE DATA DQN or FTQ #
     run_dqn.main()
     # create_data.main()
-    # HDC #
-    run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # FTQ #
-    lambdas = eval(C["lambdas"])
-    run_ftq.main(lambdas_=lambdas,empty_previous_test=True)
     # BFTQ #
     betas_test = eval(C["betas_test"])
     learn_bftq.main()
     test_bftq.main(betas_test=betas_test)
+    # HDC #
+    run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # FTQ #
+    lambdas = eval(C["lambdas"])
+    run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
 
 
 

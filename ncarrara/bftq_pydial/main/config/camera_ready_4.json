@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test",
+    "id": "camera_ready_4",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/camera_ready_4",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -32,12 +32,6 @@
           ],
           "level": "WARN",
           "propagate": false
-        },"ncarrara.utils.math": {
-          "handlers": [
-            "default"
-          ],
-          "level": "INFO",
-          "propagate": false
         },
         "ncarrara.utils_rl.algorithms.dqn": {
           "handlers": [
@@ -61,6 +55,13 @@
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.math": {
           "handlers": [
             "default"
           ],
@@ -119,28 +120,28 @@
   "create_data": {
     "filename_data": "samples.data",
     "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 2,
+    "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 2,
+    "N_trajs": 2500,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.0025
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 2
+    "N_trajs": 1000
   },
   "bftq_params": {
 
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 2,
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -154,24 +155,25 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 2,
+    "size_beta_encoder": 50,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      10,
-      10
+      256,
+      128,
+      64
     ]
   },
-  "nb_trajs_between_epoch": 2,
-  "lambdas": "[0.,5.]",
-  "betas": "[0.0,0.05]",
-  "betas_test": "np.linspace(0.,1.,2)",
+  "nb_trajs_between_epoch": 30,
+  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+  "betas": "np.linspace(0.,1.,20)",
+  "betas_test": "np.linspace(0.,1.,20)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2,
-    "optimizer": "RMS_PROP",
+    "max_nn_epoch": 2000,
+    "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -182,8 +184,9 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      10,
-      10
+      128,
+      64,
+      32
     ]
   },
   "gamma": 1.0,

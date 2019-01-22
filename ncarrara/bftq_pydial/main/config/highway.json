@@ -86,7 +86,8 @@
         "vehicles_count": [5],
         "duration": [20],
         "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
-        "centering_position": [[0.3, 0.5]]
+        "centering_position": [[0.3, 0.5]],
+        "collision_reward": [0]
     }
   },
   "create_data": {
@@ -94,8 +95,8 @@
     "handcrafted_greedy_policy": true,
     "trajs_by_ftq_batch": 2,
     "lambda_": 0,
-    "normalize_reward": true,
-    "N_trajs": 10000,
+    "normalize_reward": false,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.0002
@@ -105,7 +106,7 @@
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 2
+    "N_trajs": 20
   },
   "bftq_params": {
 

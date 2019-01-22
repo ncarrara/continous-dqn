@@ -38,6 +38,8 @@ def main(empty_previous_test=False):
     rm = Memory()
     result = np.zeros((N, 4))
     for n in range(N):
+        if n % (N//10) == 0:
+            logger.debug("DQN step {}/{}".format(n, N))
         s = e.reset()
         done = False
         rr = 0

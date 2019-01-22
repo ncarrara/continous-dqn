@@ -13,7 +13,7 @@
       },
       "handlers": {
         "default": {
-          "level": "ERROR",
+          "level": "DEBUG",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -72,6 +72,13 @@
             "default"
           ],
           "level": "ERROR",
+          "propagate": false
+        },
+        "ncarrara.bftq_pydial.main.run_dqn": {
+          "handlers": [
+            "default"
+          ],
+          "level": "DEBUG",
           "propagate": false
         }
       }

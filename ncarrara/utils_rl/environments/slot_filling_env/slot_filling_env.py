@@ -32,7 +32,8 @@ class SlotFillingEnv(object):
                  penalty_if_summarize_fail=50.,
                  penalty_by_turn=-5.,
                  penalty_if_max_turn=0.,
-                 reward_if_sucess=100.):
+                 reward_if_sucess=100.,
+                 can_say_bye=True):
 
         plot_ctop_cbot(**user_params)
         self.penalty_if_bye = penalty_if_bye
@@ -46,7 +47,10 @@ class SlotFillingEnv(object):
         self.user_params = user_params
 
         self.max_turn = max_turn
-        self.system_actions = ["SUMMARIZE_AND_INFORM", "BYE"]
+
+        self.system_actions = ["SUMMARIZE_AND_INFORM"]
+        if can_say_bye:
+            self.system_actions.append("BYE")
 
         for cons in range(size_constraints):
             self.system_actions.append("ASK_ORAL({})".format(cons))

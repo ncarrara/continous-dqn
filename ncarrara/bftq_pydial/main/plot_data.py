@@ -108,8 +108,8 @@ if __name__ == "__main__":
     #
     todo = [[],[],[]]
     # for i in [0,1,30]:
-    folder="camera_ready_1"
-    for i in range(0,7):
+    folder="camera_ready_6"
+    for i in range(0,2):
         main([
             ["tmp/{}/{}/ftq/results".format(folder,i)],
             ["tmp/{}/{}/bftq/results".format(folder,i)],

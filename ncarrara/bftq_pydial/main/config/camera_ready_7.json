@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "camera_ready_6",
+    "id": "camera_ready_7",
     "seed": 0,
-    "workspace": "tmp/camera_ready_6",
+    "workspace": "tmp/camera_ready_7",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

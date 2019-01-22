@@ -23,6 +23,8 @@ from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq,
 C.load(config_file).create_fresh_workspace(force=False)
 
 # CREATE DATA DQN or FTQ #
+"""
+This part create the data using create_data entry in config file. You can either generate the data using DQN with run_dqn, you can also generate it with FTQ. """
 print("learning dqn ...")
 run_dqn.main()
 torch.cuda.empty_cache()

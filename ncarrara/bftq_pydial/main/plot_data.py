@@ -72,49 +72,18 @@ def main(data_paths):
 
 
 if __name__ == "__main__":
-    # main([
-    #
-    #     "tmp/14/bftq/results",
-    #     "tmp/14/hdc/results",
-    #     "tmp/14/ftq/results",
-    #
-    # ])
 
-    #
-    # main([
-    #     ["tmp/14/hdc/results"],
-    #     ["tmp/17.0/ftq/results", "tmp/17.0/ftq/results"],
-    #     ["tmp/17.0/bftq/results", "tmp/17.0/bftq/results"],
-    #
-    # ])
-    # rez = []
-    # img = []
-    # for i in range(0,4):
-    #     img.append("tmp/final/test5/{}/ftq/epoch=11.png".format(i))
-    # import matplotlib.image as mpimg
-    # for i,path in enumerate(img):
-    #     xaxa = mpimg.imread(path)
-    #     plt.imshow(xaxa)
-    #     plt.title(i)
-    #     plt.show()
-
-    # main([
-    #     # ["tmp/camera_ready_0/hdc/results","tmp/camera_ready_1/hdc/results"],
-    #     # ["tmp/camera_ready_0/ftq/results","tmp/camera_ready_1/ftq/results"],
-    #      ["tmp/23.0/ftq/results"],
-    #     ["camera_ready_0/bftq/results"],
-    #
-    # ])
-    #
     todo = [[],[],[]]
-    # for i in [0,1,30]:
-    folder="camera_ready_6"
-    for i in range(0,2):
+    # folder="camera_ready_6"
+    # values = [0,1,2,3,4,7]
+
+    folder = "camera_ready_7"
+    values = [0, 1]
+    for i in values:
         main([
             ["tmp/{}/{}/ftq/results".format(folder,i)],
             ["tmp/{}/{}/bftq/results".format(folder,i)],
             ["tmp/{}/{}/hdc/results".format(folder,i)]],
-
         )
 
         todo[0].append("tmp/{}/{}/ftq/results".format(folder,i))
@@ -122,32 +91,3 @@ if __name__ == "__main__":
         todo[2].append("tmp/{}/{}/hdc/results".format(folder,i))
     main(todo)
 
-    #
-    # main([
-    #     "tmp/17.1/hdc/results",
-    #     "tmp/17.1/ftq/results",
-    #     "tmp/17.1/bftq/results",
-    #
-    # ])
-    #
-
-    # main([
-    #     "tmp/results_bftq",
-    #     "tmp/results_ftq",
-    #
-    # ])
-
-    # for v in [7.2,11,12]:
-    #
-    #     main([
-    #
-    #         "tmp/yaya{}.2/bftq/results".format(v),
-    #         "tmp/yaya{}.2/hdc/results".format(v),
-    #         "tmp/yaya{}.2/ftq/results".format(v),
-    #
-    #         "tmp/yaya{}/bftq/results".format(v),
-    #         "tmp/yaya{}/hdc/results".format(v),
-    #         "tmp/yaya{}/ftq/results".format(v),
-    #
-    #
-    #     ])

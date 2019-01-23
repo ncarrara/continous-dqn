@@ -23,7 +23,7 @@ def load_autoencoders(path_autoencoders):
     return autoencoders
 
 
-def load_memories(path_data):
+def load_memories(path_data, as_json=True):
     logger.info("reading samples ...")
     files = os.listdir(path_data)
     logger.info("reading : {}".format(files))
@@ -35,7 +35,7 @@ def load_memories(path_data):
         path_file = path_data + "/" + file
         logger.info("reading {}".format(path_file))
         m = Memory()
-        m.load_memory(path_file)
+        m.load_memory(path_file, as_json=as_json)
         memories[id_env] = m
     return memories
 

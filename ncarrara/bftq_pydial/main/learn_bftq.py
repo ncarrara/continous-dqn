@@ -47,7 +47,7 @@ def main():
         path_data = C.workspace + "/" + C["main"]["filename_data"]
     else:
         path_data = C["main"]["path_data"] + "/" + C["main"]["filename_data"]
-    rm.load_memory(path_data)
+    rm.load_memory(path_data, C["create_data"]["as_json"])
 
     transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0,
                                                                  C["main"]["normalize_reward"])

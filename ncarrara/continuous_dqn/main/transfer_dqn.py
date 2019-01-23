@@ -21,7 +21,7 @@ def main():
     feature_dqn = build_feature_dqn(C["feature_dqn_info"])
     source_params = C.load_sources_params()
     autoencoders = utils.load_autoencoders(C.path_models)
-    ers = utils.load_memories(C.path_samples)
+    ers = utils.load_memories(C.path_samples, C["create_data"]["as_json"])
 
     for er in ers:
         er.apply_feature_to_states(feature_dqn)

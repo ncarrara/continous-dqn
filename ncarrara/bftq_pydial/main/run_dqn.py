@@ -136,7 +136,7 @@ def main(empty_previous_test=False):
         plt.show()
         plt.savefig(C.workspace + '/' + "dqn_create_data")
         plt.close()
-    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"])
+    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
 
 if __name__ == "__main__":
     C.load("config/final.json")

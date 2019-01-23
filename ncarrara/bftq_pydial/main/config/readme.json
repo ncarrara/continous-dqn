@@ -87,6 +87,7 @@
   },
   "create_data": { // parameters for run_dqn or create_data
     "filename_data": "samples.data",
+    "as_json": true, // should memory be saved in text (json) or binary (pickle)
     "handcrafted_greedy_policy": true, // will use HDC policy instead of FTQ to create data with create_data.py
     "trajs_by_ftq_batch": 50, // number of trajectory generate between each batch of ftq (no used by dqn)
     "lambda_": 0, // lambda for reward penalty

@@ -42,7 +42,7 @@ def main():
                         done,
                         info)
                 s = s_
-        rm.save_memory(C.path_samples, "{}.json".format(ienv))
+        rm.save_memory(C.path_samples, "{}.json".format(ienv), C["create_data"]["as_json"])
     with open(C.path_sources_params, 'w') as file:
         dump = json.dumps(params, indent=4)
         print(dump)

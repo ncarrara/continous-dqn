@@ -54,7 +54,7 @@ def main(lambdas_, empty_previous_test=False):
         path_data = C.workspace + "/" + C["main"]["filename_data"]
     else:
         path_data = C["main"]["path_data"] + "/" + C["main"]["filename_data"]
-    rm.load_memory(path_data)
+    rm.load_memory(path_data, C["create_data"]["as_json"])
     makedirs(C.path_ftq_results)
     for lambda_ in lambdas_:
         transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,

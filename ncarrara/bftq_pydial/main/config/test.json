@@ -119,6 +119,7 @@
   },
   "create_data": {
     "filename_data": "samples.data",
+    "as_json": true,
     "handcrafted_greedy_policy": true,
     "trajs_by_ftq_batch": 3,
     "lambda_": 0,

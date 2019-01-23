@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "camera_ready_6",
+    "id": "test",
     "seed": 0,
-    "workspace": "tmp/camera_ready_6",
+    "workspace": "tmp/test",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -13,7 +13,7 @@
       },
       "handlers": {
         "default": {
-          "level": "INFO",
+          "level": "DEBUG",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -31,6 +31,12 @@
             "default"
           ],
           "level": "WARN",
+          "propagate": false
+        },"ncarrara.utils.math": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.dqn": {
@@ -61,89 +67,62 @@
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils.math": {
-          "handlers": [
-            "default"
-          ],
-          "level": "WARN",
-          "propagate": false
-        },
         "ncarrara.utils.os": {
           "handlers": [
             "default"
           ],
           "level": "ERROR",
           "propagate": false
+        },
+        "ncarrara.bftq_pydial.main.run_dqn": {
+          "handlers": [
+            "default"
+          ],
+          "level": "DEBUG",
+          "propagate": false
         }
       }
     }
   },
-  "feature_str": "feature_basic",
+  "feature_str": "feature_identity",
   "generate_envs": {
-    "envs_str": "slot_filling_env_v0",
+    "envs_str": "highway-v0",
     "envs_params": {
-      "user_params": [
-        {
-          "cerr": -0.25,
-          "cok": 0.25,
-          "ser": 0.6,
-          "cstd": 0.6,
-          "proba_hangup": 0.25
-        }
-      ],
-      "max_turn": [
-        10
-      ],
-      "size_constraints": [
-        3
-      ],
-      "penalty_if_bye": [
-        0.0
-      ],
-      "penalty_if_hangup": [
-        0.0
-      ],
-      "penalty_if_summarize_fail": [
-        0.0
-      ],
-      "penalty_by_turn": [
-        0.0
-      ],
-      "penalty_if_max_turn": [
-        0.0
-      ],
-      "reward_if_sucess": [
-        100.0
-      ],
-      "can_say_bye": [false]
+        "lanes_count": [2, 3],
+        "initial_spacing": [2],
+        "vehicles_count": [5],
+        "duration": [20],
+        "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
+        "centering_position": [[0.3, 0.5]],
+        "collision_reward": [0]
     }
   },
   "create_data": {
     "filename_data": "samples.data",
-    "as_json": true,
+    "as_json": false,
     "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 50,
+    "trajs_by_ftq_batch": 2,
     "lambda_": 0,
-    "normalize_reward": true,
-    "N_trajs": 5000,
+    "normalize_reward": false,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.0002
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 1000
+    "N_trajs": 20
   },
   "bftq_params": {
 
-    "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 2,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch": 2,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -157,44 +136,42 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 2,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
-      128,
-      64
+      10,
+      10
     ]
   },
-  "nb_trajs_between_epoch": 30,
-  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
-  "betas": "np.linspace(0.,1.,26)",
-  "betas_test": "np.linspace(0.,1.,26)",
+  "nb_trajs_between_epoch": 10,
+  "lambdas": "[0.,5.]",
+  "betas": "[0.0,0.05]",
+  "betas_test": "np.linspace(0.,1.,2)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
-    "optimizer": "ADAM",
+    "max_nn_epoch": 400,
+    "optimizer": "RMS_PROP",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
-    "learning_rate": 0.001,
+    "max_ftq_epoch": 30,
+    "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0005,
+    "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH"
   },
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      128,
-      64,
-      32
+      10,
+      10
     ]
   },
-  "gamma": 1.0,
-  "gamma_c": 1.0,
+  "gamma": 0.8,
+  "gamma_c": 0.8,
   "dqn_params": {
-    "gamma": 1,
+    "gamma": 0.8,
     "batch_size_experience_replay": 32,
     "target_update": 10,
     "optimizer": "ADAM",

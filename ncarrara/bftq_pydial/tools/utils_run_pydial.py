@@ -63,7 +63,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
     dialogue = []
     pi.reset()
 
-    if env.ID == "gym_pydial":
+    if hasattr(env, "ID") and env.ID == "gym_pydial":
         s = env.reset()
         a = env.action_space_str.index('hello')
         rew_r, rew_c, ret_r, ret_c = 0., 0., 0., 0.
@@ -95,7 +95,7 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
 
         info_pi = merge_two_dicts(info_pi, info_env)
         a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)
-        if env.ID == "gym_pydial":
+        if hasattr(env, "ID") and env.ID == "gym_pydial":
             s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         else:
             s_, r_, end, info_env = env.step(a)

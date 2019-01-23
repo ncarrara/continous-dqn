@@ -39,13 +39,13 @@ def main(lambdas_, empty_previous_test=False):
         _, results = urpy.execute_policy(e, pi, C["gamma"], C["gamma_c"], C["nb_trajs_between_epoch"], 1.)
         return np.mean(results, axis=0)
 
-
+    action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
 
     ftq = PytorchFittedQ(
         device=C.device,
         test_policy=process_between_epoch,
         workspace=C.path_ftq,
-        action_str=e.action_space_str,
+        action_str=action_str,
         policy_network=policy_network,
         **C["ftq_params"]
     )
@@ -54,7 +54,7 @@ def main(lambdas_, empty_previous_test=False):
         path_data = C.workspace + "/" + C["main"]["filename_data"]
     else:
         path_data = C["main"]["path_data"] + "/" + C["main"]["filename_data"]
-    rm.load_memory(path_data)
+    rm.load_memory(path_data, C["create_data"]["as_json"])
     makedirs(C.path_ftq_results)
     for lambda_ in lambdas_:
         transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,

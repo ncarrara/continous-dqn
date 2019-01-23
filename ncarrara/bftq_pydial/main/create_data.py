@@ -12,8 +12,6 @@ from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
 
 
 import numpy as np
-from gym_pydial.env.env_pydial import EnvPydial
-
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -83,7 +81,7 @@ def main():
                 pi_greedy = PytorchFittedPolicy(pi, e, feature)
     # for sample in rm.memory:
     #     print(sample)
-    rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"])
+    rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"], C["create_data"]["as_json"])
     np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,

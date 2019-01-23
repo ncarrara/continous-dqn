@@ -38,6 +38,8 @@ def main(empty_previous_test=False):
     rm = Memory()
     result = np.zeros((N, 4))
     for n in range(N):
+        if n % (N//10) == 0:
+            logger.debug("DQN step {}/{}".format(n, N))
         s = e.reset()
         done = False
         rr = 0
@@ -134,7 +136,7 @@ def main(empty_previous_test=False):
         plt.show()
         plt.savefig(C.workspace + '/' + "dqn_create_data")
         plt.close()
-    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"])
+    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
 
 if __name__ == "__main__":
     C.load("config/final.json")

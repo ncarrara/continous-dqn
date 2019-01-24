@@ -88,7 +88,7 @@
   "generate_envs": {
     "envs_str": "highway-v0",
     "envs_params": {
-        "lanes_count": [2, 3],
+        "lanes_count": [2],
         "initial_spacing": [2],
         "vehicles_count": [5],
         "duration": [20],
@@ -104,10 +104,10 @@
     "trajs_by_ftq_batch": 2,
     "lambda_": 0,
     "normalize_reward": false,
-    "N_trajs": 1000,
+    "N_trajs": 1500,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0002
+      "decay": 0.0001
     }
   },
   "main": {
@@ -119,14 +119,14 @@
   "bftq_params": {
 
     "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 2,
+    "max_nn_epoch": 400,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
-    "learning_rate": 0.001,
+    "max_ftq_epoch": 15,
+    "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0005,
+    "weight_decay": 0.000,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [
@@ -140,8 +140,8 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      10,
-      10
+      256,
+      256
     ]
   },
   "nb_trajs_between_epoch": 10,
@@ -153,7 +153,7 @@
     "max_nn_epoch": 400,
     "optimizer": "RMS_PROP",
     "loss_function": "l2",
-    "max_ftq_epoch": 30,
+    "max_ftq_epoch": 15,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -164,20 +164,20 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      10,
-      10
+      256,
+      256
     ]
   },
   "gamma": 0.8,
   "gamma_c": 0.8,
   "dqn_params": {
     "gamma": 0.8,
-    "batch_size_experience_replay": 32,
-    "target_update": 10,
+    "batch_size_experience_replay": 128,
+    "target_update": 50,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "lr": 0.001,
-    "weight_decay": 0.0005,
+    "lr": 0.0005,
+    "weight_decay": 0.00005,
     "workspace": "dqn"
   }
 }

@@ -24,6 +24,7 @@ def main(betas_test):
                                   **C["bftq_net_params"])
 
     betas = eval(C["betas"])
+    action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
 
     bftq = PytorchBudgetedFittedQ(
         device=C.device,
@@ -31,7 +32,7 @@ def main(betas_test):
         betas=betas,
         betas_for_discretisation=betas,
         N_actions=e.action_space.n,
-        actions_str=e.action_space_str,
+        actions_str=action_str,
         policy_network=policy_network_bftq,
         **C["bftq_params"],
 

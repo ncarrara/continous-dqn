@@ -22,7 +22,7 @@ else:
 
 # C.load_matplotlib('agg')
 #
-# logging.getLogger("ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
+# logging.getLogger(">ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
 
 print("seeds = {}".format([str(s) for s in seeds]))

@@ -89,9 +89,10 @@ class Configuration(object):
         return self
 
     def load_pytorch(self):
-        from ncarrara.utils.torch import set_device
+        from ncarrara.utils.torch import get_the_device_with_most_available_memory
         import torch
-        _device = set_device()
-        self.device = torch.device("cuda:" + str(_device) if torch.cuda.is_available() else "cpu")
+        _device = get_the_device_with_most_available_memory()
+
+        self.device = _device
         self.logger.info("DEVICE : {}".format(self.device))
         return self

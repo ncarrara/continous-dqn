@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class NetDQN(torch.nn.Module):
     DONT_NORMALIZE_YET = None
 
@@ -139,16 +140,20 @@ class DQN:
         self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
 
         batch = TransitionGym(*zip(*transitions))
-        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                                batch.s_)), device=C.device, dtype=torch.uint8)
-        non_final_next_states = torch.cat([s for s in batch.s_
-                                           if s is not None])
+        non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
+                                      device=C.device,
+                                      dtype=torch.uint8)
+        non_final_next_states= [s for s in batch.s_ if s is not None]
+        # non_final_next_states = torch.cat(non_final_next_states)
         self._state_batch = torch.cat(batch.s)
         self._action_batch = torch.cat(batch.a)
         reward_batch = torch.cat(batch.r_)
         state_action_values = self.policy_net(self._state_batch).gather(1, self._action_batch)
         next_state_values = torch.zeros(len(transitions), device=C.device)
-        next_state_values[non_final_mask] = self.target_net(non_final_next_states).max(1)[0].detach()
+        if non_final_next_states:
+            next_state_values[non_final_mask] = self.target_net(torch.cat(non_final_next_states)).max(1)[0].detach()
+        else:
+            logger.warning("Pas d'état non terminaux")
         self.expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
         loss = self.loss_function(state_action_values, self.expected_state_action_values.unsqueeze(1))
         self.optimizer.zero_grad()

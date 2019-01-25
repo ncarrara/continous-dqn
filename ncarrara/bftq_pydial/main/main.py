@@ -17,10 +17,10 @@ if len(sys.argv) > 1:
     seeds = range(seed_start, seed_start + number_seeds)
     C.load_matplotlib('agg')
 else:
-    config_file = "config/test.json"
-    seeds = [0]
+    config_file = "config/camera_ready_6.2.json"
+    seeds = [963845]
 
-# C.load_matplotlib('agg')
+C.load_matplotlib('agg')
 #
 # logging.getLogger(">ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)

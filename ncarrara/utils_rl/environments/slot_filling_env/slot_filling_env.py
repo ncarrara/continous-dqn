@@ -34,8 +34,8 @@ class SlotFillingEnv(object):
                  penalty_if_max_turn=0.,
                  reward_if_sucess=100.,
                  can_say_bye=True):
-
-        plot_ctop_cbot(**user_params)
+        if logger.getEffectiveLevel() is logging.INFO:
+            plot_ctop_cbot(**user_params)
         self.penalty_if_bye = penalty_if_bye
         self.penalty_if_summarize_fail = penalty_if_summarize_fail
         self.penalty_if_max_turn = penalty_if_max_turn

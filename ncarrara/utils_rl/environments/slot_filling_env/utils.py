@@ -1,7 +1,9 @@
 import logging
 import numpy as np
 
+import logging
 
+logger = logging.getLogger(__name__)
 
 
 def generate_proba_hangup(mean, std, k=0):

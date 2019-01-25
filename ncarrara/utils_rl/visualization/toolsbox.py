@@ -7,6 +7,7 @@ from ncarrara import utils_rl as fs
 import os
 import numpy as np
 
+from ncarrara.utils.math import update_lims
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 
@@ -22,13 +23,14 @@ def plot(values,title="no title",path_save=None):
         fig.savefig(path_save)
     plt.close()
 
-def create_Q_histograms(title, values, path, labels,inf=-1.2,sup=1.2):
+def create_Q_histograms(title, values, path, labels, lims=[-1.1, 1.1]):
     makedirs(path)
     plt.clf()
     maxfreq = 0.
+    update_lims(lims, values)
     fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
     n, bins, patches = ax.hist(x=values, label=labels, alpha=1.,
-                                stacked=False, bins=np.linspace(inf, sup, 100))  # , alpha=0.7, rwidth=0.85)
+                                stacked=False, bins=np.linspace(*lims, 100))  # , alpha=0.7, rwidth=0.85)
     plt.grid(axis='y', alpha=0.75)
 
     plt.xlabel('Value')
@@ -43,7 +45,7 @@ def create_Q_histograms(title, values, path, labels,inf=-1.2,sup=1.2):
 
 
 
-def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.2,sup=1.2):
+def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None, lims=[-1.1, 1.1]):
     makedirs(path)
 
     if mask_action is None:
@@ -62,8 +64,10 @@ def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=No
             for i in range(len(QQ)):
                 value.append(QQ[i][act])
             values.append(value)
+
+    update_lims(lims, values)
     fig, ax = plt.subplots(1, 1, figsize=(12, 9), tight_layout=True)
-    ax.hist(values, bins = np.linspace(inf, sup, 100), alpha=1.0, stacked=True)
+    ax.hist(values, bins=np.linspace(*lims, 100), alpha=1.0, stacked=True)
     plt.grid(axis='y', alpha=0.75)
     plt.legend(labels)
     plt.title(title)
@@ -75,11 +79,10 @@ def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=No
     plt.close()
 
 
-def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,inf=-1.5,sup=1.5):
+def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None, lims=[-1.1, 1.1]):
     makedirs(path)
     #
     # # set up style cycles
-
 
     if mask_action is None:
         mask_action = np.zeros(len(QQ[0]))
@@ -99,7 +102,8 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None,in
             values.append(value)
     plt.clf()
 
-    edges = np.linspace(inf, sup, 200, endpoint=True)
+    update_lims(lims, values)
+    edges = np.linspace(*lims, 200, endpoint=True)
     hist_func = partial(np.histogram, bins=edges)
     colors = plt.get_cmap('tab10').colors
     #['b', 'g', 'r', 'c', 'm', 'y', 'k']

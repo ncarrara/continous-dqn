@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test",
+    "id": "highway",
     "seed": 0,
-    "workspace": "tmp/test",
+    "workspace": "tmp/highway",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -43,21 +43,21 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -101,13 +101,13 @@
     "filename_data": "samples.data",
     "as_json": false,
     "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 2,
+    "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": false,
     "N_trajs": 1500,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0001
+      "decay": 0.002
     }
   },
   "main": {
@@ -116,8 +116,48 @@
     "normalize_reward": true,
     "N_trajs": 20
   },
-  "bftq_params": {
 
+  "nb_trajs_between_epoch": 30,
+  "lambdas": "np.linspace(0., 10., 5)",
+  "betas": "np.linspace(0., 1., 5)",
+  "betas_test": "np.linspace(0., 1., 10)",
+  "gamma": 0.8,
+  "gamma_c": 0.8,
+
+  "dqn_params": {
+    "gamma": 0.8,
+    "batch_size_experience_replay": 128,
+    "target_update": 50,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "lr": 0.0005,
+    "weight_decay": 0.00005,
+    "workspace": "dqn"
+  },
+
+  "ftq_params": {
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 400,
+    "optimizer": "RMS_PROP",
+    "loss_function": "l2",
+    "max_ftq_epoch": 15,
+    "learning_rate": 0.01,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH"
+  },
+
+  "net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      256,
+      256
+    ]
+  },
+
+  "bftq_params": {
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 400,
     "optimizer": "ADAM",
@@ -136,49 +176,13 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 2,
+    "size_beta_encoder": 50,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
       256,
       256
     ]
-  },
-  "nb_trajs_between_epoch": 10,
-  "lambdas": "[0.,5.]",
-  "betas": "[0.0,0.05]",
-  "betas_test": "np.linspace(0.,1.,2)",
-  "ftq_params": {
-    "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 400,
-    "optimizer": "RMS_PROP",
-    "loss_function": "l2",
-    "max_ftq_epoch": 15,
-    "learning_rate": 0.01,
-    "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
-    "weight_decay": 0.0,
-    "batch_size_experience_replay": "ALL_BATCH"
-  },
-  "net_params": {
-    "activation_type": "RELU",
-    "reset_type": "XAVIER",
-    "intra_layers": [
-      256,
-      256
-    ]
-  },
-  "gamma": 0.8,
-  "gamma_c": 0.8,
-  "dqn_params": {
-    "gamma": 0.8,
-    "batch_size_experience_replay": 128,
-    "target_update": 50,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "lr": 0.0005,
-    "weight_decay": 0.00005,
-    "workspace": "dqn"
   }
 }
 

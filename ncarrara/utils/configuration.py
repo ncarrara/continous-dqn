@@ -90,9 +90,7 @@ class Configuration(object):
 
     def load_pytorch(self):
         from ncarrara.utils.torch import get_the_device_with_most_available_memory
-        import torch
         _device = get_the_device_with_most_available_memory()
-
         self.device = _device
         self.logger.info("DEVICE : {}".format(self.device))
         return self

@@ -29,7 +29,7 @@ def main(empty_previous_test=False):
     traj_max_size = np.inf
     decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=N, show=True)
     net = NetDQN(n_in=size_state, n_out=e.action_space.n, **C["net_params"])
-    dqn = DQN(policy_network=net, **C["dqn_params"])
+    dqn = DQN(policy_network=net,gamma = C["gamma"], **C["dqn_params"])
     dqn.reset()
     e.seed(C["general"]["seed"])
     rrr = []

@@ -10,6 +10,7 @@ import logging
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def main(betas_test):
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
@@ -34,6 +35,8 @@ def main(betas_test):
         N_actions=e.action_space.n,
         actions_str=action_str,
         policy_network=policy_network_bftq,
+        gamma=C["gamma"],
+        gamma_c=C["gamma_c"],
         **C["bftq_params"],
 
     )

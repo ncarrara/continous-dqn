@@ -47,6 +47,7 @@ def main(lambdas_, empty_previous_test=False):
         workspace=C.path_ftq,
         action_str=action_str,
         policy_network=policy_network,
+        gamma = C["gamma"],
         **C["ftq_params"]
     )
     rm = Memory()

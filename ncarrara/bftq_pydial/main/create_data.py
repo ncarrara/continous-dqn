@@ -43,6 +43,7 @@ def main():
         action_str=e.action_space_str,
         policy_network=policy_network,
         test_policy=process_between_epoch,
+        gamma=C["gamma"],
         **C["ftq_params"]
     )
 

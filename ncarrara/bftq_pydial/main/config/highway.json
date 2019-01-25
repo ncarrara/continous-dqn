@@ -125,7 +125,6 @@
   "gamma_c": 0.8,
 
   "dqn_params": {
-    "gamma": 0.8,
     "batch_size_experience_replay": 128,
     "target_update": 50,
     "optimizer": "ADAM",

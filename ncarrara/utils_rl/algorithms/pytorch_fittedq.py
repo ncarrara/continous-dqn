@@ -168,6 +168,7 @@ class PytorchFittedQ:
         self._non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
                                             device=self.device,
                                             dtype=torch.uint8)
+        # ca peut bugguer ici si il n'y a que des etats terminaux
         self._non_final_next_states = torch.cat([s for s in batch.s_ if s is not None])
         self._state_batch = torch.cat(batch.s)
         self._action_batch = torch.cat(batch.a)

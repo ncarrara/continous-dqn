@@ -189,7 +189,6 @@
   "gamma": 1.0,
   "gamma_c": 1.0,
   "dqn_params": {
-    "gamma": 1,
     "batch_size_experience_replay": 32,
     "target_update": 10,
     "optimizer": "ADAM",

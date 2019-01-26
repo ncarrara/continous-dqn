@@ -286,7 +286,7 @@ class PytorchBudgetedFittedQ:
             self._sample_batch()
             logger.info("[epoch_bftq={:02}] #batch={}".format(self._id_ftq_epoch, len(self._state_beta_batch)))
             losses = self._ftq_epoch()
-            self._id_ftq_epoch += 1
+
 
             logger.info("[epoch_bftq={:02}] delta={}".format(self._id_ftq_epoch, self.delta))
             if logger.getEffectiveLevel() is logging.INFO:
@@ -301,6 +301,7 @@ class PytorchBudgetedFittedQ:
                                                  Q=self._policy_network,
                                                  action_mask=np.zeros(self.N_actions),
                                                  id="next_state_" + id, disp=True)
+            self._id_ftq_epoch += 1
 
         # final_network = copy.deepcopy(self._policy_network)
 

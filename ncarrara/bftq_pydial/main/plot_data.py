@@ -101,8 +101,8 @@ if __name__ == "__main__":
                 "safeness"
                 )
     }
-    folder = "camera_ready_6"
-    values = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    folder = "camera_ready_6.2"
+    values = range(0,6)
 
     # folder = "camera_ready_7"
     # values = [0, 1]

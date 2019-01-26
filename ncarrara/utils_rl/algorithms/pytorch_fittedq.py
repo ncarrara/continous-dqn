@@ -209,10 +209,8 @@ class PytorchFittedQ:
                 plt.savefig(self.workspace + '/' + title)
                 plt.show()
                 plt.close()
-
-
-            self._id_ftq_epoch += 1
             self.logger.info("[epoch_ftq={}] delta={}".format(self._id_ftq_epoch, self.delta))
+            self._id_ftq_epoch += 1
 
         final_network = copy.deepcopy(self._policy_network)
 

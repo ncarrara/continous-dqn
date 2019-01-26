@@ -76,6 +76,7 @@ def main(data_dict):
             ax.add_patch(rect)
             plt.annotate("{:.2f}".format(param), (x, y))
     plt.legend(handles=patchList)
+    plt.grid()
     plt.show()
     plt.close()
 
@@ -94,15 +95,15 @@ if __name__ == "__main__":
                   0.72, 0.76, 0.8, 0.84, 0.88, 0.92, 0.96, 1.0),
                  "\\beta"
                  ),
-        "hdc": ([],
-                (0, 0, 1),
-                (0.0, 0.1111111111111111, 0.2222222222222222, 0.3333333333333333, 0.4444444444444444,
-                 0.5555555555555556, 0.6666666666666666, 0.7777777777777777, 0.8888888888888888, 1.0),
-                "safeness"
-                )
+        # "hdc": ([],
+        #         (0, 0, 1),
+        #         (0.0, 0.1111111111111111, 0.2222222222222222, 0.3333333333333333, 0.4444444444444444,
+        #          0.5555555555555556, 0.6666666666666666, 0.7777777777777777, 0.8888888888888888, 1.0),
+        #         "safeness"
+        #         )
     }
     folder = "camera_ready_6.2"
-    values = range(0,6)
+    values = range(0,11)
 
     # folder = "camera_ready_7"
     # values = [0, 1]
@@ -114,5 +115,5 @@ if __name__ == "__main__":
         # )
         data["ftq"][0].append("tmp/{}/{}/ftq/results".format(folder, i))
         data["bftq"][0].append("tmp/{}/{}/bftq/results".format(folder, i))
-        data["hdc"][0].append("tmp/{}/{}/hdc/results".format(folder, i))
+        # data["hdc"][0].append("tmp/{}/{}/hdc/results".format(folder, i))
     main(data)

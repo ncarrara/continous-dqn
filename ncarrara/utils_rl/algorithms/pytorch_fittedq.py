@@ -214,9 +214,10 @@ class PytorchFittedQ:
 
         final_network = copy.deepcopy(self._policy_network)
 
-        for state in self.disp_states:
-            self.logger.info("Q({})={}".format(state, self._policy_network(
-                torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
+        if self.logger.getEffectiveLevel() is logging.INFO:
+            for state in self.disp_states:
+                self.logger.info("Q({})={}".format(state, self._policy_network(
+                    torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
 
         pi = self.construct_pi(final_network)
 

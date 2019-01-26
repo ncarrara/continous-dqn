@@ -27,6 +27,10 @@ def main():
 
     import numpy as np
     betas = eval(C["betas"])
+    if "betas_for_discretisation" in C.dict:
+        betas_for_discretisation = eval(C["betas_for_discretisation"])
+    else:
+        betas_for_discretisation = betas
 
     action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
 
@@ -34,7 +38,7 @@ def main():
         device=C.device,
         workspace=C.path_bftq,
         betas=betas,
-        betas_for_discretisation=betas,
+        betas_for_discretisation=betas_for_discretisation,
         N_actions=e.action_space.n,
         actions_str=action_str,
         policy_network=policy_network_bftq,

@@ -50,5 +50,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/0_pydial.json")
+    C.load("config/0_pydial.json").load_pytorch()
     main()

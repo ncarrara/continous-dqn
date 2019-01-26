@@ -26,5 +26,5 @@ def main(safenesses):
 
 
 if __name__ == "__main__":
-    C.load("config/test_slot_filling.json")
+    C.load("config/test_slot_filling.json").load_pytorch()
     main(safeness=[0., 1.])

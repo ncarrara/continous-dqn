@@ -6,7 +6,7 @@ from ncarrara.continuous_dqn.tools.configuration import C
 
 # C.load("config/0_random.json")#.create_fresh_workspace()
 # C.load("config/0_slot_filling.json").create_fresh_workspace()
-C.load("config/0_pydial.json")#.create_fresh_workspace()
+C.load("config/0_pydial.json").load_pytorch()#.create_fresh_workspace()
 
 # generate_samples.main()
 # learn_autoencoders.main()

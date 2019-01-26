@@ -2,13 +2,10 @@
 from ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
-from ncarrara.utils.os import empty_directory
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
-from ncarrara.bftq_pydial.tools.policies import PytorchBudgetedFittedPolicy
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
+
 import logging
-import matplotlib.pyplot as plt
-import numpy as np
 
 from ncarrara.utils_rl.transition.replay_memory import Memory
 
@@ -28,6 +25,7 @@ def main():
                                   layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
                                   **C["bftq_net_params"])
 
+    import numpy as np
     betas = eval(C["betas"])
 
     action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
@@ -63,5 +61,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/test_slot_filling.json")
+    C.load("config/test_slot_filling.json").load_pytorch()
     main(betas=[0, 0.5, 1.0])

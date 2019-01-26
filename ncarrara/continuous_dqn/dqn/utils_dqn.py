@@ -11,24 +11,24 @@ from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 logger = logging.getLogger(__name__)
 
 
-def run_dqn_with_transfer(env, autoencoders, ers, net_params, dqn_params, decay,
+def run_dqn_with_transfer(env, device, autoencoders, ers, net_params, dqn_params, decay,
                           N, seed, test_params,
                           sources_params, traj_max_size, feature_autoencoder, feature_dqn, start_decay):
-    return run_dqn(env, autoencoders, ers, net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
+    return run_dqn(env, device, autoencoders, ers, net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
                    seed=seed, test_params=test_params, sources_params=sources_params, traj_max_size=traj_max_size,
                    feature_autoencoder=feature_autoencoder, feature_dqn=feature_dqn, start_decay=start_decay)
 
 
-def run_dqn_without_transfer(env, net_params, dqn_params,
+def run_dqn_without_transfer(env, device, net_params, dqn_params,
                              decay, N, seed, traj_max_size,
                              feature_dqn, start_decay, **params):
-    return run_dqn(env, autoencoders=None, ers=None,
+    return run_dqn(env, device,autoencoders=None, ers=None,
                    net_params=net_params, dqn_params=dqn_params, decay=decay,
                    N=N, seed=seed, test_params=None, sources_params=None, traj_max_size=traj_max_size,
                    feature_dqn=feature_dqn, feature_autoencoder=None, start_decay=start_decay)
 
 
-def run_dqn(env, autoencoders, ers, net_params, dqn_params, decay, N, seed, test_params,
+def run_dqn(env,  device,autoencoders, ers, net_params, dqn_params, decay, N, seed, test_params,
             sources_params, traj_max_size, feature_autoencoder, feature_dqn, start_decay):
     do_transfer = autoencoders is not None or ers is not None
     if do_transfer:
@@ -37,7 +37,7 @@ def run_dqn(env, autoencoders, ers, net_params, dqn_params, decay, N, seed, test
                             experience_replays=ers)
         tm.reset()
     net = NetDQN(**net_params)
-    dqn = DQN(policy_network=net, **dqn_params)
+    dqn = DQN(policy_network=net,device=device, **dqn_params)
     dqn.reset()
     set_seed(seed=seed)
     env.seed(seed)

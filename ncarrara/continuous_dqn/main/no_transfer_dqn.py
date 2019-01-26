@@ -17,6 +17,7 @@ def main():
     feature_dqn = build_feature_dqn(C["feature_dqn_info"])
 
     rewards = run_dqn_without_transfer(i_env=0,
+                                       device=C.device,
                                        env=env,
                                        seed=C.seed,
                                        env_params=C["no_transfer_dqn"]['env_str'],
@@ -33,5 +34,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/0_pydial.json")
+    C.load("config/0_pydial.json").load_pytorch()
     main()

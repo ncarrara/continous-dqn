@@ -8,7 +8,6 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 import logging
-import os
 import numpy as np
 
 
@@ -75,5 +74,5 @@ def main(lambdas_, empty_previous_test=False):
 
 
 if __name__ == "__main__":
-    C.load("config/test_slot_filling.json")
+    C.load("config/test_slot_filling.json").load_pytorch()
     main(lambda_=[0])

@@ -29,7 +29,7 @@ def main(empty_previous_test=False):
     traj_max_size = np.inf
     decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=N, show=True)
     net = NetDQN(n_in=size_state, n_out=e.action_space.n, **C["net_params"])
-    dqn = DQN(policy_network=net,gamma = C["gamma"], **C["dqn_params"])
+    dqn = DQN(policy_network=net, device=C.device, gamma=C["gamma"], **C["dqn_params"])
     dqn.reset()
     e.seed(C["general"]["seed"])
     rrr = []
@@ -38,13 +38,13 @@ def main(empty_previous_test=False):
     rm = Memory()
     result = np.zeros((N, 4))
     for n in range(N):
-        if n % (N//10) == 0:
+        if n % (N // 10) == 0:
             logger.debug("DQN step {}/{}".format(n, N))
         s = e.reset()
         done = False
         rr = 0
         it = 0
-        trajectory=[]
+        trajectory = []
         while (not done):
             if np.random.random() < decays[n]:
                 if hasattr(e, "action_space_executable"):
@@ -57,16 +57,16 @@ def main(empty_previous_test=False):
                     action_mask = np.ones(e.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature(s,e), action_mask)
+                    a = dqn.pi(feature(s, e), action_mask)
                 else:
-                    a = dqn.pi(feature(s,e), np.zeros(e.action_space.n))
+                    a = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
 
             s_, r_, done, info = e.step(a)
             sample = (s, a if type(a) is str else int(a), r_, s_, done, info)
             trajectory.append(sample)
 
             rr += r_
-            t_dqn = (feature(s,e), a, r_, feature(s_,e), done, info)
+            t_dqn = (feature(s, e), a, r_, feature(s_, e), done, info)
             # print("before",s_)
             dqn.update(*t_dqn)
             # print("after",s_)
@@ -99,9 +99,9 @@ def main(empty_previous_test=False):
                 action_mask = np.ones(e.action_space.n)
                 for ex in exec:
                     action_mask[ex] = 0.
-                a = dqn.pi(feature(s,e), action_mask)
+                a = dqn.pi(feature(s, e), action_mask)
             else:
-                a = dqn.pi(feature(s,e), np.zeros(e.action_space.n))
+                a = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
 
             s_, r_, done, info = e.step(a)
             c_ = info["c_"]
@@ -122,14 +122,14 @@ def main(empty_previous_test=False):
         rrr_greedy.append(rr)
         result[n] = np.array([rew_r, rew_c, ret_r, ret_c])
     logger.info("[execute_policy] saving results at : {}".format(C.path_dqn_results))
-    np.savetxt(C.path_dqn_results+"/greedy_lambda_=0.result", result)
-    if N>100:
+    np.savetxt(C.path_dqn_results + "/greedy_lambda_=0.result", result)
+    if N > 100:
         nb_traj_packet = 100
-        a = np.reshape(rrr,(int(N/nb_traj_packet),-1))
-        a = np.mean(a,1)
+        a = np.reshape(rrr, (int(N / nb_traj_packet), -1))
+        a = np.mean(a, 1)
         x = np.asarray(range(len(a))) * nb_traj_packet
         plt.plot(x, a)
-        a = np.reshape(rrr_greedy, (int(N/nb_traj_packet), -1))
+        a = np.reshape(rrr_greedy, (int(N / nb_traj_packet), -1))
         a = np.mean(a, 1)
         plt.plot(x, a)
         plt.title("dqn results")
@@ -138,6 +138,7 @@ def main(empty_previous_test=False):
         plt.close()
     rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
 
+
 if __name__ == "__main__":
-    C.load("config/final.json")
+    C.load("config/final.json").load_pytorch()
     main()

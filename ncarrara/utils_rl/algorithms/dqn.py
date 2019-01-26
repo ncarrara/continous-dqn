@@ -69,6 +69,7 @@ class DQN:
     ADAPTATIVE = "ADAPTATIVE"
 
     def __init__(self,
+                 device,
                  policy_network,
                  gamma=0.999,
                  batch_size_experience_replay=128,
@@ -79,11 +80,12 @@ class DQN:
                  lr=None,
                  weight_decay=None,
                  **kwargs):
+        self.device= device
         self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
         self.GAMMA = gamma
         self.TARGET_UPDATE = target_update
         self.workspace = workspace
-        self.policy_net = policy_network.to(C.device)
+        self.policy_net = policy_network.to(self.device)
         self.target_net = copy.deepcopy(policy_network)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
@@ -141,7 +143,7 @@ class DQN:
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
-                                      device=C.device,
+                                      device=self.device,
                                       dtype=torch.uint8)
         non_final_next_states= [s for s in batch.s_ if s is not None]
         # non_final_next_states = torch.cat(non_final_next_states)
@@ -149,7 +151,7 @@ class DQN:
         self._action_batch = torch.cat(batch.a)
         reward_batch = torch.cat(batch.r_)
         state_action_values = self.policy_net(self._state_batch).gather(1, self._action_batch)
-        next_state_values = torch.zeros(len(transitions), device=C.device)
+        next_state_values = torch.zeros(len(transitions), device=self.device)
         if non_final_next_states:
             next_state_values[non_final_mask] = self.target_net(torch.cat(non_final_next_states)).max(1)[0].detach()
         else:
@@ -168,20 +170,20 @@ class DQN:
             if not type(action_mask) == type(np.zeros(1)):
                 action_mask = np.asarray(action_mask)
             action_mask[action_mask == 1.] = np.infty
-            action_mask = torch.tensor([action_mask], device=C.device, dtype=torch.float)
-            s = torch.tensor([[state]], device=C.device, dtype=torch.float)
+            action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
+            s = torch.tensor([[state]], device=self.device, dtype=torch.float)
             a = self.policy_net(s).sub(action_mask).max(1)[1].view(1, 1).item()
             return a
 
     def update(self, *sample):
         state, action, reward, next_state, done, info = sample
-        state = torch.tensor([[state]], device=C.device, dtype=torch.float)
+        state = torch.tensor([[state]], device=self.device, dtype=torch.float)
         if not done:
-            next_state = torch.tensor([[next_state]], device=C.device, dtype=torch.float)
+            next_state = torch.tensor([[next_state]], device=self.device, dtype=torch.float)
         else:
             next_state = None
-        action = torch.tensor([[action]], device=C.device, dtype=torch.long)
-        reward = torch.tensor([float(reward)], device=C.device, dtype=torch.float)
+        action = torch.tensor([[action]], device=self.device, dtype=torch.long)
+        reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
         self.memory.push(state, action, reward, next_state, done, info)
         self._optimize_model()
         if next_state is None:

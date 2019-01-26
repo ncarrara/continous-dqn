@@ -1,5 +1,4 @@
 # from ncarrara.bftq_pydial.main.plot_data import main
-import torch
 from sklearn.model_selection import ParameterGrid
 import os
 from ncarrara.bftq_pydial.tools.configuration import C
@@ -19,8 +18,9 @@ if len(sys.argv) > 1:
 else:
     config_file = "config/camera_ready_6.2.json"
     seeds = [963845]
+    C.load_matplotlib('agg')
 
-C.load_matplotlib('agg')
+C.load_pytorch()
 #
 # logging.getLogger(">ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
@@ -92,21 +92,18 @@ for i_config,params in enumerate(grid):
     # CREATE DATA DQN or FTQ #
     print("learning dqn ...")
     run_dqn.main()
-    torch.cuda.empty_cache()
     # create_data.main()
     # BFTQ #
     print("learning bftq ...")
     betas_test = eval(C["betas_test"])
     learn_bftq.main()
     print("testing bftq ...")
-    torch.cuda.empty_cache()
     test_bftq.main(betas_test=betas_test)
     # HDC #
     print("testing HDC ...")
     run_hdc.main(safenesses=np.linspace(0, 1, 10))
     # FTQ #
     print("learning and testing FTQ ...")
-    torch.cuda.empty_cache()
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
 

@@ -93,5 +93,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/final.json").create_fresh_workspace()
+    C.load("config/final.json").load_pytorch().create_fresh_workspace()
     main()

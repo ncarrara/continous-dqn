@@ -57,5 +57,5 @@ def main():
 
 if __name__ == "__main__":
     # execute only if run as a script
-    C.load("config/0_pydial.json")
+    C.load("config/0_pydial.json").load_pytorch()
     main()

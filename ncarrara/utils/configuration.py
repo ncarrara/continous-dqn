@@ -61,24 +61,17 @@ class Configuration(object):
         self.id = self.dict["general"]["id"]
         self.workspace = self.dict["general"]["workspace"]
 
-
-
         import logging.config as config
         config.dictConfig(self.dict["general"]["dictConfig"])
 
-        # if seed is not None:
-        #     self.logger.warning("overriding seed")
         self.seed = self.dict["general"]["seed"]
         if self.seed is not None:
             from ncarrara.utils.math import set_seed
             set_seed(self.seed)
 
-        import torch
         import numpy as np
-        if str(torch.__version__) == "0.4.1.":
-            self.logger.warning("0.4.1. is bugged regarding mse loss")
         np.set_printoptions(precision=2)
-        self.logger.info("Pytorch version : {}".format(torch.__version__))
+
         return self
 
     def load_matplotlib(self, graphic_engine):

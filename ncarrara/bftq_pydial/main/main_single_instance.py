@@ -1,14 +1,7 @@
-# from ncarrara.bftq_pydial.main.plot_data import main
 import torch
-from sklearn.model_selection import ParameterGrid
-import os
 from ncarrara.bftq_pydial.tools.configuration import C
 import sys
 import numpy as np
-import logging
-import re
-
-from ncarrara.utils.os import makedirs
 
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
@@ -20,7 +13,8 @@ else:
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data, run_dqn
 
-C.load(config_file).create_fresh_workspace(force=False)
+C.load(config_file).load_pytorch().create_fresh_workspace(force=False)
+
 
 # CREATE DATA DQN or FTQ #
 """

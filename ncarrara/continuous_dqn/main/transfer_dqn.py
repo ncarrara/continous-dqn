@@ -45,6 +45,7 @@ def main():
         logger.info("======== WITH TRANSFER ==========")
 
         r_w_t, r_w_t_greedy = run_dqn_with_transfer(env, seed=C.seed,
+                                                    device=C.device,
                                                     autoencoders=autoencoders,
                                                     ers=ers,
                                                     sources_params=source_params,
@@ -55,6 +56,7 @@ def main():
 
         logger.info("======== WITHOUT TRANSFER ==========")
         r_wo_t, r_wo_t_greedy = run_dqn_without_transfer(env, seed=C.seed,
+                                                         device=C.device,
                                                          sources_params=source_params,
                                                          feature_autoencoder=feature_autoencoder,
                                                          feature_dqn=feature_dqn,
@@ -107,7 +109,7 @@ def show(test_params=None, results_w_t=None, results_wo_t=None, results_w_t_gree
     n_dots = min(5, N_trajs)
     traj_by_dot = int(N_trajs / n_dots)
 
-    x = np.linspace(1, n_dots , n_dots) * traj_by_dot
+    x = np.linspace(1, n_dots, n_dots) * traj_by_dot
 
     for ienv in range(N_envs):
         if results_w_t.ndim > 1:
@@ -169,5 +171,5 @@ def show(test_params=None, results_w_t=None, results_wo_t=None, results_w_t_gree
 
 
 if __name__ == "__main__":
-    C.load("config/0_pydial.json")
+    C.load("config/0_pydial.json").load_pytorch()
     main()

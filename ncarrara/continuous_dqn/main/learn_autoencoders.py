@@ -1,7 +1,7 @@
-import torch
+
 from ncarrara.continuous_dqn.tools import utils as utils, features
 from ncarrara.continuous_dqn.ae.autoencoder import Autoencoder
-import torch.nn.functional as F
+
 import os
 import logging
 
@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
          autoencoder_size, n_epochs):
+    import torch
+    import torch.nn.functional as F
     criterion = F.l1_loss if criterion == "l1" else None
     makedirs(C.path_samples)
     feature = build_feature_autoencoder(C["feature_autoencoder_info"])
@@ -51,5 +53,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/0_pydial.json")
+    C.load("config/0_pydial.json").load_pytorch()
     main()

@@ -14,13 +14,13 @@ if len(sys.argv) > 1:
     seed_start = int(sys.argv[2])
     number_seeds = int(sys.argv[3])
     seeds = range(seed_start, seed_start + number_seeds)
-    C.load_matplotlib('agg')
+    # C.load_matplotlib('agg')
 else:
-    config_file = "config/camera_ready_6.2.json"
-    seeds = [963845]
-    C.load_matplotlib('agg')
+    config_file = "config/camera_ready_8.json"
+    seeds = [0]
 
-C.load_pytorch()
+
+# C.load_pytorch()
 #
 # logging.getLogger(">ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
 # logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
@@ -85,7 +85,7 @@ for i_config,params in enumerate(grid):
             tochange = tochange[keys[ik]]
         tochange[keys[-1]] = v
     dict["general"]["workspace"] = workspace + "/"+ str(i_config)
-    C.load(dict).create_fresh_workspace(force=True)
+    C.load(dict).create_fresh_workspace(force=True).load_pytorch().load_matplotlib()
     print("\n-------- i_config={} ----------\n".format(i_config))
 
 

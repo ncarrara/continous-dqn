@@ -103,7 +103,7 @@ if __name__ == "__main__":
         #         )
     }
     folder = "camera_ready_6.2"
-    values = range(0,11)
+    values = range(0,18)
 
     # folder = "camera_ready_7"
     # values = [0, 1]

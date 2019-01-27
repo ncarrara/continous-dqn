@@ -15,6 +15,7 @@ class ConfigurationContinuousDQN(Configuration):
         makedirs(self.path_samples)
         makedirs(self.path_models)
         makedirs(self.path_targets)
+        return self
 
     def load(self, config):
         super(ConfigurationContinuousDQN,self).load(config)

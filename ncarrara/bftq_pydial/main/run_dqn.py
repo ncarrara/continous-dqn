@@ -1,6 +1,7 @@
 # coding=utf-8
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.utils.math import epsilon_decay
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
@@ -26,7 +27,6 @@ def main(empty_previous_test=False):
     logger.info("neural net input size : {}".format(size_state))
     N = C["create_data"]["N_trajs"]
     traj_max_size = np.inf
-    from ncarrara.utils.math import epsilon_decay
     decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=N, show=True)
     net = NetDQN(n_in=size_state, n_out=e.action_space.n, **C["net_params"])
     dqn = DQN(policy_network=net, device=C.device, gamma=C["gamma"], **C["dqn_params"])

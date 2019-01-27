@@ -7,6 +7,7 @@ class Configuration(object):
         self.dict = {}
         self.device = None
         self.plt = None
+        self.backend=None
 
     def __getitem__(self, arg):
         self.__check__()
@@ -75,10 +76,12 @@ class Configuration(object):
         if self.plt is not None:
             self.logger.warning("matplotlib already loaded")
         else:
+            self.backend = None
             import matplotlib
-            if backend is None:
-                self.backend = self["general"]["matplotlib_backend"]
-                # print(self["general"]["matplotlib_backend"])
+            if backend is not None:
+                self.backend = backend
+            elif self["general"]["matplotlib_backend"] is not None:
+                self.backend =self["general"]["matplotlib_backend"]
             if self.backend is not None:
                 matplotlib.use(self.backend)
             import matplotlib.pyplot as plt

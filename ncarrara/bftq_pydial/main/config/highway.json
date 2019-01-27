@@ -135,20 +135,20 @@
   },
 
   "ftq_params": {
-    "nn_loss_stop_condition": 0.001,
+    "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 400,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 15,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
+    "delta_stop": 0.0,
     "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH"
   },
 
   "net_params": {
-    "activation_type": "RELU",
+    "activation_type": "TANH",
     "reset_type": "XAVIER",
     "intra_layers": [
       256,

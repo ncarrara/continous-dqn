@@ -32,6 +32,8 @@ class NetFTQ(torch.nn.Module):
         self.reset_type = reset_type
         if activation_type == "RELU":
             activation_type = F.relu
+        elif activation_type == "TANH":
+            activation_type = torch.tanh
         else:
             raise Exception("Unknow activation_type : {}".format(F.relu))
         all_layers = [n_in] + intra_layers + [n_out]

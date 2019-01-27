@@ -28,7 +28,10 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
         # if not data.a in 'hello()':
         r_ = data.r_
         s = feature(data.s, e)
-        s_ = feature(data.s_, e)
+        if data.done:
+            s_ = None
+        else:
+            s_ = feature(data.s_, e)
         a = data.a  # e.action_space().index(data.a)
         c_ = data.info["c_"]
         reward_ftq = r_ - (lambda_ * c_)

@@ -95,9 +95,12 @@ class PytorchBudgetedFittedQ:
                  disp_states_ids=[],
                  workspace="tmp",
                  print_q_function=False,
+                 state_to_unique_str=lambda s: str(s),
+                 action_to_unique_str=lambda a: str(a),
 
                  ):
-
+        self.state_to_unique_str =state_to_unique_str
+        self.action_to_unique_str =action_to_unique_str
         self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
@@ -182,7 +185,7 @@ class PytorchBudgetedFittedQ:
         lastkeyid = 0
         hull_keys = {}
         for i_t, t in enumerate(transitions):
-            hull_key = str(t.next_state)
+            hull_key = self.state_to_unique_str(t.next_state)
             if it % np.ceil(len(transitions) / 10) == 0:
                 logger.info("[epoch_bftq={:02}][_construct_batch] {} transitions proceeded"
                             .format(self._id_ftq_epoch, it))
@@ -206,8 +209,8 @@ class PytorchBudgetedFittedQ:
 
                 self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
-            key = str(t.state) + str(t.action)
-            key_states.add(str(t.next_state))
+            key = self.state_to_unique_str(t.state) + self.action_to_unique_str(t.action)
+            key_states.add(self.state_to_unique_str(t.next_state))
             if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
                 self.disp_states_ids.append(len(self.disp_states))
                 self.disp_states.append(t.next_state)
@@ -292,7 +295,7 @@ class PytorchBudgetedFittedQ:
             if logger.getEffectiveLevel() is logging.INFO:
                 for i_s in dispstateidsrand:
                     state = self.disp_next_states[i_s]
-                    id = str(self.disp_next_states_ids[i_s])
+                    id = self.state_to_unique_str(self.disp_next_states_ids[i_s])
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))

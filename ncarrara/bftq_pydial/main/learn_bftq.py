@@ -32,7 +32,7 @@ def main():
     else:
         betas_for_discretisation = betas
 
-    action_str = getattr(e, "action_space_str", map(str, range(e.action_space.n)))
+    action_str = getattr(e, "action_space_str", list(map(str, range(e.action_space.n))))
 
     bftq = PytorchBudgetedFittedQ(
         device=C.device,

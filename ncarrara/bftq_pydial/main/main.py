@@ -20,20 +20,17 @@ else:
     seeds = [0]
 
 
-# C.load_pytorch()
-#
-# logging.getLogger(">ncarrara.bftq_pydial.main.create_data").setLevel(logging.INFO)
-# logging.getLogger("ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env").setLevel(logging.INFO)
-
 print("seeds = {}".format([str(s) for s in seeds]))
-from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
 
 with open(config_file, 'r') as infile:
     import json
-
     dict = json.load(infile)
     workspace = dict["general"]["workspace"]
     makedirs(workspace)
+C.load_pytorch().load_matplotlib(dict["general"]["matplotlib_backend"])
+
+from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
+
 # param_grid = {
 #     'general.seed': seeds,
 #     'net_params.intra_layers': [[128, 256], [32, 64], [512, 256, 128, 64, 32], [32, 128, 256, 512], [64, 128]],
@@ -85,7 +82,7 @@ for i_config,params in enumerate(grid):
             tochange = tochange[keys[ik]]
         tochange[keys[-1]] = v
     dict["general"]["workspace"] = workspace + "/"+ str(i_config)
-    C.load(dict).create_fresh_workspace(force=True).load_pytorch().load_matplotlib()
+    C.load(dict).create_fresh_workspace(force=True).load_pytorch()
     print("\n-------- i_config={} ----------\n".format(i_config))
 
 
@@ -93,6 +90,9 @@ for i_config,params in enumerate(grid):
     print("learning dqn ...")
     run_dqn.main()
     # create_data.main()
+    print("learning and testing FTQ ...")
+    lambdas = eval(C["lambdas"])
+    run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
     # BFTQ #
     print("learning bftq ...")
     betas_test = eval(C["betas_test"])
@@ -103,9 +103,7 @@ for i_config,params in enumerate(grid):
     print("testing HDC ...")
     run_hdc.main(safenesses=np.linspace(0, 1, 10))
     # FTQ #
-    print("learning and testing FTQ ...")
-    lambdas = eval(C["lambdas"])
-    run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
+
 
 
 

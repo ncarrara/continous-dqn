@@ -78,8 +78,9 @@ class Configuration(object):
             import matplotlib
             if backend is None:
                 self.backend = self["general"]["matplotlib_backend"]
+                # print(self["general"]["matplotlib_backend"])
             if self.backend is not None:
-                matplotlib.use(backend)
+                matplotlib.use(self.backend)
             import matplotlib.pyplot as plt
             self.plt = plt
         return self

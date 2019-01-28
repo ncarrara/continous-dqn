@@ -3,6 +3,7 @@
     "id": "highway",
     "seed": 0,
     "workspace": "tmp/highway",
+    "matplotlib_backend": "agg",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -104,25 +105,25 @@
     "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": false,
-    "N_trajs": 2000,
+    "N_trajs": 1500,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0015
+      "decay": 0.002
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 20
+    "N_trajs": 150
   },
 
-  "nb_trajs_between_epoch": 30,
-  "lambdas": "[0]",
-  "betas": "np.linspace(0., 1., 5)",
-  "betas_test": "np.linspace(0., 1., 10)",
+  "nb_trajs_between_epoch": 15,
+  "lambdas": "np.linspace(0., 10., 11)",
+  "betas": "np.linspace(0., 1., 21)",
+  "betas_test": "np.linspace(0., 1., 21)",
   "gamma": 0.8,
-  "gamma_c": 0.8,
+  "gamma_c": 1.0,
 
   "dqn_params": {
     "batch_size_experience_replay": 128,
@@ -150,11 +151,12 @@
   },
 
   "net_params": {
-    "activation_type": "TANH",
+    "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
-      256
+      128,
+      64,
+      32
     ]
   },
 
@@ -166,7 +168,7 @@
     "max_ftq_epoch": 15,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
+    "delta_stop": 0.000,
     "weight_decay": 0.000,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
@@ -182,7 +184,8 @@
     "reset_type": "XAVIER",
     "intra_layers": [
       256,
-      256
+      128,
+      64
     ]
   }
 }

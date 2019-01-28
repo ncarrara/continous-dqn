@@ -9,6 +9,8 @@ import torch.optim as optim
 import torch.nn.functional as F
 import copy
 import os
+
+from ncarrara.utils.math import update_lims
 from ncarrara.utils_rl.transition.replay_memory import Memory
 import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
@@ -468,11 +470,11 @@ class PytorchBudgetedFittedQ:
         if logger.getEffectiveLevel() is logging.INFO:
             logger.info("\n[compute_next_values] Q(s') sur le batch")
             create_Q_histograms("Qr(s')_e={}".format(self._id_ftq_epoch),
-                                values=next_state_rewards.cpu().numpy().flat,
+                                values=next_state_rewards.cpu().numpy().flatten(),
                                 path=self.workspace + "/histogram",
                                 labels=["next value"])
             create_Q_histograms("Qc(s')_e={}".format(self._id_ftq_epoch),
-                                values=next_state_constraints.cpu().numpy().flat,
+                                values=next_state_constraints.cpu().numpy().flatten(),
                                 path=self.workspace + "/histogram",
                                 labels=["next value"])
 
@@ -509,12 +511,12 @@ class PytorchBudgetedFittedQ:
                 state_action_constraints = QQ.gather(1, self._action_batch + self.N_actions)
                 create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                     values=[expected_state_action_rewards.cpu().numpy(),
-                                            state_action_rewards.cpu().numpy().flat],
+                                            state_action_rewards.cpu().numpy().flatten()],
                                     path=self.workspace + "/histogram",
                                     labels=["target", "prediction"])
                 create_Q_histograms(title="Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                     values=[expected_state_action_constraints.cpu().numpy(),
-                                            state_action_constraints.cpu().numpy().flat],
+                                            state_action_constraints.cpu().numpy().flatten()],
                                     path=self.workspace + "/histogram",
                                     labels=["target", "prediction"])
 
@@ -655,14 +657,16 @@ class PytorchBudgetedFittedQ:
             yr[idx] = qrqc[0][:self.N_actions]
             yc[idx] = qrqc[0][self.N_actions:]
 
-        for ia in actions:  # self.N_actions):
-            # print( yr
-            # print( yr[:,ia]
+        lims_x = [-1.1, 1.1]
+        lims_y = [-1.1, 1.1]
+        for ia in actions:
             plt.plot(betas, yr[:, ia], ls="-", marker='o', markersize=2)
+            update_lims(lims_x, betas)
+            update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
-        plt.xlim(-0.1, 1.1)
-        plt.ylim(-0.1, 1.1)
+        plt.xlim(*lims_x)
+        plt.ylim(*lims_y)
         plt.title(title)
         plt.xlabel("beta")
         plt.ylabel("Qr")
@@ -670,32 +674,35 @@ class PytorchBudgetedFittedQ:
         plt.close()
         plt.clf()
 
-        for ia in actions:  # range(self.N_actions):
-            # print( yr
-            # print( yr[:, ia]
+        lims_x = [-1.1, 1.1]
+        lims_y = [-1.1, 1.1]
+        for ia in actions:
             plt.plot(betas, yc[:, ia], ls="-", marker='^', markersize=2)
-
+            update_lims(lims_x, betas)
+            update_lims(lims_y, yc[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)
-        plt.xlim(-0.1, 1.1)
-        plt.ylim(-0.1, 1.1)
+        plt.xlim(*lims_x)
+        plt.ylim(*lims_y)
         plt.xlabel("beta")
         plt.ylabel("Qc")
         plt.savefig(self.workspace + "/behavior/Qc_" + title + ".png")
         plt.close()
         plt.clf()
-        fig, ax = plt.subplots()
-        for ia in actions:  # range(self.N_actions):
-            plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
-            # for ib, budget in enumerate(betas):
-            #     ax.annotate("{:.2f}".format(budget), (yc[ib, ia], yr[ib, ia]))
 
+        fig, ax = plt.subplots()
+        lims_x = [-1.1, 1.1]
+        lims_y = [-1.1, 1.1]
+        for ia in actions:
+            plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
+            update_lims(lims_x, yc[:, ia])
+            update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)
-        plt.xlim(-0.1, 1.1)
-        plt.ylim(-0.1, 1.1)
+        plt.xlim(*lims_x)
+        plt.ylim(*lims_y)
         plt.xlabel("Qc")
         plt.ylabel("Qr")
         plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")

@@ -37,6 +37,10 @@ def normalized(a):
     rez = np.array([v / sum for v in a])
     return rez
 
+def update_lims(lims, values):
+    lims[0] = min(lims[0], np.amin(values))
+    lims[1] = max(lims[1], np.amax(values))
+
 # TODO check if ok
 def create_arrangements(nb_elements, size_arr, current_size_arr=0, arrs=None):
     new_arrs = []

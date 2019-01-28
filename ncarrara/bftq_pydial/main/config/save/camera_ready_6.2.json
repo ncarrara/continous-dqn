@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway",
+    "id": "camera_ready_6.2",
     "seed": 0,
-    "workspace": "tmp/highway",
+    "workspace": "tmp/camera_ready_6.2",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -13,7 +13,7 @@
       },
       "handlers": {
         "default": {
-          "level": "DEBUG",
+          "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -32,35 +32,36 @@
           ],
           "level": "WARN",
           "propagate": false
-        },"ncarrara.utils.math": {
-          "handlers": [
-            "default"
-          ],
-          "level": "INFO",
-          "propagate": false
         },
         "ncarrara.utils_rl.algorithms.dqn": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.math": {
           "handlers": [
             "default"
           ],
@@ -73,99 +74,80 @@
           ],
           "level": "ERROR",
           "propagate": false
-        },
-        "ncarrara.bftq_pydial.main.run_dqn": {
-          "handlers": [
-            "default"
-          ],
-          "level": "DEBUG",
-          "propagate": false
         }
       }
     }
   },
-  "feature_str": "feature_identity",
+  "feature_str": "feature_basic",
   "generate_envs": {
-    "envs_str": "highway-v0",
+    "envs_str": "slot_filling_env_v0",
     "envs_params": {
-        "lanes_count": [2],
-        "initial_spacing": [2],
-        "vehicles_count": [5],
-        "duration": [20],
-        "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
-        "centering_position": [[0.3, 0.5]],
-        "collision_reward": [0]
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.25
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_bye": [
+        0.0
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_if_summarize_fail": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ],
+      "can_say_bye": [false]
     }
   },
   "create_data": {
     "filename_data": "samples.data",
-    "as_json": false,
+    "as_json": true,
     "handcrafted_greedy_policy": true,
     "trajs_by_ftq_batch": 50,
     "lambda_": 0,
-    "normalize_reward": false,
-    "N_trajs": 2000,
+    "normalize_reward": true,
+    "N_trajs": 5000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0015
+      "decay": 0.001
     }
   },
   "main": {
     "filename_data": "samples.data",
     "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 20
+    "N_trajs": 1000
   },
-
-  "nb_trajs_between_epoch": 30,
-  "lambdas": "[0]",
-  "betas": "np.linspace(0., 1., 5)",
-  "betas_test": "np.linspace(0., 1., 10)",
-  "gamma": 0.8,
-  "gamma_c": 0.8,
-
-  "dqn_params": {
-    "batch_size_experience_replay": 128,
-    "target_update": 50,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "lr": 0.0005,
-    "weight_decay": 0.00005,
-    "workspace": "dqn"
-  },
-
-  "ftq_params": {
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 400,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "max_ftq_epoch": 15,
-    "learning_rate": 0.01,
-    "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.0,
-    "weight_decay": 0.0,
-    "batch_size_experience_replay": "ALL_BATCH"
-  },
-
-  "net_params": {
-    "activation_type": "TANH",
-    "reset_type": "XAVIER",
-    "intra_layers": [
-      256,
-      256
-    ]
-  },
-
   "bftq_params": {
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 400,
+
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 15,
-    "learning_rate": 0.01,
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.000,
+    "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [
@@ -180,8 +162,45 @@
     "reset_type": "XAVIER",
     "intra_layers": [
       256,
-      256
+      128,
+      64
     ]
+  },
+  "nb_trajs_between_epoch": 30,
+  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+  "betas": "np.linspace(0.,1.,26)",
+  "betas_test": "np.linspace(0.,1.,26)",
+  "ftq_params": {
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0005,
+    "batch_size_experience_replay": "ALL_BATCH"
+  },
+  "net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      128,
+      64,
+      32
+    ]
+  },
+  "gamma": 1.0,
+  "gamma_c": 1.0,
+  "dqn_params": {
+    "batch_size_experience_replay": 32,
+    "target_update": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "lr": 0.001,
+    "weight_decay": 0.0005,
+    "workspace": "dqn"
   }
 }
 

@@ -16,6 +16,7 @@ class ConfigurationBFTQ(Configuration):
         makedirs(self.path_hdc_results)
         makedirs(self.path_dqn)
         makedirs(self.path_dqn_results)
+        return self
 
     def load(self, config):
         super(ConfigurationBFTQ, self).load(config)

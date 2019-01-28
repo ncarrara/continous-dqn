@@ -7,6 +7,7 @@ class Configuration(object):
         self.dict = {}
         self.device = None
         self.plt = None
+        self.backend=None
 
     def __getitem__(self, arg):
         self.__check__()
@@ -45,9 +46,6 @@ class Configuration(object):
         return self
 
     def load(self, config):
-        if self.plt is None:
-            import matplotlib.pyplot as plt
-            self.plt = plt
         if type(config) == type(""):
             self.logger.info("reading config file at {}".format(config))
             with open(config, 'r') as infile:
@@ -74,16 +72,28 @@ class Configuration(object):
 
         return self
 
-    def load_matplotlib(self, graphic_engine):
-        import matplotlib
-        matplotlib.use(graphic_engine)
-        import matplotlib.pyplot as plt
-        self.plt = plt
+    def load_matplotlib(self, backend=None):
+        if self.plt is not None:
+            self.logger.warning("matplotlib already loaded")
+        else:
+            self.backend = None
+            import matplotlib
+            if backend is not None:
+                self.backend = backend
+            elif self["general"]["matplotlib_backend"] is not None:
+                self.backend =self["general"]["matplotlib_backend"]
+            if self.backend is not None:
+                matplotlib.use(self.backend)
+            import matplotlib.pyplot as plt
+            self.plt = plt
         return self
 
     def load_pytorch(self):
-        from ncarrara.utils.torch import get_the_device_with_most_available_memory
-        _device = get_the_device_with_most_available_memory()
-        self.device = _device
-        self.logger.info("DEVICE : {}".format(self.device))
+        if self.device is not None:
+            self.logger.warning("pytorch already loaded")
+        else:
+            from ncarrara.utils.torch import get_the_device_with_most_available_memory
+            _device = get_the_device_with_most_available_memory()
+            self.device = _device
+            self.logger.info("DEVICE : {}".format(self.device))
         return self

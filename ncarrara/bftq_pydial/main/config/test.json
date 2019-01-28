@@ -169,7 +169,7 @@
   "betas_test": "np.linspace(0.,1.,21)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 10,
+    "max_nn_epoch": 50,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 2,
@@ -177,7 +177,9 @@
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
     "weight_decay": 0.0005,
-    "batch_size_experience_replay": "ALL_BATCH"
+    "batch_size_experience_replay": "ALL_BATCH",
+        "step_test_policy_nn_epoch": 10
+
   },
   "net_params": {
     "activation_type": "RELU",

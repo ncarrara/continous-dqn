@@ -169,10 +169,39 @@ def main(path, params_algos):
     plt.legend(handles=patchList)
     plt.show()
     plt.savefig(path + "/" + "results_intra.png")
-
-
     plt.close()
 
+
+
+    # DQN
+    logger.info("printing DQN ...")
+    datas=[]
+    for id in range(nb_ids):
+        if skipthoseids[id] ==0:
+            file_id = "{}/{}/{}/results/greedy_lambda_=0.result".format(path, id, "dqn")
+            logger.info("processing {}".format(file_id))
+            datas.append(np.loadtxt(file_id, np.float32))
+
+    datas = np.asarray(datas)
+    print(datas.shape)
+
+    datas = datas[:, :, 2]
+    print(datas.shape)
+    means = np.mean(datas,0)
+
+
+    fig, ax = plt.subplots(1, figsize=(6, 5))
+
+
+
+    # plt.plot(range(len(means)),means)
+    for i in range(datas.shape[0]):
+        plt.plot(range(datas.shape[1]),datas[i])
+        # break
+    plt.grid()
+    plt.show()
+    plt.savefig(path + "/" + "dqn.png")
+    plt.close()
 
 if __name__ == "__main__":
     path = "tmp/camera_ready_6.2"

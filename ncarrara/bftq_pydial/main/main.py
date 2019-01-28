@@ -18,7 +18,7 @@ if len(sys.argv) > 1:
 else:
     config_file = "config/camera_ready_8.json"
     # seeds = [0,1,2] # override seeds of config file
-    
+
 print("seeds = {}".format([str(s) for s in seeds]))
 
 with open(config_file, 'r') as infile:
@@ -26,7 +26,12 @@ with open(config_file, 'r') as infile:
     dict = json.load(infile)
     workspace = dict["general"]["workspace"]
     makedirs(workspace)
-C.load_pytorch().load_matplotlib(dict["general"]["matplotlib_backend"])
+
+if "matplotlib_backend" in dict["general"]:
+    backend = dict["general"]["matplotlib_backend"]
+else:
+    backend="Agg"
+C.load_pytorch().load_matplotlib(backend)
 
 if seeds is None:
     seeds=[dict["general"]["seed"]]
@@ -91,20 +96,20 @@ for i_config,params in enumerate(grid):
     # CREATE DATA DQN or FTQ #
     print("learning dqn ...")
     run_dqn.main()
-    # create_data.main()
-    print("learning and testing FTQ ...")
+    # # create_data.main()
+    # print("learning and testing FTQ ...")
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
-    # BFTQ #
-    print("learning bftq ...")
-    betas_test = eval(C["betas_test"])
-    learn_bftq.main()
-    print("testing bftq ...")
-    test_bftq.main(betas_test=betas_test)
-    # HDC #
-    print("testing HDC ...")
-    run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # FTQ #
+    # # BFTQ #
+    # print("learning bftq ...")
+    # betas_test = eval(C["betas_test"])
+    # learn_bftq.main()
+    # print("testing bftq ...")
+    # test_bftq.main(betas_test=betas_test)
+    # # HDC #
+    # print("testing HDC ...")
+    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # # FTQ #
 
 
 

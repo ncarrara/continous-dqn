@@ -89,8 +89,10 @@ class PytorchFittedQ:
                  disp_states=[],
                  workspace="tmp",
                  action_str=None,
-                 test_policy=None
-                 ):
+                 test_policy=None,
+                 step_test_policy_nn_epoch=500
+                ):
+        self.step_test_policy_nn_epoch = step_test_policy_nn_epoch
         self.logger = logging.getLogger(__name__)
         self.device = device
         self.test_policy = test_policy
@@ -189,8 +191,8 @@ class PytorchFittedQ:
         self._policy_network.reset()
         self.delta = np.inf
         self._id_ftq_epoch = 0
-        rewards=[]
-        returns=[]
+        rewards = []
+        returns = []
         while self._id_ftq_epoch < self._max_ftq_epoch and self.delta > self.delta_stop:
             self.logger.info("[epoch_ftq={}] ---------".format(self._id_ftq_epoch))
             self._sample_batch()
@@ -200,13 +202,13 @@ class PytorchFittedQ:
             self.logger.info("loss {}".format(losses[-1]))
 
             if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
-                title="epoch={}.png".format(self._id_ftq_epoch)
+                title = "epoch={}.png".format(self._id_ftq_epoch)
                 stats = self.test_policy(self.construct_pi(self._policy_network))
                 rewards.append(stats[0])
                 returns.append(stats[2])
                 plt.clf()
-                plt.plot(range(len(rewards)), rewards, label="reward",marker='o')
-                plt.plot(range(len(returns)), returns, label="returns",marker='o')
+                plt.plot(range(len(rewards)), rewards, label="reward", marker='o')
+                plt.plot(range(len(returns)), returns, label="returns", marker='o')
                 plt.legend()
                 plt.title(title)
                 plt.grid()
@@ -227,7 +229,7 @@ class PytorchFittedQ:
 
         return pi
 
-    def construct_pi(self,network):
+    def construct_pi(self, network):
         def pi(state, action_mask):
             with torch.no_grad():
                 if not type(action_mask) == type(np.zeros(1)):
@@ -238,6 +240,7 @@ class PytorchFittedQ:
                 a = network(s).sub(action_mask).max(1)[1].view(1, 1).item()
 
                 return a
+
         return pi
 
     def _ftq_epoch(self):
@@ -266,10 +269,10 @@ class PytorchFittedQ:
 
             mask_action = np.zeros(len(QQ[0]))
             fast_create_Q_histograms_for_actions(title="actions_Q(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                            QQ=QQ.cpu().detach().numpy(),
-                                            path=self.workspace,
-                                            labels=self.action_str,
-                                            mask_action=mask_action,
+                                                 QQ=QQ.cpu().detach().numpy(),
+                                                 path=self.workspace,
+                                                 labels=self.action_str,
+                                                 mask_action=mask_action,
                                                  inf=-2, sup=2)
 
         return losses
@@ -282,18 +285,19 @@ class PytorchFittedQ:
         nn_epoch = 0
         losses = []
         # torch.set_grad_enabled(True)
-        rewards=[]
-        returns=[]
+        rewards = []
+        returns = []
         while not stop:
             loss = self._gradient_step()
             losses.append(loss)
-            if nn_epoch%500==0:
-                self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
-                                 .format(self._id_ftq_epoch, nn_epoch, loss))
-                if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
-                    stats = self.test_policy(self.construct_pi(self._policy_network))
-                    rewards.append(stats[0])
-                    returns.append(stats[2])
+            if self.logger.getEffectiveLevel() is logging.INFO:
+                if nn_epoch % self.step_test_policy_nn_epoch == 0:
+                    self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
+                                     .format(self._id_ftq_epoch, nn_epoch, loss))
+                    if self.test_policy is not None:
+                        stats = self.test_policy(self.construct_pi(self._policy_network))
+                        rewards.append(stats[0])
+                        returns.append(stats[2])
             cvg = loss < self.nn_stop_loss_condition
             if cvg:
                 self.logger.info(
@@ -303,11 +307,13 @@ class PytorchFittedQ:
             nn_epoch += 1
             stop = nn_epoch > self._max_nn_epoch or cvg
 
-        if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None and len(rewards)>0:
+        if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None and len(rewards) > 0:
             plt.clf()
-            title="neural_network_optimisation_epoch_ftq={}".format(self._id_ftq_epoch)
-            plt.plot(np.asarray(range(len(rewards)))*100, rewards, label="reward",marker='o')
-            plt.plot(np.asarray(range(len(rewards)))*100, returns, label="returns",marker='o')
+            title = "neural_network_optimisation_epoch_ftq={}".format(self._id_ftq_epoch)
+            plt.plot(np.asarray(range(len(rewards))) * self.step_test_policy_nn_epoch, rewards, label="reward",
+                     marker='o')
+            plt.plot(np.asarray(range(len(rewards))) * self.step_test_policy_nn_epoch, returns, label="returns",
+                     marker='o')
             plt.title(title)
             plt.grid()
             plt.savefig(self.workspace + '/' + title)
@@ -316,7 +322,7 @@ class PytorchFittedQ:
 
         # torch.set_grad_enabled(False)
         self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
-                             .format(self._id_ftq_epoch, nn_epoch, loss))
+                         .format(self._id_ftq_epoch, nn_epoch, loss))
         if self.logger.getEffectiveLevel() is logging.INFO:
             plot(losses,
                  title="losses_epoch={}".format(self._id_ftq_epoch),

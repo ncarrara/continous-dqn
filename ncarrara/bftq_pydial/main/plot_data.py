@@ -1,69 +1,108 @@
+import matplotlib
+
+matplotlib.use("Agg")
 import numpy as np
 import os
-import re
 import matplotlib.pyplot as plt
 from matplotlib import patches
 import logging
 import matplotlib.patches as mpatches
+import re
 
 logger = logging.getLogger(__name__)
 
 
-def main(data_dict):
-    # colors = ["r", "g", "b", "purple", "grey", "black", "yellow", 'orange']
+def main(path, params_algos):
+    with open(path + "/" + "params") as f:
+        lines = f.readlines()
+        match = re.search("^id=([0-9]+) .*$", lines[-1])
+        nb_ids = int(match.group(1)) + 1
+
     fig, ax = plt.subplots(1, figsize=(6, 5))
 
-    datas = {}
+    datas = []
 
-    for algo_str, v in data_dict.items():
-        file_seeds, _, params_to_search,_ = v
-        datas_algo = []
-        for file_seed in file_seeds:
-            datas_seed = []
-            logger.info("processing {}".format(file_seed))
-            if not os.path.exists(file_seed):
-                logging.warning("{} do not exists, skipping it".format(file_seed))
+    for ialgo, paramalgo in enumerate(params_algos):
+        algo_str, _, _ = paramalgo
+        params_to_search = []
+        for path_param in os.listdir("{}/{}/{}/results".format(path, 0, algo_str)):
+            match = re.search("=(.*).results", path_param)
+            params_to_search.append(match.group(1))
+        params_to_search.sort()
+        paramalgo.append(params_to_search)
+    # print(params_algos)
+    # exit()
+    skipthoseids = np.zeros(nb_ids)
+    for algo_str, _, _, params_to_search in params_algos:
+
+        datas_algo = [None]*nb_ids
+        for id in range(nb_ids):
+            file_id = "{}/{}/{}/results".format(path, id, algo_str)
+            datas_id = []
+            logger.info("processing {}".format(file_id))
+            if not os.path.exists(file_id):
+                logging.warning("{} do not exists, skipping it".format(file_id))
             else:
-                files_lambda = os.listdir(file_seed)
-                if not files_lambda:
-                    logging.warning("{} exists, but no data, skipping it".format(file_seed))
+                files_params = os.listdir(file_id)
+                if not files_params:
+                    logging.warning("{} exists, but no data, skipping it".format(file_id))
+                    skipthoseids[id]=True
                 else:
-                    for file_lambda in files_lambda:
-                        m = re.search("=(.*).results", file_lambda)
+                    for file_param in files_params:
+                        m = re.search("=(.*).results", file_param)
                         if m:
-                            param = float(m.group(1))
-                            results = np.loadtxt(file_seed + "/" + file_lambda, np.float32)
-                            datas_seed.append((results, param))
+                            param = m.group(1)
+                            results = np.loadtxt(file_id + "/" + file_param, np.float32)
+                            datas_id.append((results, param))
                         else:
-                            logger.warning("Malformed file : {}".format(file_lambda))
-                    if not datas_seed:
-                        logging.warning("malformed results at {}".format(file_seed))
+                            logger.warning("Malformed file : {}".format(file_param))
+                            skipthoseids[id] = True
+                    if not datas_id:
+                        logging.warning("malformed results at {}".format(file_id))
+                        skipthoseids[id] = True
                     else:
-                        datas_seed.sort(key=lambda tup: tup[1])
+                        datas_id.sort(key=lambda tup: tup[1])
                         # print(datas_seed)
-                        datas_seed, params = zip(*datas_seed)
+                        data_algo, params = zip(*datas_id)
+                        params = list(params)
                         if params == params_to_search:
-                            datas_algo.append(datas_seed)
+                            datas_algo[id]=data_algo
                         else:
                             logging.warning(("malformed params, {} != {}".format(params, params_to_search)))
-        datas[algo_str] = (np.asarray(datas_algo), params_to_search)
+                            skipthoseids[id] = True
+                        # exit()
+        datas.append([algo_str,datas_algo, params_to_search])
+
+    print(skipthoseids)
+
+    for ientry,entry in enumerate(datas):
+        algo_str,d, params_to_search = entry
+        datas_algo = []
+        for idd, dd in enumerate(d):
+            if not skipthoseids[idd]:
+                datas_algo.append(dd)
+        entry[1]= np.asarray(datas_algo)
+
+    # exit()
 
     patchList = []
 
-    for algo_str, v in datas.items():
-        data, params = v
-        patch = mpatches.Patch(color=data_dict[algo_str][1], label=r"$"+algo_str+"("+data_dict[algo_str][3]+")$")
+    for ialgo, dataalgo in enumerate(datas):
+        algo_str, data, params_to_search = dataalgo
+        print(data.shape)
+        patch = mpatches.Patch(color=params_algos[ialgo][1],
+                               label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
         patchList.append(patch)
         N_seed = data.shape[1]
         means_run = np.mean(data, 2)
         means_seed = np.mean(means_run, 0)
         mean_std_seed = np.std(means_run, 0)
-        for iparam, param in enumerate(params):
+        for iparam, param in enumerate(params_to_search):
             mean = means_seed[iparam]
             std = mean_std_seed[iparam]
             x, y = mean[3], mean[2]
             std_x, std_y = std[3], std[2]
-            plt.scatter(x, y,  zorder=2, c=data_dict[algo_str][1])  # ,color=colors[ipath],)
+            plt.scatter(x, y, zorder=2, c=params_algos[ialgo][1])  # ,color=colors[ipath],)
             confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
             confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
             rect = patches.Rectangle((x - confidence_x, y - confidence_y),
@@ -71,49 +110,22 @@ def main(data_dict):
                                      2 * confidence_y,
                                      linewidth=1.0,
                                      fill=True,
-                                     edgecolor=data_dict[algo_str][1] + (1,),
-                                     facecolor=data_dict[algo_str][1] + (0.2,), zorder=0)
+                                     edgecolor=params_algos[ialgo][1] + [1],
+                                     facecolor=params_algos[ialgo][1] + [0.2], zorder=0)
             ax.add_patch(rect)
-            plt.annotate("{:.2f}".format(param), (x, y))
+            plt.annotate("{:.2f}".format(float(param)), (x, y))
     plt.legend(handles=patchList)
     plt.grid()
     plt.show()
+    plt.savefig(path+"/"+"results.png")
     plt.close()
 
 
 if __name__ == "__main__":
-
-    data = {
-        "ftq": ([],
-                (1, 0, 0),
-                (0.0, 10.0, 15.0, 20.0, 25.0, 30.0, 40.0, 50.0, 75.0, 100.0, 250.0, 500.0),
-                "\lambda"),
-        "bftq": ([],
-                 (0, 1, 0),
-                 (0.0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.28, 0.32,
-                  0.36, 0.4, 0.44, 0.48, 0.52, 0.56, 0.6, 0.64, 0.68,
-                  0.72, 0.76, 0.8, 0.84, 0.88, 0.92, 0.96, 1.0),
-                 "\\beta"
-                 ),
-        # "hdc": ([],
-        #         (0, 0, 1),
-        #         (0.0, 0.1111111111111111, 0.2222222222222222, 0.3333333333333333, 0.4444444444444444,
-        #          0.5555555555555556, 0.6666666666666666, 0.7777777777777777, 0.8888888888888888, 1.0),
-        #         "safeness"
-        #         )
-    }
-    folder = "camera_ready_6.2"
-    values = range(0,16)
-
-    # folder = "camera_ready_7"
-    # values = [0, 1]
-    for i in values:
-        # main([
-        #     ["tmp/{}/{}/ftq/results".format(folder,i)],
-        #     ["tmp/{}/{}/bftq/results".format(folder,i)],
-        #     ["tmp/{}/{}/hdc/results".format(folder,i)]],
-        # )
-        data["ftq"][0].append("tmp/{}/{}/ftq/results".format(folder, i))
-        data["bftq"][0].append("tmp/{}/{}/bftq/results".format(folder, i))
-        # data["hdc"][0].append("tmp/{}/{}/hdc/results".format(folder, i))
-    main(data)
+    path = "tmp/camera_ready_6.2"
+    params = (
+        ["ftq", [1, 0, 0], "\lambda"],
+        ["bftq", [0, 1, 0], "\\beta"],
+        ["hdc", [0, 0, 1], "safeness"]
+    )
+    main(path, params)

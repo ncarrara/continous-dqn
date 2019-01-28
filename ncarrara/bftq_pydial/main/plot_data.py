@@ -19,6 +19,7 @@ def main(path, params_algos):
         nb_ids = int(match.group(1)) + 1
 
     fig, ax = plt.subplots(1, figsize=(6, 5))
+    plt.grid()
 
     datas = []
 
@@ -35,7 +36,7 @@ def main(path, params_algos):
     skipthoseids = np.zeros(nb_ids)
     for algo_str, _, _, params_to_search in params_algos:
 
-        datas_algo = [None]*nb_ids
+        datas_algo = [None] * nb_ids
         for id in range(nb_ids):
             file_id = "{}/{}/{}/results".format(path, id, algo_str)
             datas_id = []
@@ -46,7 +47,7 @@ def main(path, params_algos):
                 files_params = os.listdir(file_id)
                 if not files_params:
                     logging.warning("{} exists, but no data, skipping it".format(file_id))
-                    skipthoseids[id]=True
+                    skipthoseids[id] = True
                 else:
                     for file_param in files_params:
                         m = re.search("=(.*).results", file_param)
@@ -66,22 +67,22 @@ def main(path, params_algos):
                         data_algo, params = zip(*datas_id)
                         params = list(params)
                         if params == params_to_search:
-                            datas_algo[id]=data_algo
+                            datas_algo[id] = data_algo
                         else:
                             logging.warning(("malformed params, {} != {}".format(params, params_to_search)))
                             skipthoseids[id] = True
                         # exit()
-        datas.append([algo_str,datas_algo, params_to_search])
+        datas.append([algo_str, datas_algo, params_to_search])
 
-    print(skipthoseids)
+    print("malformed ids :", skipthoseids)
 
-    for ientry,entry in enumerate(datas):
-        algo_str,d, params_to_search = entry
+    for ientry, entry in enumerate(datas):
+        algo_str, d, params_to_search = entry
         datas_algo = []
         for idd, dd in enumerate(d):
             if not skipthoseids[idd]:
                 datas_algo.append(dd)
-        entry[1]= np.asarray(datas_algo)
+        entry[1] = np.asarray(datas_algo)
 
     # exit()
 
@@ -93,13 +94,20 @@ def main(path, params_algos):
         patch = mpatches.Patch(color=params_algos[ialgo][1],
                                label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
         patchList.append(patch)
-        N_seed = data.shape[1]
-        means_run = np.mean(data, 2)
-        means_seed = np.mean(means_run, 0)
-        mean_std_seed = np.std(means_run, 0)
+        N_seed = data.shape[0]
+        print("N_seed : {}".format(N_seed))
+        means_intra_seed = np.mean(data, 2)
+        stds_intra_seed = np.std(data, 2)
+
+        means_ids = np.mean(means_intra_seed, 0)
+        std_extra_seed = np.std(means_intra_seed, 0)
+        std_intra_seed = np.mean(stds_intra_seed, 0)
+
+
+        # mean_std_ids = np.std(means_trajectories, 0)
         for iparam, param in enumerate(params_to_search):
-            mean = means_seed[iparam]
-            std = mean_std_seed[iparam]
+            mean = means_ids[iparam]
+            std = std_extra_seed[iparam]
             x, y = mean[3], mean[2]
             std_x, std_y = std[3], std[2]
             plt.scatter(x, y, zorder=2, c=params_algos[ialgo][1])  # ,color=colors[ipath],)
@@ -113,11 +121,56 @@ def main(path, params_algos):
                                      edgecolor=params_algos[ialgo][1] + [1],
                                      facecolor=params_algos[ialgo][1] + [0.2], zorder=0)
             ax.add_patch(rect)
+
             plt.annotate("{:.2f}".format(float(param)), (x, y))
     plt.legend(handles=patchList)
-    plt.grid()
     plt.show()
-    plt.savefig(path+"/"+"results.png")
+    plt.savefig(path + "/" + "results_extra.png")
+    plt.close()
+    fig, ax = plt.subplots(1, figsize=(6, 5))
+    plt.grid()
+    patchList = []
+
+    for ialgo, dataalgo in enumerate(datas):
+        algo_str, data, params_to_search = dataalgo
+        print(data.shape)
+        patch = mpatches.Patch(color=params_algos[ialgo][1],
+                               label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
+        patchList.append(patch)
+        N_seed = data.shape[2]
+        print("N_traj : {}".format(N_seed))
+        means_intra_seed = np.mean(data, 2)
+        stds_intra_seed = np.std(data, 2)
+
+        means_ids = np.mean(means_intra_seed, 0)
+        std_extra_seed = np.std(means_intra_seed, 0)
+        std_intra_seed = np.mean(stds_intra_seed, 0)
+
+        # mean_std_ids = np.std(means_trajectories, 0)
+        for iparam, param in enumerate(params_to_search):
+            mean = means_ids[iparam]
+            std = std_intra_seed[iparam]
+            x, y = mean[3], mean[2]
+            std_x, std_y = std[3], std[2]
+            plt.scatter(x, y, zorder=2, c=params_algos[ialgo][1])  # ,color=colors[ipath],)
+            confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
+            confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
+            rect = patches.Rectangle((x - confidence_x, y - confidence_y),
+                                     2 * confidence_x,
+                                     2 * confidence_y,
+                                     linestyle="--",
+                                     linewidth=1.0,
+                                     fill=True,
+                                     edgecolor=params_algos[ialgo][1] + [1],
+                                     facecolor=params_algos[ialgo][1] + [0.2], zorder=0)
+            ax.add_patch(rect)
+
+            plt.annotate("{:.2f}".format(float(param)), (x, y))
+    plt.legend(handles=patchList)
+    plt.show()
+    plt.savefig(path + "/" + "results_intra.png")
+
+
     plt.close()
 
 

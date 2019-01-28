@@ -19,7 +19,7 @@ else:
     config_file = "config/camera_ready_8.json"
     # seeds = [0,1,2] # override seeds of config file
 
-print("seeds = {}".format([str(s) for s in seeds]))
+
 
 with open(config_file, 'r') as infile:
     import json
@@ -35,6 +35,8 @@ C.load_pytorch().load_matplotlib(backend)
 
 if seeds is None:
     seeds=[dict["general"]["seed"]]
+
+print("seeds = {}".format([str(s) for s in seeds]))
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
 

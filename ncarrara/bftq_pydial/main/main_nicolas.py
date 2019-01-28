@@ -19,6 +19,7 @@ else:
     config_file = "config/camera_ready_8.json"
 
 
+
 with open(config_file, 'r') as infile:
     import json
     dict = json.load(infile)
@@ -106,10 +107,10 @@ for i_config,params in enumerate(grid):
     learn_bftq.main()
     print("testing bftq ...")
     test_bftq.main(betas_test=betas_test)
-    # HDC #
-    print("testing HDC ...")
-    run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # FTQ #
+    # # HDC #
+    # print("testing HDC ...")
+    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # # FTQ #
 
 
 

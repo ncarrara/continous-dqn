@@ -10,7 +10,6 @@ from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy, RandomPolic
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
 
-
 import numpy as np
 import logging
 
@@ -58,8 +57,7 @@ def main():
     rm = Memory()
 
     for i in range(C["create_data"]["N_trajs"]):
-        if i % 50 == 0:
-            logger.info(i)
+        if i % 50 == 0: logger.info(i)
         pi_epsilon_greedy.epsilon = decays[i]
         pi_epsilon_greedy.pi_greedy = pi_greedy
         trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
@@ -71,7 +69,6 @@ def main():
             pi_greedy = HandcraftedSlotFillingEnv(e=e, safeness=0.5)
         else:
             if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
-
                 transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                              C["create_data"]["lambda_"],
                                                                              C["create_data"]["normalize_reward"])
@@ -82,7 +79,7 @@ def main():
                 pi_greedy = PytorchFittedPolicy(pi, e, feature)
     # for sample in rm.memory:
     #     print(sample)
-    rm.save_memory(C.workspace, "/"+C["create_data"]["filename_data"], C["create_data"]["as_json"])
+    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
     np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,

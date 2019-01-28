@@ -103,15 +103,15 @@ for i_config,params in enumerate(grid):
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
     # # BFTQ #
-    # print("learning bftq ...")
-    # betas_test = eval(C["betas_test"])
-    # learn_bftq.main()
-    # print("testing bftq ...")
-    # test_bftq.main(betas_test=betas_test)
-    # # HDC #
-    # print("testing HDC ...")
-    # run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # # FTQ #
+    print("learning bftq ...")
+    betas_test = eval(C["betas_test"])
+    learn_bftq.main()
+    print("testing bftq ...")
+    test_bftq.main(betas_test=betas_test)
+    # HDC #
+    print("testing HDC ...")
+    run_hdc.main(safenesses=np.linspace(0, 1, 10))
+    # FTQ #
 
 
 

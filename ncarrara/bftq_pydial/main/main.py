@@ -8,7 +8,7 @@ import logging
 import re
 
 from ncarrara.utils.os import makedirs
-
+seeds = None
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
     seed_start = int(sys.argv[2])
@@ -17,9 +17,8 @@ if len(sys.argv) > 1:
     # C.load_matplotlib('agg')
 else:
     config_file = "config/camera_ready_8.json"
-    seeds = [0]
-
-
+    # seeds = [0,1,2] # override seeds of config file
+    
 print("seeds = {}".format([str(s) for s in seeds]))
 
 with open(config_file, 'r') as infile:
@@ -28,6 +27,9 @@ with open(config_file, 'r') as infile:
     workspace = dict["general"]["workspace"]
     makedirs(workspace)
 C.load_pytorch().load_matplotlib(dict["general"]["matplotlib_backend"])
+
+if seeds is None:
+    seeds=[dict["general"]["seed"]]
 
 from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
 

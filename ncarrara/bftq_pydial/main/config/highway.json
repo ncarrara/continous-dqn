@@ -146,8 +146,7 @@
     "delta_stop": 0.0,
     "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH",
-    "step_test_policy_nn_epoch": 50
-
+    "step_test_policy_nn_epoch": 500
   },
 
   "net_params": {

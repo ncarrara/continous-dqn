@@ -27,8 +27,7 @@ def main(lambdas_, empty_previous_test=False):
     size_state = len(feature(e.reset(), e))
     logger.info("neural net input size : {}".format(size_state))
 
-
-
+    set_seed(C.seed)
     policy_network = NetFTQ(n_in=size_state,
                             n_out=e.action_space.n,
                             **C["net_params"])

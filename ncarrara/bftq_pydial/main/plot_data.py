@@ -43,6 +43,7 @@ def main(path, params_algos):
             logger.info("processing {}".format(file_id))
             if not os.path.exists(file_id):
                 logging.warning("{} do not exists, skipping it".format(file_id))
+                skipthoseids[id] = True
             else:
                 files_params = os.listdir(file_id)
                 if not files_params:

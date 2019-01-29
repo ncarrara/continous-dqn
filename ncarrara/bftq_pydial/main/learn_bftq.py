@@ -2,6 +2,7 @@
 from ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.utils.math import set_seed
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
 
@@ -58,6 +59,7 @@ def main():
     transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0,
                                                                  C["main"]["normalize_reward"])
 
+    set_seed(C.seed)
     bftq.reset(True)
     _ = bftq.fit(transition_bftq)
 

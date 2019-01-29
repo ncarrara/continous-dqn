@@ -2,6 +2,7 @@
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.policies import HandcraftedSlotFillingEnv
 from ncarrara.bftq_pydial.tools.utils_run_pydial import execute_policy, format_results
+from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 import logging
@@ -16,6 +17,7 @@ def main(safenesses):
     makedirs(C.path_hdc_results)
 
     for safeness in safenesses:
+        set_seed(C.seed)
         _, results = execute_policy(e, HandcraftedSlotFillingEnv(e=e, safeness=safeness),
                                     C["gamma"],
                                     C["gamma_c"],

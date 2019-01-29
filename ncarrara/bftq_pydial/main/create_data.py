@@ -2,7 +2,7 @@
 from ncarrara.bftq_pydial.tools.configuration import C
 # C.load_matplotlib('agg')
 from ncarrara.bftq_pydial.tools.features import feature_factory
-from ncarrara.utils.math import epsilon_decay
+from ncarrara.utils.math import epsilon_decay, set_seed
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def main():
     # print(logger)
     # logger.setLevel(C.logging_level)
-
+    set_seed(C.seed)
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
@@ -55,6 +55,7 @@ def main():
     pi_greedy = RandomPolicy()
     rez = np.zeros((C["create_data"]["N_trajs"], 4))
     rm = Memory()
+
 
     for i in range(C["create_data"]["N_trajs"]):
         if i % 50 == 0: logger.info(i)

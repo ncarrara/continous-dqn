@@ -1,7 +1,7 @@
 # coding=utf-8
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
-from ncarrara.utils.math import epsilon_decay
+from ncarrara.utils.math import epsilon_decay, set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
@@ -14,6 +14,7 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
 def main(empty_previous_test=False):
+    set_seed(C.seed)
     logger = logging.getLogger(__name__)
     if empty_previous_test:
         empty_directory(C.path_ftq_results)
@@ -31,7 +32,7 @@ def main(empty_previous_test=False):
     net = NetDQN(n_in=size_state, n_out=e.action_space.n, **C["net_params"])
     dqn = DQN(policy_network=net, device=C.device, gamma=C["gamma"], **C["dqn_params"])
     dqn.reset()
-    e.seed(C["general"]["seed"])
+    e.seed(C.seed)
     rrr = []
     rrr_greedy = []
     nb_samples = 0

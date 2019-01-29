@@ -2,6 +2,7 @@
 from ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.bftq_pydial.tools.policies import PytorchBudgetedFittedPolicy
@@ -47,6 +48,7 @@ def main(betas_test):
 
     makedirs(C.path_bftq_results)
     for beta in betas_test:
+        set_seed(C.seed)
         # print("Computing trajectory with beta={}".format(beta))
         _, results_bftq = urpy.execute_policy(e, pi_bftq,
                                               C["gamma"],

@@ -1,6 +1,7 @@
 # coding=utf-8
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
@@ -57,6 +58,8 @@ def main(lambdas_, empty_previous_test=False):
     rm.load_memory(path_data, C["create_data"]["as_json"])
     makedirs(C.path_ftq_results)
     for lambda_ in lambdas_:
+        # learning
+        set_seed(C.seed)
         transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                      lambda_,
                                                                      C["main"]["normalize_reward"])
@@ -65,6 +68,8 @@ def main(lambdas_, empty_previous_test=False):
         pi = ftq.fit(transitions_ftq)
         pi = PytorchFittedPolicy(pi, e, feature)
 
+        # testing
+        set_seed(C.seed)
         _, results = urpy.execute_policy(e, pi,
                                          C["gamma"],
                                          C["gamma_c"],

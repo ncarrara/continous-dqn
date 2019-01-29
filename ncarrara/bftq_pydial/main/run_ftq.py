@@ -64,6 +64,10 @@ def main(lambdas_, empty_previous_test=False):
                                                                      lambda_,
                                                                      C["main"]["normalize_reward"])
 
+        # Sub-workspace for saving plots
+        ftq.workspace = C.path_ftq + '/lambda_={}'.format(lambda_)
+        makedirs(ftq.workspace)
+
         ftq.reset(True)
         pi = ftq.fit(transitions_ftq)
         pi = PytorchFittedPolicy(pi, e, feature)

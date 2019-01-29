@@ -1,3 +1,5 @@
+import sys
+
 import matplotlib
 
 matplotlib.use("Agg")
@@ -23,16 +25,19 @@ def main(path, params_algos):
 
     datas = []
 
-    for ialgo, paramalgo in enumerate(params_algos):
+    for paramalgo in params_algos[:]:
         algo_str, _, _ = paramalgo
         params_to_search = []
-        for path_param in os.listdir("{}/{}/{}/results".format(path, 0, algo_str)):
-            match = re.search("=(.*).results", path_param)
-            params_to_search.append(match.group(1))
-        params_to_search.sort()
-        paramalgo.append(params_to_search)
-    # print(params_algos)
-    # exit()
+        try:
+            for path_param in os.listdir("{}/{}/{}/results".format(path, 0, algo_str)):
+                match = re.search("=(.*).results", path_param)
+                params_to_search.append(match.group(1))
+            params_to_search.sort()
+            paramalgo.append(params_to_search)
+        except FileNotFoundError:
+            logging.warning("Could not find results for {}".format(algo_str))
+            params_algos.remove(paramalgo)
+
     skipthoseids = np.zeros(nb_ids)
     for algo_str, _, _, params_to_search in params_algos:
 
@@ -43,6 +48,7 @@ def main(path, params_algos):
             logger.info("processing {}".format(file_id))
             if not os.path.exists(file_id):
                 logging.warning("{} do not exists, skipping it".format(file_id))
+                skipthoseids[id] = True
             else:
                 files_params = os.listdir(file_id)
                 if not files_params:
@@ -204,10 +210,12 @@ def main(path, params_algos):
     plt.close()
 
 if __name__ == "__main__":
-    path = "tmp/camera_ready_6.2"
-    params = (
+    if len(sys.argv) <= 1:
+        raise ValueError("Usage: plot_data.py <path>")
+    path = sys.argv[1]
+    params = [
         ["ftq", [1, 0, 0], "\lambda"],
         ["bftq", [0, 1, 0], "\\beta"],
         ["hdc", [0, 0, 1], "safeness"]
-    )
+    ]
     main(path, params)

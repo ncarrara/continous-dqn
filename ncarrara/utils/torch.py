@@ -1,6 +1,6 @@
 import subprocess
 import numpy as np
-
+import torch
 import logging
 import os
 
@@ -18,7 +18,6 @@ def get_gpu_memory_map():
 
 
 def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False):
-    import torch
     if str(torch.__version__) == "0.4.1.":
         logger.warning("0.4.1. is bugged regarding mse loss")
     logger.info("Pytorch version : {}".format(torch.__version__))
@@ -54,3 +53,12 @@ def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False)
     device = torch.device(device_str)
     logger.info("device with most available memory: {}".format(device))
     return device
+
+
+def optimizer_factory(optimizer_type, params, lr=None, weight_decay=None):
+    if optimizer_type == "ADAM":
+        return torch.optim.Adam(params=params, lr=lr, weight_decay=weight_decay)
+    elif optimizer_type == "RMS_PROP":
+        return torch.optim.RMSprop(params=params, weight_decay=weight_decay)
+    else:
+        raise ValueError("Unknown optimizer type: {}".format(optimizer_type))

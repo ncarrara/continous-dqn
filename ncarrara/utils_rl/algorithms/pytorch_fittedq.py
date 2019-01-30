@@ -6,6 +6,7 @@ import torch.nn.functional as F
 import copy
 import matplotlib.pyplot as plt
 
+from ncarrara.utils.torch import optimizer_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import Transition
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
@@ -106,18 +107,10 @@ class PytorchFittedQ:
         self._max_nn_epoch = max_nn_epoch
         self._gamma = gamma
         self.reset_policy_each_ftq_epoch = reset_policy_each_ftq_epoch
-        self.optimizer = optimizer
-        if self.optimizer is None:
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(), weight_decay=weight_decay)
-        elif self.optimizer == "ADAM":
-            self.optimizer = optim.Adam(params=self._policy_network.parameters(),
-                                        lr=learning_rate,
-                                        weight_decay=weight_decay)
-        elif self.optimizer == "RMS_PROP":
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(),
-                                           weight_decay=weight_decay)
-        else:
-            raise Exception("Unknown optimizer")
+        self.optimizer_type = optimizer
+        self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
+        self.optimizer = None
         self.loss_function = loss_function
         if self.loss_function == "l1":
             self.loss_function = F.smooth_l1_loss
@@ -134,6 +127,10 @@ class PytorchFittedQ:
         self.memory.reset()
         if reset_weight:
             self._policy_network.reset()
+        self.optimizer = optimizer_factory(self.optimizer_type,
+                                           self._policy_network.parameters(),
+                                           self.learning_rate,
+                                           self.weight_decay)
         self._id_ftq_epoch = None
         self._non_final_mask = None
         self._non_final_next_states = None

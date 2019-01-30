@@ -5,6 +5,7 @@ import copy
 import torch.nn.functional as F
 
 from ncarrara.continuous_dqn.tools.configuration import C
+from ncarrara.utils.torch import optimizer_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import logging
@@ -102,15 +103,12 @@ class DQN:
             self.loss_function = F.l1_loss
         else:
             raise Exception("Unknown loss function : {}".format(loss_function))
+        self.lr = lr
+        self.weight_decay = weight_decay
+        self.optimizer_type = optimizer
+        self.optimizer = None
+        self.reset()
 
-        if optimizer == "ADAM":
-            self.optimizer = torch.optim.Adam(params=self.policy_net.parameters(),
-                                              lr=lr, weight_decay=weight_decay)
-        elif optimizer == "RMS_PROP":
-            self.optimizer = torch.optim.RMSprop(params=self.policy_net.parameters(),
-                                                 weight_decay=weight_decay)
-        else:
-            raise Exception("Unknown optimizer : {}".format(optimizer))
 
     def update_transfer_experience_replay(self, er):
         self.transfer_experience_replay = er
@@ -119,6 +117,10 @@ class DQN:
         self.memory.reset()
         if reset_weight:
             self.policy_net.reset()
+        self.optimizer = optimizer_factory(self.optimizer_type,
+                                           self.policy_net.parameters(),
+                                           self.lr,
+                                           self.weight_decay)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.i_episode = 0
         self.transfer_experience_replay = None

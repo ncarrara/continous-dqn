@@ -11,6 +11,7 @@ import copy
 import os
 
 from ncarrara.utils.math import update_lims
+from ncarrara.utils.torch import optimizer_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
@@ -127,18 +128,10 @@ class PytorchBudgetedFittedQ:
         self._GAMMA_C = gamma_c
         self._GAMMA = gamma
         self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH = reset_policy_each_ftq_epoch
-        self.optimizer = optimizer
-        if self.optimizer is None:
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(), weight_decay=weight_decay)
-        elif self.optimizer == "ADAM":
-            self.optimizer = optim.Adam(params=self._policy_network.parameters(),
-                                        lr=learning_rate,
-                                        weight_decay=weight_decay)
-        elif self.optimizer == "RMS_PROP":
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(),
-                                           weight_decay=weight_decay)
-        else:
-            raise Exception("Unknown optimizer")
+        self.optimizer_type = optimizer
+        self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
+        self.optimizer = None
         self.loss_function = loss_function
         self.loss_function_c = loss_function_c
         if self.loss_function == "l1":
@@ -164,6 +157,10 @@ class PytorchBudgetedFittedQ:
         self.memory.reset()
         if reset_weight:
             self._policy_network.reset()
+        self.optimizer = optimizer_factory(self.optimizer_type,
+                                           self._policy_network.parameters(),
+                                           self.learning_rate,
+                                           self.weight_decay)
         self._id_ftq_epoch = None
         self._non_final_mask = None
         self._non_final_next_states = None

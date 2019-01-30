@@ -54,6 +54,13 @@ def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False)
     logger.info("device with most available memory: {}".format(device))
     return device
 
+def loss_fonction_factory(loss_function):
+    if loss_function == "l2":
+        return F.mse_loss
+    elif loss_function == "l1":
+        return  F.l1_loss
+    else:
+        raise Exception("Unknown loss function : {}".format(loss_function))
 
 def optimizer_factory(optimizer_type, params, lr=None, weight_decay=None):
     if optimizer_type == "ADAM":

@@ -9,11 +9,14 @@ import logging
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+from ncarrara.utils.math import generate_random_point_on_simplex_not_uniform
 
 from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
 def main(empty_previous_test=False):
+    betas = np.linspace(0,1,5)
+
     set_seed(C.seed)
     logger = logging.getLogger(__name__)
     if empty_previous_test:
@@ -51,22 +54,24 @@ def main(empty_previous_test=False):
             trajectory = []
             while (not done):
                 if np.random.random() < decays[n]:
-                    a = np.random.random(e.action_space.n)
-                    a /= np.sum(a)
                     if hasattr(e, "action_space_executable"):
-                        a = np.random.choice(e.action_space_executable())
+                        raise NotImplementedError("TODO")
                     else:
-                        a = e.action_space.sample()
-                    # choose random ditribution on action with
+                        action_repartition = np.random.random(e.action_space.n)
+                        action_repartition /= np.sum(action_repartition)
+                        budget_repartion = generate_random_point_on_simplex_not_uniform(
+                            coeff=action_repartition,
+                            bias=beta,
+                            min_x=0,
+                            max_x=1)
+                        a = np.random.choice(a=range(len(e.action_space.n)),
+                                             p=action_repartition)
+                        beta = budget_repartion[a]
                 else:
                     if hasattr(e, "action_space_executable"):
-                        exec = e.action_space_executable()
-                        action_mask = np.ones(e.action_space.n)
-                        for ex in exec:
-                            action_mask[ex] = 0.
-                        a = dqn.pi(feature(s, e), action_mask)
+                        raise NotImplementedError("TODO")
                     else:
-                        a = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
+                        a,beta = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
 
                 s_, r_, done, info = e.step(a)
                 sample = (s, a if type(a) is str else int(a), r_, s_, done, info)

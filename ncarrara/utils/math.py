@@ -4,7 +4,7 @@ import random
 import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
-def generate_random_point_hyperplan(coeff, bias, min_x, max_x):
+def generate_random_point_on_simplex_not_uniform(coeff, bias, min_x, max_x):
     """
     Warning, this is not uniform sampling. Need to found a way to not favorise the vertex (maybe look at dirichlet distribution)
     :param coeff:

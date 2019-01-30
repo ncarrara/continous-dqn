@@ -91,33 +91,21 @@ for i_config,params in enumerate(grid):
         tochange[keys[-1]] = v
     dict["general"]["workspace"] = workspace + "/"+ str(i_config)
     C.load(dict).create_fresh_workspace(force=True).load_pytorch()
+
     print("\n-------- i_config={} ----------\n".format(i_config))
+    print("Learning DQN")
+    run_dqn.main()
 
-
-    # CREATE DATA DQN or FTQ #
-    print("learning dqn ...")
-    # run_dqn.main()
-    # # create_data.main()
-    print("learning and testing FTQ ...")
+    print("Learning and testing FTQ")
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
-    print("------------------- RANDOM ---------------------")
-    print(np.random.random())
-    import random
-    print(random.random())
-    import torch
-    print(torch.rand(1))
-    # # # BFTQ #
-    # print("learning bftq ...")
-    # betas_test = eval(C["betas_test"])
-    # learn_bftq.main()
-    # print("testing bftq ...")
-    # test_bftq.main(betas_test=betas_test)
+
+    print("Learning BFTQ")
+    betas_test = eval(C["betas_test"])
+    learn_bftq.main()
+    print("Testing BFTQ")
+    test_bftq.main(betas_test=betas_test)
+
     # # HDC #
-    # print("testing HDC ...")
+    # print("Testing HDC")
     # run_hdc.main(safenesses=np.linspace(0, 1, 10))
-    # # FTQ #
-
-
-
-

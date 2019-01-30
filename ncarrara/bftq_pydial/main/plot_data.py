@@ -14,7 +14,7 @@ import re
 logger = logging.getLogger(__name__)
 
 
-def main(path, params_algos):
+def main(path, params_algos, discounted=1):
     with open(path + "/" + "params") as f:
         lines = f.readlines()
         match = re.search("^id=([0-9]+) .*$", lines[-1])
@@ -100,8 +100,8 @@ def main(path, params_algos):
         patch = mpatches.Patch(color=params_algos[ialgo][1],
                                label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
         patchList.append(patch)
-        N_seed = data.shape[0]
-        print("N_seed : {}".format(N_seed))
+        N_traj = data.shape[0]
+        print("N_seed : {}".format(N_traj))
         means_intra_seed = np.mean(data, 2)
         stds_intra_seed = np.std(data, 2)
 
@@ -114,11 +114,11 @@ def main(path, params_algos):
         for iparam, param in enumerate(params_to_search):
             mean = means_ids[iparam]
             std = std_extra_seed[iparam]
-            x, y = mean[3], mean[2]
-            std_x, std_y = std[3], std[2]
+            x, y = mean[1+2*discounted], mean[2*discounted]
+            std_x, std_y = std[1+2*discounted], std[2*discounted]
             plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
-            confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
-            confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
+            confidence_y = 1.96 * (std_y / np.sqrt(N_traj))
+            confidence_x = 1.96 * (std_x / np.sqrt(N_traj))
             rect = patches.Rectangle((x - confidence_x, y - confidence_y),
                                      2 * confidence_x,
                                      2 * confidence_y,
@@ -143,8 +143,8 @@ def main(path, params_algos):
         patch = mpatches.Patch(color=params_algos[ialgo][1],
                                label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
         patchList.append(patch)
-        N_seed = data.shape[2]
-        print("N_traj : {}".format(N_seed))
+        N_traj = data.shape[2]
+        print("N_traj : {}".format(N_traj))
         means_intra_seed = np.mean(data, 2)
         stds_intra_seed = np.std(data, 2)
 
@@ -156,11 +156,11 @@ def main(path, params_algos):
         for iparam, param in enumerate(params_to_search):
             mean = means_ids[iparam]
             std = std_intra_seed[iparam]
-            x, y = mean[3], mean[2]
-            std_x, std_y = std[3], std[2]
+            x, y = mean[1+2*discounted], mean[2*discounted]
+            std_x, std_y = std[1+2*discounted], std[2*discounted]
             plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
-            confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
-            confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
+            confidence_y = 1.96 * (std_y / np.sqrt(N_traj))
+            confidence_x = 1.96 * (std_x / np.sqrt(N_traj))
             rect = patches.Rectangle((x - confidence_x, y - confidence_y),
                                      2 * confidence_x,
                                      2 * confidence_y,
@@ -184,9 +184,13 @@ def main(path, params_algos):
     datas=[]
     for id in range(nb_ids):
         if skipthoseids[id] ==0:
-            file_id = "{}/{}/{}/results/greedy_lambda_=0.result".format(path, id, "dqn")
-            logger.info("processing {}".format(file_id))
-            datas.append(np.loadtxt(file_id, np.float32))
+            try:
+                file_id = "{}/{}/{}/results/greedy_lambda_=0.result".format(path, id, "dqn")
+                logger.info("processing {}".format(file_id))
+                datas.append(np.loadtxt(file_id, np.float32))
+            except OSError:
+                logging.warning("Could not find {}".format(file_id))
+                continue
 
     datas = np.asarray(datas)
     print(datas.shape)

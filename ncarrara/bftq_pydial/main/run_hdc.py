@@ -17,7 +17,7 @@ def main(safenesses):
     makedirs(C.path_hdc_results)
 
     for safeness in safenesses:
-        set_seed(C.seed)
+        set_seed(C.seed, e)
         _, results = execute_policy(e, HandcraftedSlotFillingEnv(e=e, safeness=safeness),
                                     C["gamma"],
                                     C["gamma_c"],

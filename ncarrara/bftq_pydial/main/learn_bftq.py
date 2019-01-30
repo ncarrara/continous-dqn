@@ -17,6 +17,9 @@ def main():
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
     e.reset()
+
+    set_seed(C.seed, e)
+
     feature = feature_factory(C["feature_str"])
 
     size_state = len(feature(e.reset(), e))
@@ -59,7 +62,6 @@ def main():
     transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0,
                                                                  C["main"]["normalize_reward"])
 
-    set_seed(C.seed)
     bftq.reset(True)
     _ = bftq.fit(transition_bftq)
 

@@ -48,7 +48,7 @@ def main(betas_test):
 
     makedirs(C.path_bftq_results)
     for beta in betas_test:
-        set_seed(C.seed)
+        set_seed(C.seed, e)
         # print("Computing trajectory with beta={}".format(beta))
         _, results_bftq = urpy.execute_policy(e, pi_bftq,
                                               C["gamma"],

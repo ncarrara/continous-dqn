@@ -45,13 +45,17 @@ def to_onehot(vector, max_value):
         rez[int(index)] = 1.
     return rez
 
-def set_seed(seed):
+def set_seed(seed, env=None):
     if seed is not None:
         logger.info("Setting seed = {}".format(seed))
         random.seed(seed)
         np.random.seed(seed)
         import torch
         torch.manual_seed(seed)
+
+        if env is not None:
+            env.seed(seed)
+            env.reset()
 
 def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
@@ -71,8 +75,7 @@ def normalized(a):
     return rez
 
 def update_lims(lims, values):
-    lims[0] = min(lims[0], np.amin(values))
-    lims[1] = max(lims[1], np.amax(values))
+    return min(lims[0], np.amin(values)), max(lims[1], np.amax(values))
 
 # TODO check if ok
 def create_arrangements(nb_elements, size_arr, current_size_arr=0, arrs=None):

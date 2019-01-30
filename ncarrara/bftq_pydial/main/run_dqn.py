@@ -14,15 +14,16 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
 def main(empty_previous_test=False):
-    set_seed(C.seed)
+
     logger = logging.getLogger(__name__)
     if empty_previous_test:
         empty_directory(C.path_ftq_results)
 
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
-    e.reset()
     feature = feature_factory(C["feature_str"])
+
+    set_seed(C.seed, e)
 
     size_state = len(feature(e.reset(), e))
     logger.info("neural net input size : {}".format(size_state))
@@ -32,7 +33,6 @@ def main(empty_previous_test=False):
     net = NetDQN(n_in=size_state, n_out=e.action_space.n, **C["net_params"])
     dqn = DQN(policy_network=net, device=C.device, gamma=C["gamma"], **C["dqn_params"])
     dqn.reset()
-    e.seed(C.seed)
     rrr = []
     rrr_greedy = []
     nb_samples = 0

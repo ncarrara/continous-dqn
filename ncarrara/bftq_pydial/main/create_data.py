@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 def main():
     # print(logger)
     # logger.setLevel(C.logging_level)
-    set_seed(C.seed)
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
-    e.reset()
+    set_seed(C.seed, e)
+
     feature = feature_factory(C["feature_str"])
 
     def process_between_epoch(pi):

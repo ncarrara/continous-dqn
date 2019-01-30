@@ -20,14 +20,11 @@ def main(lambdas_, empty_previous_test=False):
 
     envs, params = generate_envs(**C["generate_envs"])
     e = envs[0]
-    e.reset()
-    # print(e.action_space.n)
-    feature =feature_factory(C["feature_str"])
 
+    set_seed(C.seed, e)
+    feature = feature_factory(C["feature_str"])
     size_state = len(feature(e.reset(), e))
     logger.info("neural net input size : {}".format(size_state))
-
-
 
     policy_network = NetFTQ(n_in=size_state,
                             n_out=e.action_space.n,
@@ -59,7 +56,7 @@ def main(lambdas_, empty_previous_test=False):
     makedirs(C.path_ftq_results)
     for lambda_ in lambdas_:
         # learning
-        set_seed(C.seed)
+        set_seed(C.seed, e)
         transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
                                                                      lambda_,
                                                                      C["main"]["normalize_reward"])
@@ -73,7 +70,7 @@ def main(lambdas_, empty_previous_test=False):
         pi = PytorchFittedPolicy(pi, e, feature)
 
         # testing
-        set_seed(C.seed)
+        set_seed(C.seed, e)
         _, results = urpy.execute_policy(e, pi,
                                          C["gamma"],
                                          C["gamma_c"],

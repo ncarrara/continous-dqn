@@ -11,6 +11,7 @@ import copy
 import os
 
 from ncarrara.utils.math import update_lims
+from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
 import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
@@ -127,18 +128,10 @@ class PytorchBudgetedFittedQ:
         self._GAMMA_C = gamma_c
         self._GAMMA = gamma
         self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH = reset_policy_each_ftq_epoch
-        self.optimizer = optimizer
-        if self.optimizer is None:
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(), weight_decay=weight_decay)
-        elif self.optimizer == "ADAM":
-            self.optimizer = optim.Adam(params=self._policy_network.parameters(),
-                                        lr=learning_rate,
-                                        weight_decay=weight_decay)
-        elif self.optimizer == "RMS_PROP":
-            self.optimizer = optim.RMSprop(params=self._policy_network.parameters(),
-                                           weight_decay=weight_decay)
-        else:
-            raise Exception("Unknown optimizer")
+        self.optimizer_type = optimizer
+        self.learning_rate = learning_rate
+        self.weight_decay = weight_decay
+        self.optimizer = None
         self.loss_function = loss_function
         self.loss_function_c = loss_function_c
         if self.loss_function == "l1":
@@ -164,6 +157,10 @@ class PytorchBudgetedFittedQ:
         self.memory.reset()
         if reset_weight:
             self._policy_network.reset()
+        self.optimizer = optimizer_factory(self.optimizer_type,
+                                           self._policy_network.parameters(),
+                                           self.learning_rate,
+                                           self.weight_decay)
         self._id_ftq_epoch = None
         self._non_final_mask = None
         self._non_final_next_states = None
@@ -657,12 +654,12 @@ class PytorchBudgetedFittedQ:
             yr[idx] = qrqc[0][:self.N_actions]
             yc[idx] = qrqc[0][self.N_actions:]
 
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(betas, yr[:, ia], ls="-", marker='o', markersize=2)
-            update_lims(lims_x, betas)
-            update_lims(lims_y, yr[:, ia])
+            lims_x = update_lims(lims_x, betas)
+            lims_y = update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.xlim(*lims_x)
@@ -674,12 +671,12 @@ class PytorchBudgetedFittedQ:
         plt.close()
         plt.clf()
 
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(betas, yc[:, ia], ls="-", marker='^', markersize=2)
-            update_lims(lims_x, betas)
-            update_lims(lims_y, yc[:, ia])
+            lims_x = update_lims(lims_x, betas)
+            lims_y = update_lims(lims_y, yc[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)
@@ -692,12 +689,12 @@ class PytorchBudgetedFittedQ:
         plt.clf()
 
         fig, ax = plt.subplots()
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
-            update_lims(lims_x, yc[:, ia])
-            update_lims(lims_y, yr[:, ia])
+            lims_x = update_lims(lims_x, yc[:, ia])
+            lims_y = update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)
@@ -709,33 +706,18 @@ class PytorchBudgetedFittedQ:
         plt.close()
 
 
-class NetBFTQ(torch.nn.Module):
-    def _init_weights(self, m):
-
-        if hasattr(m, 'weight'):
-            if self.reset_type == "XAVIER":
-                torch.nn.init.xavier_uniform_(m.weight.data)
-            elif self.reset_type == "ZEROS":
-                torch.nn.init.constant_(m.weight.data, 0.)
-            else:
-                raise ("fuck off mate !")
-
-    def __init__(self, size_state, size_beta_encoder, layers, activation_type="RELU", normalize=False,
+class NetBFTQ(BaseModule):
+    def __init__(self, size_state, size_beta_encoder, layers,
+                 activation_type="RELU",
                  reset_type="XAVIER",
-                 beta_encoder_type="LINEAR", **kwargs):  # REPEAT
-        super(NetBFTQ, self).__init__()
+                 normalize=False,
+                 beta_encoder_type="LINEAR",
+                 **kwargs):
+        super(NetBFTQ, self).__init__(activation_type, reset_type, normalize)
         sizes = layers
         self.beta_encoder_type = beta_encoder_type
         self.size_state = size_state
         self.size_beta_encoder = size_beta_encoder
-        if activation_type == "RELU":
-            self.activation_type = F.relu
-        else:
-            raise Exception("Unknow activation_type : {}".format(F.relu))
-        self.reset_type = reset_type
-        self.normalize = normalize
-        self.std = None
-        self.mean = None
         self.size_action = sizes[-1] / 2
         layers = []
         if size_beta_encoder > 1:
@@ -748,30 +730,21 @@ class NetBFTQ(torch.nn.Module):
         for i in range(0, len(sizes) - 2):
             module = torch.nn.Linear(sizes[i], sizes[i + 1])
             layers.append(module)
-
         self.linears = nn.ModuleList(layers)
-
         self.predict = torch.nn.Linear(sizes[-2], sizes[-1])
 
-    def set_normalization_params(self, mean, std):
-        std[std == 0.] = 1.  # on s'en moque, on divisera 0 par 1.
-        self.std = std
-        self.mean = mean
-
     def forward(self, x):
-
-        if self.normalize:  # hasattr(self, "normalize"):
+        if self.normalize:
             x = (x - self.mean) / self.std
 
         if self.size_beta_encoder > 1:
-            # print "x",x
             beta = x[:, :, -1]
             if self.beta_encoder_type == "REPEAT":
                 beta = beta.repeat(1, self.size_beta_encoder)
             elif self.beta_encoder_type == "LINEAR":
                 beta = self.beta_encoder(beta)
             else:
-                raise "Unknow encoder type : {}".format(self.beta_encoder_type)
+                raise "Unknown encoder type : {}".format(self.beta_encoder_type)
             state = x[:, :, 0:-1][:, 0]
             x = torch.cat((state, beta), dim=1)
             x = self.concat_layer(x)
@@ -781,16 +754,7 @@ class NetBFTQ(torch.nn.Module):
             x = x[:, :, 0:-1]
 
         for i, layer in enumerate(self.linears):
-            x = self.activation_type(layer(x))
-        x = self.predict(x)  # linear output
+            x = self.activation(layer(x))
+        x = self.predict(x)
 
         return x.view(x.size(0), -1)
-
-    def reset(self):
-        # if self.reset_type == "XAVIER":
-        #     print("Reseting network with random value ...")
-        # elif self.reset_type == "ZEROS":
-        #     print("Reseting network with zeros ...")
-        # else:
-        #     raise ("fuck off mate !")
-        self.apply(self._init_weights)

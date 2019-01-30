@@ -116,7 +116,7 @@ def main(path, params_algos):
             std = std_extra_seed[iparam]
             x, y = mean[3], mean[2]
             std_x, std_y = std[3], std[2]
-            plt.scatter(x, y, zorder=2, c=params_algos[ialgo][1])  # ,color=colors[ipath],)
+            plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
             confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
             confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
             rect = patches.Rectangle((x - confidence_x, y - confidence_y),
@@ -158,7 +158,7 @@ def main(path, params_algos):
             std = std_intra_seed[iparam]
             x, y = mean[3], mean[2]
             std_x, std_y = std[3], std[2]
-            plt.scatter(x, y, zorder=2, c=params_algos[ialgo][1])  # ,color=colors[ipath],)
+            plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
             confidence_y = 1.96 * (std_y / np.sqrt(N_seed))
             confidence_x = 1.96 * (std_x / np.sqrt(N_seed))
             rect = patches.Rectangle((x - confidence_x, y - confidence_y),

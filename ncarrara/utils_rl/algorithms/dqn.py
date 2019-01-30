@@ -5,6 +5,7 @@ import copy
 import torch.nn.functional as F
 
 from ncarrara.continuous_dqn.tools.configuration import C
+from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import logging
@@ -12,56 +13,24 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class NetDQN(torch.nn.Module):
-    DONT_NORMALIZE_YET = None
-
-    def _init_weights(self, m):
-        if hasattr(m, 'weight'):
-
-            if self.reset_type == "XAVIER":
-                torch.nn.init.xavier_uniform_(m.weight.data)
-            elif self.reset_type == "ZEROS":
-                torch.nn.init.constant_(m.weight.data, 0.)
-            else:
-                raise ("fuck off mate !")
-                # torch.nn.init.constant_(m.weight.data, 0.)
-
-    def __init__(self, n_in, n_out, intra_layers, activation_type="RELU", normalize=None, reset_type="XAVIER"):
-        super(NetDQN, self).__init__()
-        self.reset_type = reset_type
-        if activation_type == "RELU":
-            activation_type = F.relu
-        else:
-            raise Exception("Unknow activation_type : {}".format(F.relu))
+class NetDQN(BaseModule):
+    def __init__(self, n_in, n_out, intra_layers, activation_type="RELU", reset_type="XAVIER", normalize=None):
+        super(NetDQN, self).__init__(activation_type, reset_type, normalize)
         all_layers = [n_in] + intra_layers + [n_out]
-        # self.logger.info(all_layers)
-        self.activation = activation_type
-        self.normalize = normalize
         self.layers = []
         for i in range(0, len(all_layers) - 2):
             module = torch.nn.Linear(all_layers[i], all_layers[i + 1])
             self.layers.append(module)
             self.add_module("h_" + str(i), module)
-
         self.predict = torch.nn.Linear(all_layers[-2], all_layers[-1])
 
-    def set_normalization_params(self, mean, std):
-        if self.normalize:
-            std[std == 0.] = 1.  # on s'en moque, on divisera 0 par 1.
-        self.std = std
-        self.mean = mean
-
     def forward(self, x):
-        # self.logger.info "x : ",x
-        if self.normalize:  # hasattr(self, "normalize"):
+        if self.normalize:
             x = (x.float() - self.mean.float()) / self.std.float()
         for layer in self.layers:
             x = self.activation(layer(x))
-        x = self.predict(x)  # linear output
+        x = self.predict(x)
         return x.view(x.size(0), -1)
-
-    def reset(self):
-        self.apply(self._init_weights)
 
 
 class DQN:
@@ -102,15 +71,12 @@ class DQN:
             self.loss_function = F.l1_loss
         else:
             raise Exception("Unknown loss function : {}".format(loss_function))
+        self.lr = lr
+        self.weight_decay = weight_decay
+        self.optimizer_type = optimizer
+        self.optimizer = None
+        self.reset()
 
-        if optimizer == "ADAM":
-            self.optimizer = torch.optim.Adam(params=self.policy_net.parameters(),
-                                              lr=lr, weight_decay=weight_decay)
-        elif optimizer == "RMS_PROP":
-            self.optimizer = torch.optim.RMSprop(params=self.policy_net.parameters(),
-                                                 weight_decay=weight_decay)
-        else:
-            raise Exception("Unknown optimizer : {}".format(optimizer))
 
     def update_transfer_experience_replay(self, er):
         self.transfer_experience_replay = er
@@ -119,6 +85,10 @@ class DQN:
         self.memory.reset()
         if reset_weight:
             self.policy_net.reset()
+        self.optimizer = optimizer_factory(self.optimizer_type,
+                                           self.policy_net.parameters(),
+                                           self.lr,
+                                           self.weight_decay)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.i_episode = 0
         self.transfer_experience_replay = None

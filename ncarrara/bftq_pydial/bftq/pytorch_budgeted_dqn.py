@@ -121,14 +121,18 @@ class PytorchBudgetedDQN(PytorchBudgetedFittedQ):
         state, action, reward, next_state, constraint, beta, done, info = sample
         state = torch.tensor([[state]], device=self.device, dtype=torch.float)
         if not done:
-            next_state = torch.tensor([[next_state]], device=self.device, dtype=torch.float)
+            next_state = torch.tensor([[next_state]],
+                                      device=self.device,
+                                      dtype=torch.float)
         else:
-            next_state = None
+            next_state = torch.tensor([[[np.nan] * self.policy_net.size_state]],
+                                      device=self.device,
+                                      dtype=torch.float)
         action = torch.tensor([[action]], device=self.device, dtype=torch.long)
         reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
         constraint = torch.tensor([float(constraint)], device=self.device, dtype=torch.float)
         beta = torch.tensor([float(beta)], device=self.device, dtype=torch.float)
-        self.memory.push(state, action, reward, next_state,constraint,beta, done, info)
+        self.memory.push(state, action, reward, next_state, constraint, beta, done, info)
         self._optimize_model()
         if next_state is None:
             self.i_episode += 1

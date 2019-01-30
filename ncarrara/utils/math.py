@@ -1,9 +1,41 @@
 import numpy as np
 import logging
 import random
-import torch
 import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
+
+def generate_random_point_hyperplan(coeff, bias, min_x, max_x):
+    """
+    Warning, this is not uniform sampling. Need to found a way to not favorise the vertex (maybe look at dirichlet distribution)
+    :param coeff:
+    :param bias:
+    :param min_x:
+    :param max_x:
+    :return:
+    """
+    x = np.zeros(len(coeff))
+    indexes = np.asarray(range(0, len(coeff)))
+    np.random.shuffle(indexes)  # need shuffle to not favorise a dimension
+    remain_indexes = np.copy(indexes)
+    for i_index, index in enumerate(indexes):
+        remain_indexes = remain_indexes[1:]
+        current_coeff = np.take(coeff, remain_indexes)
+        fullmin = np.full(len(remain_indexes), min_x)
+        fullmax = np.full(len(remain_indexes), max_x)
+        dotmax = np.dot(current_coeff, fullmax)
+        dotmin = np.dot(current_coeff, fullmin)
+        min_xi = (bias - dotmax) / coeff[index]
+        max_xi = (bias - dotmin) / coeff[index]
+        min_xi = np.max([min_xi, min_x])
+        max_xi = np.min([max_xi, max_x])
+        xi = min_xi + np.random.random_sample() * (max_xi - min_xi)
+        bias = bias - xi * coeff[index]
+        x[index] = xi
+        if len(remain_indexes) == 1:
+            break
+    last_index = remain_indexes[0]
+    x[last_index] = bias / coeff[last_index]
+    return x
 
 def to_onehot(vector, max_value):
     rez = [0] * (max_value + 1)
@@ -18,6 +50,7 @@ def set_seed(seed):
         logger.info("Setting seed = {}".format(seed))
         random.seed(seed)
         np.random.seed(seed)
+        import torch
         torch.manual_seed(seed)
 
 def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):

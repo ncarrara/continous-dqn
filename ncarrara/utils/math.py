@@ -13,12 +13,16 @@ def to_onehot(vector, max_value):
         rez[int(index)] = 1.
     return rez
 
-def set_seed(seed):
+def set_seed(seed, env=None):
     if seed is not None:
         logger.info("Setting seed = {}".format(seed))
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
+
+        if env is not None:
+            env.seed(seed)
+            env.reset()
 
 def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]

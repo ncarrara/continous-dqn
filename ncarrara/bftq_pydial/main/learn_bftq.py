@@ -18,7 +18,7 @@ def main():
     e = envs[0]
     e.reset()
 
-    set_seed(C.seed)
+    set_seed(C.seed, e)
 
     feature = feature_factory(C["feature_str"])
 

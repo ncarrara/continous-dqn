@@ -19,8 +19,7 @@ def main():
         # print(env.action_space.n)
         # print(env.action_space_str)
         logger.info("generating samples for env {}".format(ienv))
-        set_seed(seed=seed)
-        env.seed(seed)
+        set_seed(seed=seed, env=env)
         rm = Memory()
         for i_traj in range(N_trajs):
             if i_traj % (N_trajs / 10) == 0:

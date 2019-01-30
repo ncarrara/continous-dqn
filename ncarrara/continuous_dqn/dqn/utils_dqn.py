@@ -39,8 +39,7 @@ def run_dqn(env,  device,autoencoders, ers, net_params, dqn_params, decay, N, se
     net = NetDQN(**net_params)
     dqn = DQN(policy_network=net,device=device, **dqn_params)
     dqn.reset()
-    set_seed(seed=seed)
-    env.seed(seed)
+    set_seed(seed=seed, env=env)
     rrr = []
     rrr_greedy = []
     epsilons = epsilon_decay(start=start_decay, decay=decay, N=N)

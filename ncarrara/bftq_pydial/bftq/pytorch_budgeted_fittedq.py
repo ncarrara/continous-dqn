@@ -654,12 +654,12 @@ class PytorchBudgetedFittedQ:
             yr[idx] = qrqc[0][:self.N_actions]
             yc[idx] = qrqc[0][self.N_actions:]
 
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(betas, yr[:, ia], ls="-", marker='o', markersize=2)
-            update_lims(lims_x, betas)
-            update_lims(lims_y, yr[:, ia])
+            lims_x = update_lims(lims_x, betas)
+            lims_y = update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.xlim(*lims_x)
@@ -671,12 +671,12 @@ class PytorchBudgetedFittedQ:
         plt.close()
         plt.clf()
 
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(betas, yc[:, ia], ls="-", marker='^', markersize=2)
-            update_lims(lims_x, betas)
-            update_lims(lims_y, yc[:, ia])
+            lims_x = update_lims(lims_x, betas)
+            lims_y = update_lims(lims_y, yc[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)
@@ -689,12 +689,12 @@ class PytorchBudgetedFittedQ:
         plt.clf()
 
         fig, ax = plt.subplots()
-        lims_x = [-1.1, 1.1]
-        lims_y = [-1.1, 1.1]
+        lims_x = (-1.1, 1.1)
+        lims_y = (-1.1, 1.1)
         for ia in actions:
             plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
-            update_lims(lims_x, yc[:, ia])
-            update_lims(lims_y, yr[:, ia])
+            lims_x = update_lims(lims_x, yc[:, ia])
+            lims_y = update_lims(lims_y, yr[:, ia])
         if self.N_actions < 4:
             plt.legend([self.actions_str[a] for a in actions])
         plt.title(title)

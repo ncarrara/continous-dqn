@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-
+from scipy.spatial import ConvexHull
+from scipy.spatial.qhull import QhullError
 import matplotlib.pyplot as plt
 from collections import namedtuple
 import torch
@@ -13,7 +14,6 @@ import os
 from ncarrara.utils.math import update_lims
 from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
-import ncarrara.bftq_pydial.bftq.concave_utils as concave_utils
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
     fast_create_Q_histograms_for_actions
@@ -27,6 +27,157 @@ TransitionBFTQ = namedtuple('TransitionBFTQ',
 
 logger = logging.getLogger(__name__)
 
+
+def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
+    if not type(action_mask) == type(np.zeros(1)):
+        action_mask = np.asarray(action_mask)
+    # print betas
+    N_OK_actions = int(len(action_mask) - np.sum(action_mask))
+
+    dtype = [('Qc', 'f4'), ('Qr', 'f4'), ('beta', 'f4'), ('action', 'i4')]
+
+    path = path + "/interest_points/"
+    # print path
+    colinearity = False
+    test = False
+    if disp or test:
+        if not os.path.exists(path):
+            os.makedirs(path)
+
+    all_points = np.zeros((N_OK_actions * len(betas), 2))
+    all_betas = np.zeros((N_OK_actions * len(betas),))
+    all_Qs = np.zeros((N_OK_actions * len(betas),), dtype=int)
+    max_Qr = -np.inf
+    Qc_for_max_Qr = None
+    l = 0
+    x = np.zeros((N_OK_actions, len(betas)))
+    y = np.zeros((N_OK_actions, len(betas)))
+    i_beta = 0
+    for beta in betas:
+        with torch.no_grad():
+            b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
+            sb = torch.cat((s.float(), b_), 1)
+            sb = sb.unsqueeze(0)
+            QQ = Q(sb)[0]
+            QQ = QQ.cpu().detach().numpy()
+        for i_a, mask in enumerate(action_mask):
+            i_a_ok_act = 0
+            if mask == 1:
+                pass
+            else:
+                Qr = QQ[i_a]  # TODO c'est peut etre l'inverse ici
+                Qc = QQ[i_a + len(action_mask)]
+                x[i_a_ok_act][i_beta] = Qc
+                y[i_a_ok_act][i_beta] = Qr
+                if Qr > max_Qr:
+                    max_Qr = Qr
+                    Qc_for_max_Qr = Qc
+                all_points[l] = (Qc, Qr)
+                all_Qs[l] = i_a
+                all_betas[l] = beta
+                l += 1
+                i_a_ok_act += 1
+        i_beta += 1
+
+    if disp or test:
+        for i_a in range(0, N_OK_actions):  # len(Q_as)):
+            if action_mask[i_a] == 1:
+                pass
+            else:
+                plt.plot(x[i_a], y[i_a], linewidth=6, alpha=0.2)
+    k = 0
+    points = []
+    betas = []
+    Qs = []
+    for point in all_points:
+        Qc, Qr = point
+        if not (Qr < max_Qr and Qc >= Qc_for_max_Qr):
+            # on ajoute que les points non dominés
+            points.append(point)
+            Qs.append(all_Qs[k])
+            betas.append(all_betas[k])
+        k += 1
+    points = np.array(points)
+    if disp or test:
+        # plt.plot(points[:, 0], points[:, 1], '-', linewidth=3, color="tab:cyan")
+        plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
+        plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
+        #
+        plt.grid()
+    try:
+        hull = ConvexHull(points)
+    except QhullError:
+        colinearity = True
+
+    if colinearity:
+        idxs_interest_points = range(0, len(points))  # tous les points d'intéret sont bon a prendre
+    else:
+        stop = False
+        max_Qr = -np.inf
+        corr_Qc = None
+        max_Qr_index = None
+        for k in range(0, len(hull.vertices)):
+            idx_vertex = hull.vertices[k]
+            Qc, Qr = points[idx_vertex]
+            if Qr > max_Qr:
+                max_Qr = Qr
+                max_Qr_index = k
+                corr_Qc = Qc
+            else:
+                if Qr == max_Qr and Qc < corr_Qc:
+                    max_Qr = Qr
+                    max_Qr_index = k
+                    corr_Qc = Qc
+                    k += 1
+
+                stop = True
+            stop = stop or k >= len(hull.vertices)
+        idxs_interest_points = []
+        stop = False
+        # on va itera a l'envers jusq'a ce que Qc change de sens
+        Qc_previous = np.inf
+        k = max_Qr_index
+        j = 0
+        # on peut procéder comme ça car c'est counterclockwise
+        while not stop:
+            idx_vertex = hull.vertices[k]
+            Qc, Qr = points[idx_vertex]
+            if Qc_previous >= Qc:
+                idxs_interest_points.append(idx_vertex)
+                Qc_previous = Qc
+            else:
+                stop = True
+            j += 1
+            k = (k + 1) % len(hull.vertices)  # counterclockwise
+            if j >= len(hull.vertices):
+                stop = True
+
+    if disp or test:
+        plt.title(
+            "interest_points_colinear={}".format(colinearity))
+        # plt.xlim(-0.1, 1.1)
+        # plt.ylim(-0.1, 1.1)
+        plt.plot(points[idxs_interest_points, 0], points[idxs_interest_points, 1], 'r--', lw=1, color="red")
+        plt.plot(points[idxs_interest_points][:, 0], points[idxs_interest_points][:, 1], 'x', markersize=15,
+                 color="tab:pink")
+
+        plt.savefig(path + str(id) + ".png", dpi=300)
+        plt.close()
+
+    rez = np.zeros(len(idxs_interest_points), dtype=dtype)
+    k = 0
+    for idx in idxs_interest_points:
+        Qc, Qr = points[idx]
+        beta = betas[idx]
+        action = Qs[idx]
+        rez[k] = np.array([(Qc, Qr, beta, action)], dtype=dtype)
+        k += 1
+    if colinearity:
+        rez = np.sort(rez, order="Qc")
+    else:
+        rez = np.flip(rez, 0)  # normalement si ya pas colinearité c'est deja trié dans l'ordre decroissant
+    # print rez
+    return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
 
 def optimal_pia_pib(beta, hull, statistic):
     # statistic["len_hull"] = len(hull)
@@ -595,7 +746,7 @@ class PytorchBudgetedFittedQ:
     def convexe_hull(self, s, action_mask, Q, id, disp):
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
-        hull, colinearity = concave_utils.compute_interest_points_NN(
+        hull, colinearity = compute_interest_points_NN(
             s=s,
             Q=Q,
             action_mask=action_mask,
@@ -637,6 +788,8 @@ class PytorchBudgetedFittedQ:
         logger.info(("[epoch_bftq={:02}] computing hulls [DONE]".format(self._id_ftq_epoch)))
 
         return hulls
+
+
 
     def draw_Qr_and_Qc(self, s, Q, id):
         plt.clf()

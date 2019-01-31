@@ -44,58 +44,59 @@ def main(empty_previous_test=False):
     rm = Memory()
     result = np.zeros((N, 4))
     for n in range(N):
-        for beta in betas:
-            if n % (N // 10) == 0:
-                logger.debug("DQN step {}/{}".format(n, N))
-            s = e.reset()
-            done = False
-            rr = 0
-            it = 0
-            trajectory = []
-            while (not done):
-                if np.random.random() < decays[n]:
-                    if hasattr(e, "action_space_executable"):
-                        raise NotImplementedError("TODO")
-                    else:
-                        action_repartition = np.random.random(e.action_space.n)
-                        action_repartition /= np.sum(action_repartition)
-                        budget_repartion = generate_random_point_on_simplex_not_uniform(
-                            coeff=action_repartition,
-                            bias=beta,
-                            min_x=0,
-                            max_x=1)
-                        a = np.random.choice(a=range(len(e.action_space.n)),
-                                             p=action_repartition)
-                        beta = budget_repartion[a]
+        # for beta in betas:
+        beta = np.random.random()
+        if n % (N // 10) == 0:
+            logger.debug("DQN step {}/{}".format(n, N))
+        s = e.reset()
+        done = False
+        rr = 0
+        it = 0
+        trajectory = []
+        while (not done):
+            if np.random.random() < decays[n]:
+                if hasattr(e, "action_space_executable"):
+                    raise NotImplementedError("TODO")
                 else:
-                    if hasattr(e, "action_space_executable"):
-                        raise NotImplementedError("TODO")
-                    else:
-                        a,beta = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
+                    action_repartition = np.random.random(e.action_space.n)
+                    action_repartition /= np.sum(action_repartition)
+                    budget_repartion = generate_random_point_on_simplex_not_uniform(
+                        coeff=action_repartition,
+                        bias=beta,
+                        min_x=0,
+                        max_x=1)
+                    a = np.random.choice(a=range(len(e.action_space.n)),
+                                         p=action_repartition)
+                    beta = budget_repartion[a]
+            else:
+                if hasattr(e, "action_space_executable"):
+                    raise NotImplementedError("TODO")
+                else:
+                    a,beta = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
 
-                s_, r_, done, info = e.step(a)
-                sample = (s, a if type(a) is str else int(a), r_, s_, done, info)
-                trajectory.append(sample)
+            s_, r_, done, info = e.step(a)
+            sample = (s, a if type(a) is str else int(a), r_, s_, done, info)
+            trajectory.append(sample)
 
-                rr += r_
-                t_dqn = (feature(s, e), a, r_, feature(s_, e), done, info)
-                # print("before",s_)
-                dqn.update(*t_dqn)
-                # print("after",s_)
-                s = s_
-                nb_samples += 1
-                it += 1
-                if it % 100 == 0:
-                    if it > 500:
-                        logger.warning("Number of trajectories overflowing : {}".format(it))
-                if traj_max_size is not None and it >= traj_max_size:
-                    logger.warning("Max size trajectory reached")
-                    break
+            rr += r_
+            t_dqn = (feature(s, e), a, r_, feature(s_, e), done, info)
+            # print("before",s_)
+            dqn.update(*t_dqn)
+            # print("after",s_)
+            s = s_
+            nb_samples += 1
+            it += 1
+            if it % 100 == 0:
+                if it > 500:
+                    logger.warning("Number of trajectories overflowing : {}".format(it))
+            if traj_max_size is not None and it >= traj_max_size:
+                logger.warning("Max size trajectory reached")
+                break
 
-            rrr.append(rr)
+        rrr.append(rr)
 
-            for sample in trajectory:
-                rm.push(*sample)
+        for sample in trajectory:
+            rm.push(*sample)
 
     logger.info("[execute_policy] saving results at : {}".format(C.path_dqn_results))
     np.savetxt(C.path_dqn_results + "/greedy_lambda_=0.result", result)

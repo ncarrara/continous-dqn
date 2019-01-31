@@ -160,7 +160,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
         plt.plot(points[idxs_interest_points, 0], points[idxs_interest_points, 1], 'r--', lw=1, color="red")
         plt.plot(points[idxs_interest_points][:, 0], points[idxs_interest_points][:, 1], 'x', markersize=15,
                  color="tab:pink")
-
+        plt.grid()
         plt.savefig(path + str(id) + ".png", dpi=300)
         plt.close()
 
@@ -820,6 +820,7 @@ class PytorchBudgetedFittedQ:
         plt.title(title)
         plt.xlabel("beta")
         plt.ylabel("Qr")
+        plt.grid()
         plt.savefig(self.workspace + "/behavior/Qr_" + title + ".png")
         plt.close()
         plt.clf()
@@ -837,6 +838,7 @@ class PytorchBudgetedFittedQ:
         plt.ylim(*lims_y)
         plt.xlabel("beta")
         plt.ylabel("Qc")
+        plt.grid()
         plt.savefig(self.workspace + "/behavior/Qc_" + title + ".png")
         plt.close()
         plt.clf()
@@ -855,6 +857,7 @@ class PytorchBudgetedFittedQ:
         plt.ylim(*lims_y)
         plt.xlabel("Qc")
         plt.ylabel("Qr")
+        plt.grid()
         plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")
         plt.close()
 

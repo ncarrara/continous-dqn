@@ -63,60 +63,20 @@ class PytorchBudgetedDQN():
         self.current_hull_id = 0
         self.i_update = 0
         self.hull_ids.clear()
-        self._id_ftq_epoch = None
-        self._non_final_mask = None
-        self._non_final_next_states = None
-        self._action_batch = None
-        self._constraint_batch = None
-        self._reward_batch = None
-        self._beta_batch = None
-        self._state_beta_batch = None
-        self._states_for_hulls = None
-
-    # copié coller de BFTQ, pas de raison de mettre ça dans budgeted utils, ca dépend de comment on veut build la loss
-    def _compute_loss(self, expected_state_action_rewards, expected_state_action_constraints, with_weight=True):
-        QQ = self._policy_network(self._state_beta_batch)
-        state_action_rewards = QQ.gather(1, self._action_batch)
-        action_batch_qc = self._action_batch + self.N_actions
-        state_action_constraints = QQ.gather(1, action_batch_qc)
-        loss_Qc = self.loss_function_c(state_action_constraints, expected_state_action_constraints.unsqueeze(1))
-        loss_Qr = self.loss_function(state_action_rewards, expected_state_action_rewards.unsqueeze(1))
-        w_r, w_c = self.weights_losses
-        if with_weight:
-            loss = w_c * loss_Qc + w_r * loss_Qr
-        else:
-            loss = loss_Qc + loss_Qr
-
-        return loss
 
     def _optimize_model(self):
         transitions = self.memory.sample(
             len(self.memory) if self.size_mini_batch > len(self.memory) else self.size_mini_batch)
         batch = TransitionGym(*zip(*transitions))
-        self._state_batch = torch.cat(batch.s)
-        self._next_state_batch = torch.cat(batch.s_)
-        self._action_batch = torch.cat(batch.a)
-        self._reward_batch = torch.cat(batch.r_)
-        self._constraint_batch = torch.cat(batch.c_)
-        self._beta_batch = torch.cat(batch.beta)
-        self._hull_id_batch = torch.cat(batch.hull_id)
-
-        with torch.no_grad():
-            if self._id_ftq_epoch > 0:
-                next_state_rewards, next_state_constraints = self.budgeted_utils.compute_targets(
-                    self.policy_net, self._next_state_batch, self._beta_batch, self._hull_id_batch)
-            else:
-                next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
-                next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
-
-            expected_state_action_rewards = self._reward_batch + (self._gamma * next_state_rewards)
-            expected_state_action_constraints = self._constraint_batch + (self._gamma_c * next_state_constraints)
-        loss = self._compute_loss(expected_state_action_rewards, expected_state_action_constraints)
+        loss = self.budgeted_utils.loss(batch)
         self.optimizer.zero_grad()
         loss.backward()
         for param in self.policy_net.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
+
+    def pi(self,state,beta,action_mask):
+        return self.budgeted_utils.policy(self.policy_net,state,beta,action_mask)
 
     def update(self, *sample):
         self.budgeted_utils.change_id(self.i_update)

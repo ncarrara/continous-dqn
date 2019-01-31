@@ -20,11 +20,22 @@ logger = logging.getLogger(__name__)
 OptimalPolicy = namedtuple('OptimalPolicy',
                            ('id_action_inf', 'id_action_sup', 'proba_inf', 'proba_sup', 'budget_inf', 'budget_sup'))
 
-
 TransitionBudgeted = namedtuple('TransitionBudgeted',
-                            ('state', 'action', 'reward', "next_state", 'constraint', 'beta', "hull_id"))
+                                ('state', 'action', 'reward', "next_state", 'constraint', 'beta', "hull_id"))
+
+
 class BudgetedUtils():
-    def __init__(self, beta_for_discretization, workspace, device, N_action, id="NO_ID"):
+    def __init__(self,
+                 beta_for_discretization,
+                 workspace,
+                 device,
+                 N_action,
+                 loss_function,
+                 loss_function_c,
+                 gamma=0.999,
+                 gamma_c=1.0,
+                 weights_losses=[1., 1.],
+                 id="NO_ID"):
         self.device = device
         self.workspace = workspace
         self.beta_for_discretization = beta_for_discretization
@@ -35,10 +46,59 @@ class BudgetedUtils():
         # stateless
         pass
 
-    def change_id(self,id):
+    def change_id(self, id):
         self.id = id
 
-    def compute_targets(self, Q, _next_state_batch, _beta_batch, _hull_id_batch):
+    def loss(self, Q, batch, targets_must_be_zeros=False):
+        _state_batch = torch.cat(batch.s)
+        _action_batch = torch.cat(batch.a)
+        _reward_batch = torch.cat(batch.r_)
+        _constraint_batch = torch.cat(batch.c_)
+
+        with torch.no_grad():
+            if not targets_must_be_zeros:
+                _next_state_batch = torch.cat(batch.s_)
+                _beta_batch = torch.cat(batch.beta)
+                _hull_id_batch = torch.cat(batch.hull_id)
+                next_state_rewards, next_state_constraints = self._compute_targets(
+                    Q, _next_state_batch, _beta_batch, _hull_id_batch)
+            else:
+                next_state_rewards = torch.zeros(len(batch), device=self.device)
+                next_state_constraints = torch.zeros(len(batch), device=self.device)
+
+            expected_state_action_rewards = _reward_batch + (self._gamma * next_state_rewards)
+            expected_state_action_constraints = _constraint_batch + (self._gamma_c * next_state_constraints)
+        loss= self._compute_loss(Q, _state_beta_batch, _action_batch, expected_state_action_rewards,
+                      expected_state_action_constraints)
+        return loss
+
+    def _compute_loss(self, Q, _state_beta_batch, _action_batch, expected_state_action_rewards,
+                      expected_state_action_constraints):
+        QQ = Q(_state_beta_batch)
+        state_action_rewards = QQ.gather(1, _action_batch)
+        action_batch_qc = _action_batch + self.N_actions
+        state_action_constraints = QQ.gather(1, action_batch_qc)
+        loss_Qc = self.loss_function_c(state_action_constraints, expected_state_action_constraints.unsqueeze(1))
+        loss_Qr = self.loss_function(state_action_rewards, expected_state_action_rewards.unsqueeze(1))
+        w_r, w_c = self.weights_losses
+        # if with_weight:
+        loss = w_c * loss_Qc + w_r * loss_Qr
+        # else:
+        #     loss = loss_Qc + loss_Qr
+
+        return loss
+
+    def policy(self, Q, state, beta, action_mask):
+        hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                 Q=Q,
+                                 action_mask=action_mask)
+        opt = self.budgeted_utils.optimal_pia_pib(beta=beta, hull=hull, statistic={})
+        rand = np.random.random()
+        a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
+        b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
+        return a, b
+
+    def _compute_targets(self, Q, _next_state_batch, _beta_batch, _hull_id_batch):
         hulls = self._compute_hulls(_next_state_batch, _hull_id_batch, Q)
         piapib, _next_state_beta = self._compute_opts(_next_state_batch, _beta_batch, _hull_id_batch, hulls)
         Q_next = Q(_next_state_beta)  # self._policy_network

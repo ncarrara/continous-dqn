@@ -1,8 +1,4 @@
 import sys
-
-import matplotlib
-
-matplotlib.use("Agg")
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -10,216 +6,113 @@ from matplotlib import patches
 import logging
 import matplotlib.patches as mpatches
 import re
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
 
 logger = logging.getLogger(__name__)
 
 
-def main(path, params_algos, discounted=1):
+def parse_data(path, params):
     with open(path + "/" + "params") as f:
-        lines = f.readlines()
-        match = re.search("^id=([0-9]+) .*$", lines[-1])
-        nb_ids = int(match.group(1)) + 1
+        ids = re.findall(r"id=(\d+)", f.read(), re.MULTILINE)
 
-    fig, ax = plt.subplots(1, figsize=(6, 5))
-    plt.grid()
-
-    datas = []
-
-    for paramalgo in params_algos[:]:
-        algo_str, _, _ = paramalgo
-        params_to_search = []
-        try:
-            for path_param in os.listdir("{}/{}/{}/results".format(path, 0, algo_str)):
-                match = re.search("=(.*).results", path_param)
-                params_to_search.append(match.group(1))
-            params_to_search.sort()
-            paramalgo.append(params_to_search)
-        except FileNotFoundError:
-            logging.warning("Could not find results for {}".format(algo_str))
-            params_algos.remove(paramalgo)
-
-    skipthoseids = np.zeros(nb_ids)
-    for algo_str, _, _, params_to_search in params_algos:
-
-        datas_algo = [None] * nb_ids
-        for id in range(nb_ids):
-            file_id = "{}/{}/{}/results".format(path, id, algo_str)
-            datas_id = []
+    # Extract results for each valid (algorithm, id) pair
+    data = pd.DataFrame()
+    for algo in params.keys():
+        results = pd.DataFrame()
+        for id in ids:
+            # Results directory
+            file_id = "{}/{}/{}/results".format(path, id, algo)
             logger.info("processing {}".format(file_id))
             if not os.path.exists(file_id):
-                logging.warning("{} do not exists, skipping it".format(file_id))
-                skipthoseids[id] = True
-            else:
-                files_params = os.listdir(file_id)
-                if not files_params:
-                    logging.warning("{} exists, but no data, skipping it".format(file_id))
-                    skipthoseids[id] = True
-                else:
-                    for file_param in files_params:
-                        m = re.search("=(.*).results", file_param)
-                        if m:
-                            param = m.group(1)
-                            results = np.loadtxt(file_id + "/" + file_param, np.float32)
-                            datas_id.append((results, param))
-                        else:
-                            logger.warning("Malformed file : {}".format(file_param))
-                            skipthoseids[id] = True
-                    if not datas_id:
-                        logging.warning("malformed results at {}".format(file_id))
-                        skipthoseids[id] = True
-                    else:
-                        datas_id.sort(key=lambda tup: tup[1])
-                        # print(datas_seed)
-                        data_algo, params = zip(*datas_id)
-                        params = list(params)
-                        if params == params_to_search:
-                            datas_algo[id] = data_algo
-                        else:
-                            logging.warning(("malformed params, {} != {}".format(params, params_to_search)))
-                            skipthoseids[id] = True
-                        # exit()
-        datas.append([algo_str, datas_algo, params_to_search])
-
-    print("malformed ids :", skipthoseids)
-
-    for ientry, entry in enumerate(datas):
-        algo_str, d, params_to_search = entry
-        datas_algo = []
-        for idd, dd in enumerate(d):
-            if not skipthoseids[idd]:
-                datas_algo.append(dd)
-        entry[1] = np.asarray(datas_algo)
-
-    # exit()
-
-    patchList = []
-
-    for ialgo, dataalgo in enumerate(datas):
-        algo_str, data, params_to_search = dataalgo
-        print(data.shape)
-        patch = mpatches.Patch(color=params_algos[ialgo][1],
-                               label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
-        patchList.append(patch)
-        N_traj = data.shape[0]
-        print("N_seed : {}".format(N_traj))
-        means_intra_seed = np.mean(data, 2)
-        stds_intra_seed = np.std(data, 2)
-
-        means_ids = np.mean(means_intra_seed, 0)
-        std_extra_seed = np.std(means_intra_seed, 0)
-        std_intra_seed = np.mean(stds_intra_seed, 0)
-
-
-        # mean_std_ids = np.std(means_trajectories, 0)
-        for iparam, param in enumerate(params_to_search):
-            mean = means_ids[iparam]
-            std = std_extra_seed[iparam]
-            x, y = mean[1+2*discounted], mean[2*discounted]
-            std_x, std_y = std[1+2*discounted], std[2*discounted]
-            plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
-            confidence_y = 1.96 * (std_y / np.sqrt(N_traj))
-            confidence_x = 1.96 * (std_x / np.sqrt(N_traj))
-            rect = patches.Rectangle((x - confidence_x, y - confidence_y),
-                                     2 * confidence_x,
-                                     2 * confidence_y,
-                                     linewidth=1.0,
-                                     fill=True,
-                                     edgecolor=params_algos[ialgo][1] + [1],
-                                     facecolor=params_algos[ialgo][1] + [0.2], zorder=0)
-            ax.add_patch(rect)
-
-            plt.annotate("{:.2f}".format(float(param)), (x, y))
-    plt.legend(handles=patchList)
-    plt.show()
-    plt.savefig(path + "/" + "results_extra.png")
-    plt.close()
-    fig, ax = plt.subplots(1, figsize=(6, 5))
-    plt.grid()
-    patchList = []
-
-    for ialgo, dataalgo in enumerate(datas):
-        algo_str, data, params_to_search = dataalgo
-        print(data.shape)
-        patch = mpatches.Patch(color=params_algos[ialgo][1],
-                               label=r"$" + algo_str + "(" + params_algos[ialgo][2] + ")$")
-        patchList.append(patch)
-        N_traj = data.shape[2]
-        print("N_traj : {}".format(N_traj))
-        means_intra_seed = np.mean(data, 2)
-        stds_intra_seed = np.std(data, 2)
-
-        means_ids = np.mean(means_intra_seed, 0)
-        std_extra_seed = np.std(means_intra_seed, 0)
-        std_intra_seed = np.mean(stds_intra_seed, 0)
-
-        # mean_std_ids = np.std(means_trajectories, 0)
-        for iparam, param in enumerate(params_to_search):
-            mean = means_ids[iparam]
-            std = std_intra_seed[iparam]
-            x, y = mean[1+2*discounted], mean[2*discounted]
-            std_x, std_y = std[1+2*discounted], std[2*discounted]
-            plt.scatter(x, y, zorder=2, color=params_algos[ialgo][1])
-            confidence_y = 1.96 * (std_y / np.sqrt(N_traj))
-            confidence_x = 1.96 * (std_x / np.sqrt(N_traj))
-            rect = patches.Rectangle((x - confidence_x, y - confidence_y),
-                                     2 * confidence_x,
-                                     2 * confidence_y,
-                                     linestyle="--",
-                                     linewidth=1.0,
-                                     fill=True,
-                                     edgecolor=params_algos[ialgo][1] + [1],
-                                     facecolor=params_algos[ialgo][1] + [0.2], zorder=0)
-            ax.add_patch(rect)
-
-            plt.annotate("{:.2f}".format(float(param)), (x, y))
-    plt.legend(handles=patchList)
-    plt.show()
-    plt.savefig(path + "/" + "results_intra.png")
-    plt.close()
-
-
-
-    # DQN
-    logger.info("printing DQN ...")
-    datas=[]
-    for id in range(nb_ids):
-        if skipthoseids[id] ==0:
-            try:
-                file_id = "{}/{}/{}/results/greedy_lambda_=0.result".format(path, id, "dqn")
-                logger.info("processing {}".format(file_id))
-                datas.append(np.loadtxt(file_id, np.float32))
-            except OSError:
-                logging.warning("Could not find {}".format(file_id))
+                logging.warning("{} does not exist , skipping it".format(file_id))
                 continue
 
-    datas = np.asarray(datas)
-    print(datas.shape)
+            # Results files
+            id_results = pd.DataFrame()
+            for file_param in os.listdir(file_id):
+                m = re.search("=(.*).result", file_param)
+                if m:  # valid filename
+                    param = m.group(1)
+                    res = pd.read_csv(file_id + "/" + file_param, sep=' ', names=['R', 'C', 'Rd', 'Cd'])
+                    res["parameter"] = param
+                    id_results = id_results.append(res, sort=False)
+                else:
+                    continue
+            if id_results.empty:
+                logging.warning("Could not find any result at {}".format(file_id))
+                continue
+            id_results["id"] = id
+            results = results.append(id_results, sort=False)
+        results["algorithm"] = algo
+        data = data.append(results, sort=False)
+    return data
 
-    datas = datas[:, :, 2]
-    print(datas.shape)
-    means = np.mean(datas,0)
+
+def plot_all(data, path, params):
+    means = data.groupby(['algorithm', 'parameter', 'id']).mean().reset_index()
+    stds = data.groupby(['algorithm', 'parameter', 'id']).std().reset_index()
+    counts = data.groupby(['algorithm', 'parameter', 'id']).count().reset_index()
+
+    means_of_means = means.groupby(['algorithm', 'parameter']).mean().reset_index()
+    std_of_means = means.groupby(['algorithm', 'parameter']).std().reset_index()
+    mean_of_stds = stds.groupby(['algorithm', 'parameter']).mean().reset_index()
+
+    plot_patch(means_of_means, mean_of_stds, counts, x="Cd", y="Rd", curves="algorithm", points="parameter",
+               params=params, filename=os.path.join(path, "results_disc_extra.png"))
+    plot_patch(means_of_means, std_of_means, counts, x="Cd", y="Rd", curves="algorithm", points="parameter",
+               params=params, filename=os.path.join(path, "results_disc_intra.png"))
+    plot_patch(means_of_means, mean_of_stds, counts, x="C", y="R", curves="algorithm", points="parameter",
+               params=params, filename=os.path.join(path, "results_extra.png"))
+    plot_patch(means_of_means, std_of_means, counts, x="C", y="R", curves="algorithm", points="parameter",
+               params=params, filename=os.path.join(path, "results_intra.png"))
+    plot_group(data[data["algorithm"] == "dqn"], x='id', y='Rd', filename=os.path.join(path, "dqn.png"))
 
 
-    fig, ax = plt.subplots(1, figsize=(6, 5))
-
-
-
-    # plt.plot(range(len(means)),means)
-    for i in range(datas.shape[0]):
-        plt.plot(range(datas.shape[1]),datas[i])
-        # break
-    plt.grid()
+def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    result = pd.concat([mean, std.add_suffix("_std"), counts.add_suffix("_count")], axis=1, sort=False)
+    for group_label, data in result.groupby(curves):
+        data.plot.scatter(x=x, y=y, ax=ax, c=params[group_label][0], zorder=2)
+        for param, point in data.groupby(points):
+            sqr_n = np.sqrt(point[x + "_count"].values)
+            confidence_x = 1.96 * (point[x + "_std"].values / sqr_n)
+            confidence_y = 1.96 * (point[y + "_std"].values / sqr_n)
+            rect = patches.Rectangle((point[x].values - confidence_x, point[y].values - confidence_y),
+                                     2 * confidence_x, 2 * confidence_y,
+                                     linewidth=1.0,
+                                     fill=True,
+                                     edgecolor=params[group_label][0] + [1],
+                                     facecolor=params[group_label][0] + [0.2], zorder=0)
+            ax.add_patch(rect)
+            plt.annotate("{:.2f}".format(float(param)), (point[x].values, point[y].values))
+    plt.legend(handles=[mpatches.Patch(label=param[1], color=param[0]) for _, param in params.items()])
+    if filename:
+        plt.savefig(filename)
     plt.show()
-    plt.savefig(path + "/" + "dqn.png")
     plt.close()
+
+
+def plot_group(data, x=None, y=None, filename=None):
+    if x:
+        data = data.groupby(x).mean()
+    data[y].plot(legend=True)
+    if filename:
+        plt.savefig(filename)
+    plt.show()
+    plt.close()
+
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         raise ValueError("Usage: plot_data.py <path>")
-    path = sys.argv[1]
-    params = [
-        ["ftq", [1, 0, 0], "\lambda"],
-        ["bftq", [0, 1, 0], "\\beta"],
-        ["hdc", [0, 0, 1], "safeness"]
-    ]
-    main(path, params)
+    workspace = sys.argv[1]
+    algos = {
+        "ftq": [[1, 0, 0], r"ftq($\lambda$)"],
+        "bftq": [[0, 1, 0], r"bftq($\beta$)"],
+        "hdc": [[0, 0, 1], "hdc(safeness)"],
+        "dqn": [[1, 1, 0], "dqn"]
+    }
+    plot_all(parse_data(workspace, algos), workspace, algos)

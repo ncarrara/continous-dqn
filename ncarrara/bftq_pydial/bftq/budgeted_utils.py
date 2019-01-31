@@ -54,6 +54,7 @@ class BudgetedUtils():
         _action_batch = torch.cat(batch.a)
         _reward_batch = torch.cat(batch.r_)
         _constraint_batch = torch.cat(batch.c_)
+        _state_beta_batch = torch.cat((self._state_batch, self._beta_batch), dim=2)
 
         with torch.no_grad():
             if not targets_must_be_zeros:

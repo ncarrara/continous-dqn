@@ -16,23 +16,43 @@ logger = logging.getLogger(__name__)
 class PytorchBudgetedDQN():
 
     def __init__(self,
+
                  policy_net,
-                 beta_for_discretization,
+                 beta_for_discretisation,
                  workspace,
                  device,
-                 N_action,
                  loss_function,
                  loss_function_c,
+                 optimizer_params={"learning_rate": 0.01,
+                                   "weight_decay": 0.0,
+                                   "optimizer_type": "ADAM"},
                  gamma=0.999,
                  gamma_c=1.0,
                  weights_losses=[1., 1.],
                  target_update=10,
                  size_minibatch=32,
-                 state_to_unique_str=lambda s: str(s),
-                 action_to_unique_str=lambda a: str(a),
+                 state_to_unique_str="id",
+                 action_to_unique_str="id",
                  ):
+        # TODO refaire proprement avec factory et functions
+        if state_to_unique_str == "str":
+            state_to_unique_str = lambda a: str(a)
+        else:
+            raise Exception("Unknown state_to_unique_str {}".format(state_to_unique_str))
+        if action_to_unique_str == "str":
+            action_to_unique_str = lambda a: str(a)
+        else:
+            raise Exception("Unknown action_to_unique_str {}".format(action_to_unique_str))
+
         # pattern, par composition (on ne veut pas d héritage pour les algos)
-        self.budgeted_utils = BudgetedUtils(beta_for_discretization, workspace, device, N_action, id="NO_ID")
+        self.budgeted_utils = BudgetedUtils(beta_for_discretization=beta_for_discretisation,
+                                            workspace=workspace,
+                                            device=device,
+                                            loss_function_c=loss_function_c,
+                                            loss_function=loss_function,
+                                            id="NO_ID")
+        self.device = device
+        self.optimizer_params = optimizer_params
         self.state_to_unique_str = state_to_unique_str
         self.action_to_unique_str = action_to_unique_str
         self.gamma = gamma
@@ -43,9 +63,6 @@ class PytorchBudgetedDQN():
         self.policy_net = policy_net
         self.memory = Memory(class_transition=TransitionBudgeted)
         self.i_episode = 0
-        self.n_actions = self.policy_net.predict.out_features
-        self.loss_function_c = loss_function_c
-        self.loss_function = loss_function
         self.hulls_key_id = {}
         self.reset()
 
@@ -55,45 +72,40 @@ class PytorchBudgetedDQN():
         self.target_net = copy.deepcopy(self.policy_net)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
-        self.optimizer = optimizer_factory(self.optimizer_type,
-                                           self._policy_net.parameters(),
-                                           self.learning_rate,
-                                           self.weight_decay)
+        print(self.optimizer_params)
+        self.optimizer = optimizer_factory(params=self.policy_net.parameters(), **self.optimizer_params)
         self.i_episode = 0
         self.current_hull_id = 0
         self.i_update = 0
-        self.hull_ids.clear()
+        self.hulls_key_id = {}
 
     def _optimize_model(self):
         transitions = self.memory.sample(
             len(self.memory) if self.size_mini_batch > len(self.memory) else self.size_mini_batch)
-        batch = TransitionGym(*zip(*transitions))
-        loss = self.budgeted_utils.loss(batch)
+        batch = TransitionBudgeted(*zip(*transitions))
+        loss = self.budgeted_utils.loss(Q=self.policy_net, batch=batch)
         self.optimizer.zero_grad()
         loss.backward()
         for param in self.policy_net.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    def pi(self,state,beta,action_mask):
-        return self.budgeted_utils.policy(self.policy_net,state,beta,action_mask)
+    def pi(self, state, beta, action_mask):
+        return self.budgeted_utils.policy(self.policy_net, state, beta, action_mask)
 
     def update(self, *sample):
+        print("update")
         self.budgeted_utils.change_id(self.i_update)
         state, action, reward, next_state, constraint, beta, done, info = sample
-        state = torch.tensor([[state]], device=self.device, dtype=torch.float)
+        state = torch.tensor(state, device=self.device, dtype=torch.float).unsqueeze(0)
         if not done:
-            next_state = torch.tensor([[next_state]],
-                                      device=self.device,
-                                      dtype=torch.float)
+            next_state = torch.tensor(next_state, device=self.device, dtype=torch.float).unsqueeze(0)
         else:
-            next_state = torch.tensor([[[np.nan] * self.policy_net.size_state]],
-                                      device=self.device,
-                                      dtype=torch.float)
-        action = torch.tensor([[action]], device=self.device, dtype=torch.long)
-        reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
-        constraint = torch.tensor([float(constraint)], device=self.device, dtype=torch.float)
-        beta = torch.tensor([float(beta)], device=self.device, dtype=torch.float)
+            next_state = None
+        action = torch.tensor(action, device=self.device, dtype=torch.long).unsqueeze(0)
+        reward = torch.tensor(float(reward), device=self.device, dtype=torch.float).unsqueeze(0)
+        constraint = torch.tensor(float(constraint), device=self.device, dtype=torch.float).unsqueeze(0)
+        beta = torch.tensor(float(beta), device=self.device, dtype=torch.float).unsqueeze(0)
 
         hull_key = self.state_to_unique_str(next_state)
         if hull_key in self.hulls_key_id:
@@ -101,7 +113,7 @@ class PytorchBudgetedDQN():
         else:
             hull_id = self.current_hull_id
             self.current_hull_id += 1
-
+        hull_id = torch.tensor(hull_id, device=self.device, dtype=torch.int).unsqueeze(0)
         self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
         self._optimize_model()
         if next_state is None:

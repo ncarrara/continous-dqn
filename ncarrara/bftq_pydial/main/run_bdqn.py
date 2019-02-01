@@ -1,4 +1,6 @@
 # coding=utf-8
+from ncarrara.bftq_pydial.bftq.budgeted_network import BudgetedNetwork
+from ncarrara.bftq_pydial.bftq.pytorch_budgeted_dqn import PytorchBudgetedDQN
 from ncarrara.bftq_pydial.tools.configuration import C
 from ncarrara.bftq_pydial.tools.features import feature_factory
 from ncarrara.utils.math import epsilon_decay, set_seed
@@ -15,7 +17,7 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
 def main(empty_previous_test=False):
-    betas = np.linspace(0,1,5)
+    # betas = np.linspace(0, 1, 5)
 
     set_seed(C.seed)
     logger = logging.getLogger(__name__)
@@ -32,10 +34,21 @@ def main(empty_previous_test=False):
     N = C["create_data"]["N_trajs"]
     traj_max_size = np.inf
     decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=N, show=True)
-    net = NetBFTQ(size_state=size_state,
-                  layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
-                  **C["bftq_net_params"])
-    dqn = PytorchBudgetedDQN(policy_network=net, device=C.device, gamma=C["gamma"], **C["dqn_params"])
+    net = BudgetedNetwork(size_state=size_state,
+                          layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
+                          device=C.device,
+                          **C["bftq_net_params"])
+
+    betas_for_discretisation = eval(C["betas_for_discretisation"])
+
+    print(C["bdqn_params"])
+    dqn = PytorchBudgetedDQN(policy_net=net,
+                             workspace=C.path_bdqn,
+                             device=C.device,
+                             gamma=C["gamma"],
+                             gamma_c=C["gamma_c"],
+                             beta_for_discretisation=betas_for_discretisation,
+                             **C["bdqn_params"])
     dqn.reset()
     e.seed(C.seed)
     rrr = []
@@ -65,25 +78,27 @@ def main(empty_previous_test=False):
                         bias=beta,
                         min_x=0,
                         max_x=1)
-                    a = np.random.choice(a=range(len(e.action_space.n)),
+                    a = np.random.choice(a=range(e.action_space.n),
                                          p=action_repartition)
-                    beta = budget_repartion[a]
+                    beta_ = budget_repartion[a]
             else:
                 if hasattr(e, "action_space_executable"):
                     raise NotImplementedError("TODO")
                 else:
-                    a,beta = dqn.pi(feature(s, e), np.zeros(e.action_space.n))
+                    a, beta_ = dqn.pi(feature(s, e), beta, np.zeros(e.action_space.n))
 
             s_, r_, done, info = e.step(a)
+            c_ = info["c_"]
             sample = (s, a if type(a) is str else int(a), r_, s_, done, info)
             trajectory.append(sample)
 
             rr += r_
-            t_dqn = (feature(s, e), a, r_, feature(s_, e), done, info)
+            t_dqn = (feature(s, e), a, r_, feature(s_, e), c_, beta, done, info)
             # print("before",s_)
             dqn.update(*t_dqn)
             # print("after",s_)
             s = s_
+            beta = beta_
             nb_samples += 1
             it += 1
             if it % 100 == 0:
@@ -99,7 +114,7 @@ def main(empty_previous_test=False):
             rm.push(*sample)
 
     logger.info("[execute_policy] saving results at : {}".format(C.path_dqn_results))
-    np.savetxt(C.path_dqn_results + "/greedy_lambda_=0.result", result)
+    np.savetxt(C.path_bdqn_results + "/greedy_lambda_=0.result", result)
     if N > 100:
         nb_traj_packet = 100
         a = np.reshape(rrr, (int(N / nb_traj_packet), -1))
@@ -117,5 +132,5 @@ def main(empty_previous_test=False):
 
 
 if __name__ == "__main__":
-    C.load("config/final.json").load_pytorch()
+    C.load("config/test.json").load_pytorch().create_fresh_workspace(force=True)
     main()

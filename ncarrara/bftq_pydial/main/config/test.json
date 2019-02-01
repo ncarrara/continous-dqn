@@ -127,7 +127,7 @@
     "N_trajs": 10,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.5
     }
   },
   "main": {
@@ -137,7 +137,6 @@
     "N_trajs": 10
   },
   "bftq_params": {
-
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 10,
     "optimizer": "ADAM",
@@ -178,8 +177,7 @@
     "delta_stop": 0.001,
     "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH",
-        "step_test_policy_nn_epoch": 10
-
+    "step_test_policy_nn_epoch": 10
   },
   "net_params": {
     "activation_type": "RELU",
@@ -198,6 +196,24 @@
     "lr": 0.001,
     "weight_decay": 0.0005,
     "workspace": "dqn"
+  },
+  "betas_for_discretisation": "np.linspace(0.,1.,4)",
+  "bdqn_params": {
+    "optimizer_params": {
+      "lr": 0.01,
+      "weight_decay": 0.0,
+      "optimizer_type": "ADAM"
+    },
+    "loss_function": "l2",
+    "loss_function_c": "l2",
+    "target_update": 3,
+    "size_minibatch": 32,
+    "state_to_unique_str": "str",
+    "action_to_unique_str": "str",
+    "weights_losses": [
+      1,
+      1
+    ]
   }
 }
 

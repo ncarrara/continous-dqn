@@ -94,7 +94,6 @@ class PytorchBudgetedDQN():
         return self.budgeted_utils.policy(self.policy_net, state, beta, action_mask)
 
     def update(self, *sample):
-        print("update")
         self.budgeted_utils.change_id(self.i_update)
         state, action, reward, next_state, constraint, beta, done, info = sample
         state = torch.tensor(state, device=self.device, dtype=torch.float).unsqueeze(0)

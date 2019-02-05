@@ -171,6 +171,7 @@
   "lambdas": "[0.]",
   "betas": "np.linspace(0.,1.,35.)",
   "betas_test": "np.linspace(0.,1.,35.)",
+  "betas_for_discretisation": "np.linspace(0.,1.,35.)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 2000,
@@ -203,6 +204,23 @@
     "lr": 0.001,
     "weight_decay": 0.00075,
     "workspace": "dqn"
+  },
+  "bdqn_params": {
+    "optimizer_params": {
+      "lr": 0.001,
+      "weight_decay": 0.0,
+      "optimizer_type": "ADAM"
+    },
+    "loss_function": "l2",
+    "loss_function_c": "l2",
+    "target_update": 10,
+    "size_minibatch": 32,
+    "state_to_unique_str": "str",
+    "action_to_unique_str": "str",
+    "weights_losses": [
+      1,
+      1
+    ]
   }
 }
 

@@ -14,13 +14,13 @@ import matplotlib.pyplot as plt
 from ncarrara.utils.math import generate_random_point_on_simplex_not_uniform
 
 from ncarrara.utils_rl.transition.replay_memory import Memory
-
+logger = logging.getLogger("run_bdqn")
 
 def main(empty_previous_test=False):
     # betas = np.linspace(0, 1, 5)
 
     set_seed(C.seed)
-    logger = logging.getLogger(__name__)
+
     if empty_previous_test:
         empty_directory(C.path_ftq_results)
 
@@ -59,11 +59,12 @@ def main(empty_previous_test=False):
     for n in range(N):
         # for beta in betas:
         beta = np.random.random()
+        logger.info("beta {}".format(beta))
         if n % (N // 10) == 0:
             logger.debug("DQN step {}/{}".format(n, N))
         s = e.reset()
         done = False
-        rr = 0
+        result_traj = np.zeros(4)
         it = 0
         trajectory = []
         while (not done):
@@ -81,22 +82,23 @@ def main(empty_previous_test=False):
                     a = np.random.choice(a=range(e.action_space.n),
                                          p=action_repartition)
                     beta_ = budget_repartion[a]
+                    logger.info(
+                        "Random action : {} with a random budget : {} (from {})".format(a,beta_, budget_repartion))
             else:
                 if hasattr(e, "action_space_executable"):
                     raise NotImplementedError("TODO")
                 else:
                     a, beta_ = dqn.pi(feature(s, e), beta, np.zeros(e.action_space.n))
+                    logger.info("Greedy action : {} with corresponding budget {}".format(a, beta))
 
             s_, r_, done, info = e.step(a)
             c_ = info["c_"]
             sample = (s, a if type(a) is str else int(a), r_, s_, done, info)
             trajectory.append(sample)
 
-            rr += r_
+            result_traj += np.array([r_, c_, r_ * (C["gamma"]** it), c_ * (C["gamma_c"]** it)])
             t_dqn = (feature(s, e), a, r_, feature(s_, e), c_, beta, done, info)
-            # print("before",s_)
             dqn.update(*t_dqn)
-            # print("after",s_)
             s = s_
             beta = beta_
             nb_samples += 1
@@ -107,8 +109,7 @@ def main(empty_previous_test=False):
             if traj_max_size is not None and it >= traj_max_size:
                 logger.warning("Max size trajectory reached")
                 break
-
-        rrr.append(rr)
+        logger.info("result_traj : {}".format(result_traj))
 
         for sample in trajectory:
             rm.push(*sample)
@@ -132,5 +133,5 @@ def main(empty_previous_test=False):
 
 
 if __name__ == "__main__":
-    C.load("config/test.json").load_pytorch().create_fresh_workspace(force=True)
+    C.load("config/bdqn.json").load_pytorch().create_fresh_workspace(force=True)
     main()

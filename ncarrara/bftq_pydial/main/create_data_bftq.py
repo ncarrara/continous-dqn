@@ -73,8 +73,9 @@ def main():
         if i % 50 == 0: logger.info(i)
         pi_epsilon_greedy.epsilon = decays[i]
         pi_epsilon_greedy.pi_greedy = pi_greedy
+        beta= np.random.sample()
         trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
-            e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=1.0)
+            e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=beta)
         rez[i] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:
             rm.push(*sample)

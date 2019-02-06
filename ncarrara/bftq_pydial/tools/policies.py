@@ -3,6 +3,7 @@ import numpy as np
 
 
 # from policy.HDCPolicy import HDCPolicy
+from ncarrara.utils.math import generate_random_point_on_simplex_not_uniform
 
 
 class Policy:
@@ -145,9 +146,9 @@ class PytorchFittedPolicy(Policy):
 
 
 class EpsilonGreedyPolicy(Policy):
-    def __init__(self, pi_greedy, epsilon):
+    def __init__(self, pi_greedy, epsilon,pi_random = RandomPolicy()):
         self.pi_greedy = pi_greedy
-        self.pi_random = RandomPolicy()
+        self.pi_random = pi_random
         self.epsilon = epsilon
 
     def reset(self):
@@ -161,6 +162,31 @@ class EpsilonGreedyPolicy(Policy):
 
         return a, is_master_action, info
 
+class RandomBudgetedPolicy(Policy):
+    def __init__(self):
+        pass
+
+    def reset(self):
+        pass
+
+    def execute(self, s, action_mask, info):
+        beta = info["beta"]
+        actions = []
+        for i in range(len(action_mask)):
+            if action_mask[i] == 0:
+                actions.append(i)
+        action_repartition = np.random.random(len(actions))
+        action_repartition /= np.sum(action_repartition)
+        budget_repartion = generate_random_point_on_simplex_not_uniform(
+            coeff=action_repartition,
+            bias=beta,
+            min_x=0,
+            max_x=1)
+        a = np.random.choice(a=actions,
+                             p=action_repartition)
+        beta_ = budget_repartion[a]
+        info["beta"] = beta_
+        return a, False, info
 
 class PytorchBudgetedFittedPolicy(Policy):
     def __init__(self, pi, env, feature):

@@ -498,13 +498,13 @@ class PytorchBudgetedFittedQ:
 
         return pi
 
-    def save_policy(self):
-        path = self.workspace+"/policy.pt"
+    def save_policy(self,policy_name="policy"):
+        path = self.workspace+"/{}.pt".format(policy_name)
         logger.info("saving bftq policy at {}".format(path))
         torch.save(self._policy_network, path)
 
-    def load_policy(self):
-        path = self.workspace + "/policy.pt"
+    def load_policy(self,policy_name="policy"):
+        path = self.workspace+"/{}.pt".format(policy_name)
         logger.info("loading bftq policy at {}".format(path))
         network = torch.load(path, map_location=self.device)
         pi = self.build_policy(network)

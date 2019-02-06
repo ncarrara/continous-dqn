@@ -57,13 +57,15 @@ def set_seed(seed, env=None):
             env.seed(seed)
             env.reset()
 
-def epsilon_decay(start=1.0, decay=0.01, N=100,show=False):
+def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
     logger.info("Epsilons (decayed) : [{}]".format(''.join(["{:.2f} ".format(eps) for eps in decays])))
     if logger.getEffectiveLevel() is logging.INFO:
         plt.plot(range(len(decays)),decays)
         plt.title("epsilon decays")
         plt.show()
+        if savepath is not None:
+            plt.savefig(savepath+"/epsilon_decay")
         plt.close()
     return decays
 

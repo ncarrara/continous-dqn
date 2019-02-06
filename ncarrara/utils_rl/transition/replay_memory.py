@@ -9,6 +9,8 @@ from ncarrara.utils_rl.transition.transition import TransitionGym
 import sys
 import logging
 
+
+
 class Memory(object):
     logger = logging.getLogger(__name__)
 
@@ -33,6 +35,7 @@ class Memory(object):
         return random.sample(self.memory, batch_size)
 
     def save_memory(self, path, filename, as_json=True, indent=0):
+        self.logger.info("saving memory at {}".format(path))
         makedirs(path)
         memory = [t._asdict() for t in self.memory]
         if as_json:
@@ -47,6 +50,7 @@ class Memory(object):
                 pickle.dump(memory, f)
 
     def load_memory(self, path, as_json=True):
+        self.logger.info("loading memory at {}".format(path))
         if as_json:
             with open(path, 'r') as infile:
                 memory = json.load(infile)

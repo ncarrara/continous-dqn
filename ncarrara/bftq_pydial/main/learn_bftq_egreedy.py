@@ -4,6 +4,7 @@ from ncarrara.bftq_pydial.tools.configuration import C
 # C.load_matplotlib('agg')
 from ncarrara.bftq_pydial.tools.features import feature_factory
 from ncarrara.utils.math import epsilon_decay, set_seed
+from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -45,7 +46,7 @@ def main():
 
     bftq = PytorchBudgetedFittedQ(
         device=C.device,
-        workspace=C.path_bftq,
+        workspace=C.path_learn_bftq_egreedy + "/batch=0",
         betas=betas,
         betas_for_discretisation=betas_for_discretisation,
         N_actions=e.action_space.n,
@@ -59,40 +60,49 @@ def main():
 
     pi_greedy = None
 
-    decays = epsilon_decay(**C["create_data"]["epsilon_decay"], N=C["create_data"]["N_trajs"], show=True)
+    decays = epsilon_decay(**C["learn_bftq_egreedy"]["epsilon_decay"],
+                           N=C["learn_bftq_egreedy"]["N_trajs"],
+                           savepath=C.path_learn_bftq_egreedy)
     logger.info("decays={}".format(decays))
 
     pi_random = RandomBudgetedPolicy()
-    pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0],pi_random=pi_random)
+    pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0], pi_random=pi_random)
     pi_greedy = pi_random
-    rez = np.zeros((C["create_data"]["N_trajs"], 4))
+    rez = np.zeros((C["learn_bftq_egreedy"]["N_trajs"], 4))
     rm = Memory()
+    batch = 0
 
-
-    for i in range(C["create_data"]["N_trajs"]):
-        if i % 50 == 0: logger.info(i)
-        pi_epsilon_greedy.epsilon = decays[i]
+    for i_traj in range(C["learn_bftq_egreedy"]["N_trajs"]):
+        if i_traj % 50 == 0: logger.info(i_traj)
+        pi_epsilon_greedy.epsilon = decays[i_traj]
         pi_epsilon_greedy.pi_greedy = pi_greedy
-        beta= np.random.sample()
+        beta = np.random.sample()
         trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
             e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=beta)
-        rez[i] = np.array([rew_r, rew_c, ret_r, ret_c])
+        rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:
             rm.push(*sample)
-        if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
-            transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
-                                                                         C["create_data"]["lambda_"],
-                                                                         C["create_data"]["normalize_reward"])
-            logger.info("[LEARNING FTQ PI GREEDY] #samples={}".format(len(transitions_ftq)))
-
+        if i_traj > 0 and (i_traj+1) % C["learn_bftq_egreedy"]["trajs_by_ftq_batch"] == 0:
+            transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0,
+                                                                         C["learn_bftq_egreedy"]["normalize_reward"])
+            logger.info("[BATCH={}]---------------------------------------".format(batch))
+            logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}".format(batch, len(transitions_ftq),i_traj+1))
+            logger.info("[BATCH={}]---------------------------------------".format(batch))
             bftq.reset(True)
+            bftq.workspace = C.path_learn_bftq_egreedy + "/batch={}".format(batch)
+            makedirs(bftq.workspace)
             pi = bftq.fit(transition_bftq)
+            bftq.save_policy()
             pi_greedy = PytorchBudgetedFittedPolicy(pi, e, feature)
+            batch += 1
 
-    rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
-    np.savetxt(C.workspace + "/" + C.id + ".results", rez)
+    # rm.save_memory(C.path_create_data_bftq, "/" + C["learn_bftq_egreedy"]["filename_data"],
+    #                C["learn_bftq_egreedy"]["as_json"])
+    bftq.workspace = C.path_learn_bftq_egreedy
+    bftq.save_policy(policy_name="final_policy")
+    # np.savetxt(C.workspace + "/" + C.id + ".results", rez)
 
-    # _, rez = urpy.execute_policy(e, pi_epsilon_greedy,
+    # _, rez = urpy.execute_policy(e, pi_greedy,
     #                              gamma_r=C["gamma"], gamma_c=C["gamma_c"],
     #                              beta=1.0, N_dialogues=100)
     # print("greedy results")
@@ -100,5 +110,5 @@ def main():
 
 
 if __name__ == "__main__":
-    C.load("config/final.json").load_pytorch().create_fresh_workspace()
+    C.load("config/test3.json").load_pytorch().create_fresh_workspace(force=True)
     main()

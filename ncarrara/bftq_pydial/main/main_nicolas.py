@@ -16,7 +16,7 @@ if len(sys.argv) > 1:
         number_seeds = int(sys.argv[3])
         seeds = range(seed_start, seed_start + number_seeds)
 else:
-    config_file = "config/camera_ready_8.json"
+    config_file = "config/test3.json"
 
 
 
@@ -37,7 +37,8 @@ if seeds is None:
 
 print("seeds = {}".format([str(s) for s in seeds]))
 
-from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data,run_dqn
+from ncarrara.bftq_pydial.main import run_ftq, create_data, run_hdc, learn_bftq, test_bftq, plot_data, run_dqn, \
+    create_data_bftq
 
 # param_grid = {
 #     'general.seed': seeds,
@@ -96,8 +97,8 @@ for i_config,params in enumerate(grid):
 
     # CREATE DATA DQN or FTQ #
     print("learning dqn ...")
-    run_dqn.main()
-    # # create_data.main()
+    # run_dqn.main()
+    create_data_bftq.main()
     # print("learning and testing FTQ ...")
     lambdas = eval(C["lambdas"])
     run_ftq.main(lambdas_=lambdas, empty_previous_test=True)

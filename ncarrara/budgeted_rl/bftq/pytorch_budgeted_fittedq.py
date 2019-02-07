@@ -181,6 +181,8 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
 
 
 def optimal_pia_pib(beta, hull, statistic):
+    # print(beta)
+    # exit()
     # statistic["len_hull"] = len(hull)
     if len(hull) == 0:
         raise Exception("Hull is empty")
@@ -265,9 +267,9 @@ class PytorchBudgetedFittedQ:
         self.disp_states_ids = disp_states_ids
         self.do_dynamic_disp_state = not self.disp_states
         self.workspace = workspace
-        self.N_actions = policy_network.out_features
+        self.N_actions = policy_network.predict.out_features//2
         if actions_str is None:
-            actions_str = [str(i) for i in range(policy_network.out_features)]
+            actions_str = [str(i) for i in range(self.N_actions)]
         self.actions_str = actions_str
 
         if type(betas_for_duplication) == type(""):
@@ -506,20 +508,18 @@ class PytorchBudgetedFittedQ:
 
         return pi
 
-    def save_policy(self, policy_path=None, policy_basename="policy"):
+    def save_policy(self, policy_path=None):
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        logger.info("saving bftq policy at {}".format(path))
-        torch.save(self._policy_network, path)
+            policy_path = self.workspace + "/policy.pt"
+        logger.info("saving bftq policy at {}".format(policy_path))
+        torch.save(self._policy_network, policy_path)
 
-    def load_policy(self, policy_path=None, policy_basename="policy"):
+    def load_policy(self, policy_path=None):
 
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        logger.info("loading bftq policy at {}".format(path))
-        network = torch.load(path, map_location=self.device)
+            policy_path = self.workspace + "/policy.pt"
+        logger.info("loading bftq policy at {}".format(policy_path))
+        network = torch.load(policy_path, map_location=self.device)
         pi = self.build_policy(network)
         return pi
 
@@ -882,8 +882,7 @@ class NetBFTQ(BaseModule):
                  beta_encoder_type="LINEAR",
                  **kwargs):
         super(NetBFTQ, self).__init__(activation_type, reset_type, normalize)
-        sizes = intra_layers
-        sizes.append([2 * n_actions])
+        sizes = intra_layers + [2 * n_actions]
         self.beta_encoder_type = beta_encoder_type
         self.size_state = size_state
         self.size_beta_encoder = size_beta_encoder

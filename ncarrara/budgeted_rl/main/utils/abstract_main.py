@@ -52,7 +52,7 @@ def main(config_file, override_param_grid, f):
         C.load(dict).create_fresh_workspace(force=True)
 
         print("\n-------- i_config={} ----------\n".format(i_config))
-        f()
+        f(C)
 
 
 if __name__ == "__main__":

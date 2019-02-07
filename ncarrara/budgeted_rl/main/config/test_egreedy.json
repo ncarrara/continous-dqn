@@ -95,10 +95,12 @@
     }
   },
   "test_bftq": {
+    "policy_path": "final_policy.pt",
     "N_trajs": 5,
     "betas_test": "np.linspace(0.,1.,3)"
   },
   "test_ftq": {
+    "policy_path": "final_policy.pt",
     "N_trajs": 5
   },
   "gamma": 1.0,

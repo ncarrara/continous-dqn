@@ -1,5 +1,4 @@
 # coding=utf-8
-from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils import math
 from ncarrara.utils.math import epsilon_decay, set_seed
@@ -21,11 +20,10 @@ logger = logging.getLogger(__name__)
 
 def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
          device, epsilon_decay, N_trajs, trajs_by_ftq_batch, normalize_reward,
-         workspace, lambda_=0, **args):
-    print("too much args : ",args)
+         workspace, seed,lambda_=0, **args):
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
-    set_seed(C.seed, e)
+    set_seed(seed, e)
 
     feature = feature_factory(feature_str)
 
@@ -77,12 +75,16 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         config_file = sys.argv[1]
         lambda_ = float(sys.argv[2])
+        force=False
     else:
         config_file = "../config/test_egreedy.json"
         lambda_ = 0.
-    C.load(config_file).create_fresh_workspace().load_pytorch().load_matplotlib('agg')
+        force=True
+    from ncarrara.budgeted_rl.tools.configuration import C
+    C.load(config_file).create_fresh_workspace(force=force).load_pytorch().load_matplotlib('agg')
     main(lambda_=lambda_,
+         seed = C.seed,
          device=C.device,
-         workspace=C.path_learn_bftq_egreedy,
+         workspace=C.path_learn_ftq_egreedy,
          **C.dict["learn_ftq_egreedy"],
          **C.dict)

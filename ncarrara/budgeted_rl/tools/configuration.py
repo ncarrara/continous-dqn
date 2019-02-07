@@ -7,19 +7,19 @@ class ConfigurationBFTQ(Configuration):
 
     def create_fresh_workspace(self,force=False):
         super(ConfigurationBFTQ, self).create_fresh_workspace(force)
-        from ncarrara.utils.os import makedirs
-        makedirs(self.path_bftq)
-        makedirs(self.path_bftq_results)
-        makedirs(self.path_ftq)
-        makedirs(self.path_ftq_results)
-        makedirs(self.path_hdc)
-        makedirs(self.path_hdc_results)
-        makedirs(self.path_dqn)
-        makedirs(self.path_dqn_results)
-        makedirs(self.path_bdqn)
-        makedirs(self.path_bdqn_results)
-        makedirs(self.path_learn_bftq_egreedy)
-        makedirs(self.path_learn_ftq_egreedy)
+        # from ncarrara.utils.os import makedirs
+        # makedirs(self.path_bftq)
+        # makedirs(self.path_bftq_results)
+        # makedirs(self.path_ftq)
+        # makedirs(self.path_ftq_results)
+        # makedirs(self.path_hdc)
+        # makedirs(self.path_hdc_results)
+        # makedirs(self.path_dqn)
+        # makedirs(self.path_dqn_results)
+        # makedirs(self.path_bdqn)
+        # makedirs(self.path_bdqn_results)
+        # makedirs(self.path_learn_bftq_egreedy)
+        # makedirs(self.path_learn_ftq_egreedy)
         return self
 
     def load(self, config):

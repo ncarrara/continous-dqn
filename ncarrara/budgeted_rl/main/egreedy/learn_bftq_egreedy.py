@@ -1,9 +1,8 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
-from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils import math
-from ncarrara.utils.math import epsilon_decay, set_seed
+from ncarrara.utils.math import  set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -20,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq_params, bftq_net_params, N_trajs,
-         workspace, seed, device, normalize_reward, trajs_by_ftq_batch):
-    envs, params = envs_factory.generate_envs(generate_envs)
+         workspace, seed, device, normalize_reward, trajs_by_ftq_batch,epsilon_decay,**args):
+    envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     set_seed(seed, e)
 
@@ -32,7 +31,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     bftq = PytorchBudgetedFittedQ(
         device=device,
         workspace=workspace + "/batch=0",
-        actions_str=None if not hasattr("action_str", e) else e.action_str,
+        actions_str=None if not hasattr( e,"action_str") else e.action_str,
         policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n, **bftq_net_params),
         gamma=gamma,
         gamma_c=gamma_c,
@@ -87,10 +86,14 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
+        force=False
     else:
         config_file = "../config/test_egreedy.json"
-    C.load(config_file).create_fresh_workspace().load_pytorch().load_matplotlib('agg')
+        force=True
+    from ncarrara.budgeted_rl.tools.configuration import C
+    C.load(config_file).create_fresh_workspace(force=force).load_pytorch().load_matplotlib('agg')
     main(device=C.device,
+         seed=C.seed,
          workspace=C.path_learn_bftq_egreedy,
          **C.dict["learn_bftq_egreedy"],
          **C.dict)

@@ -192,7 +192,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     e = SlotFillingEnv(user_params={"cerr": -1, "cok": 1, "ser": 0.5, "cstd": 0.2, "proba_hangup": 0.3})
     e.seed(1)
-    from ncarrara.bftq_pydial.tools.policies import HandcraftedSlotFillingEnv
+    from ncarrara.budgeted_rl.tools.policies import HandcraftedSlotFillingEnv
 
     hdc_policy = HandcraftedSlotFillingEnv(e=e,safeness=1.0)
 

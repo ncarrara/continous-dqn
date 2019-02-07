@@ -1,6 +1,6 @@
 import numpy as np
 
-import ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq as pbf
+import ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq as pbf
 from ncarrara.utils.datastructure import merge_two_dicts
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.transition.transition import Transition

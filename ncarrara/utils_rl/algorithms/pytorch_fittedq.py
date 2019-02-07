@@ -64,7 +64,7 @@ class PytorchFittedQ:
         self.device = device
         self.test_policy = test_policy
         if action_str is None:
-            action_str = [str(i) for i in range(policy_network.out_features)]
+            action_str = [str(i) for i in range(policy_network.predict.out_features)]
         self.action_str = action_str
         self.workspace = workspace
         self.nn_stop_loss_condition = nn_loss_stop_condition

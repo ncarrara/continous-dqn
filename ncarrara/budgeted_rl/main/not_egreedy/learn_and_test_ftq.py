@@ -1,13 +1,13 @@
 # coding=utf-8
-from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.budgeted_rl.tools.configuration import C
+from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.policies import PytorchFittedPolicy
-import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
+from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy
+import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
 import logging
 import numpy as np
 

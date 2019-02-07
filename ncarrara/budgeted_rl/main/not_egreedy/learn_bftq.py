@@ -1,10 +1,10 @@
 # coding=utf-8
-from ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
-from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
+from ncarrara.budgeted_rl.tools.configuration import C
+from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import set_seed
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
-import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
 
 import logging
 
@@ -22,10 +22,8 @@ def main():
 
     feature = feature_factory(C["feature_str"])
 
-    size_state = len(feature(e.reset(), e))
-    # print("neural net input size :", size_state)
 
-    policy_network_bftq = NetBFTQ(size_state=size_state,
+    policy_network_bftq = NetBFTQ(size_state=len(feature(e.reset(), e)),
                                   layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
                                   **C["bftq_net_params"])
 
@@ -36,15 +34,12 @@ def main():
     else:
         betas_for_discretisation = betas
 
-    action_str = getattr(e, "action_space_str", list(map(str, range(e.action_space.n))))
-
     bftq = PytorchBudgetedFittedQ(
         device=C.device,
         workspace=C.path_bftq,
         betas_for_duplication=betas,
         betas_for_discretisation=betas_for_discretisation,
-        N_actions=e.action_space.n,
-        actions_str=action_str,
+        actions_str=None if not hasattr("action_str", e) else e.action_str,
         policy_network=policy_network_bftq,
         gamma=C["gamma"],
         gamma_c=C["gamma_c"],

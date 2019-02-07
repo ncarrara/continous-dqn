@@ -1,7 +1,7 @@
-from ncarrara.bftq_pydial.main import test_bftq
+from ncarrara.budgeted_rl.main.utils import test_bftq
 import numpy as np
 
-from ncarrara.bftq_pydial.tools.configuration import C
+from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.utils.os import makedirs
 
 config_file = "config/egreedy.json"

@@ -1,10 +1,10 @@
-# ne fonctionne pas
+
 
 {
   "general": {
-    "id": "egreedy",
+    "id": "test_egreedy",
     "seed": 0,
-    "workspace": "tmp/egreedy",
+    "workspace": "tmp/test_egreedy",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -66,10 +66,10 @@
         }
       ],
       "max_turn": [
-        10
+        3
       ],
       "size_constraints": [
-        3
+        2
       ],
       "penalty_if_bye": [
         0.0
@@ -95,34 +95,43 @@
     }
   },
   "test_bftq": {
-    "N_trajs": 300,
-    "betas_test": "np.linspace(0.,1.,11)"
+    "N_trajs": 5,
+    "betas_test": "np.linspace(0.,1.,3)"
+  },
+  "test_ftq": {
+    "N_trajs": 5
   },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "nb_trajs_between_epoch": 30,
-  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+  "lambdas": "[0.,10.]",
 
-  "learn_bftq_egreedy": {
-    "filename_data": "samples.data",
-    "as_json": true,
-    "trajs_by_ftq_batch": 100,
+  "learn_ftq_egreedy": {
+    "trajs_by_ftq_batch": 3,
     "normalize_reward": true,
-    "N_trajs": 500,
+    "N_trajs": 10,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    }
+  },
+  "learn_bftq_egreedy": {
+    "trajs_by_ftq_batch": 3,
+    "normalize_reward": true,
+    "N_trajs": 10,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.01
     },
-    "betas_for_exploration": "np.linspace(0.,1.,11)"
+    "betas_for_exploration": "np.linspace(0.,1.,3)"
   },
   "bftq_params": {
-    "betas_for_discretisation": "np.linspace(0.,1.,11)",
+    "betas_for_discretisation": "np.linspace(0.,1.,3)",
     "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
+    "max_nn_epoch": 50,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch":2,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -136,33 +145,29 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 3,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
-      128,
-      64
+      32
     ]
   },
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
+    "max_nn_epoch": 50,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch": 2,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
     "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH"
   },
-  "net_params": {
+  "ftq_net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      128,
-      64,
       32
     ]
   }

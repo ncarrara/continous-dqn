@@ -19,6 +19,7 @@ class ConfigurationBFTQ(Configuration):
         makedirs(self.path_bdqn)
         makedirs(self.path_bdqn_results)
         makedirs(self.path_learn_bftq_egreedy)
+        makedirs(self.path_learn_ftq_egreedy)
         return self
 
     def load(self, config):
@@ -34,6 +35,7 @@ class ConfigurationBFTQ(Configuration):
         self.path_bdqn_results = self.workspace + "/bdqn/results"
         self.path_bdqn = self.workspace + "/bdqn"
         self.path_learn_bftq_egreedy = self.path_bftq + "/learn_bftq_egreedy"
+        self.path_learn_ftq_egreedy = self.path_ftq + "/learn_ftq_egreedy"
         return self
 
 

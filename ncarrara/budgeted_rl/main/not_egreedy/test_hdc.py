@@ -1,7 +1,7 @@
 # coding=utf-8
-from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.policies import HandcraftedSlotFillingEnv
-from ncarrara.bftq_pydial.tools.utils_run_pydial import execute_policy, format_results
+from ncarrara.budgeted_rl.tools.configuration import C
+from ncarrara.budgeted_rl.tools.policies import HandcraftedSlotFillingEnv
+from ncarrara.budgeted_rl.tools.utils_run_pydial import execute_policy, format_results
 from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs

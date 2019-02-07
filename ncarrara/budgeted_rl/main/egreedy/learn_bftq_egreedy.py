@@ -1,14 +1,14 @@
 # coding=utf-8
-from ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
-from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
+from ncarrara.budgeted_rl.tools.configuration import C
+from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import epsilon_decay, set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.policies import RandomBudgetedPolicy, PytorchBudgetedFittedPolicy
-import ncarrara.bftq_pydial.tools.utils_run_pydial as urpy
-from ncarrara.bftq_pydial.tools.policies import EpsilonGreedyPolicy
+from ncarrara.budgeted_rl.tools.policies import RandomBudgetedPolicy, PytorchBudgetedFittedPolicy
+import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
 
 import numpy as np
 import logging
@@ -28,7 +28,6 @@ def main(config_file):
 
     betas_for_exploration = eval(C["learn_bftq_egreedy"]["betas_for_exploration"])
 
-    action_str = getattr(e, "action_space_str", list(map(str, range(e.action_space.n))))
 
     policy_network_bftq = NetBFTQ(size_state=len(feature(e.reset(), e)),
                                   layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
@@ -37,8 +36,7 @@ def main(config_file):
     bftq = PytorchBudgetedFittedQ(
         device=C.device,
         workspace=C.path_learn_bftq_egreedy + "/batch=0",
-        N_actions=e.action_space.n,
-        actions_str=action_str,
+        actions_str=None if not hasattr("action_str", e) else e.action_str,
         policy_network=policy_network_bftq,
         gamma=C["gamma"],
         gamma_c=C["gamma_c"],

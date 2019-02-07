@@ -14,7 +14,7 @@ import os
 from ncarrara.utils.math import update_lims
 from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.configuration import C
+from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
     fast_create_Q_histograms_for_actions
 import logging
@@ -230,7 +230,6 @@ class PytorchBudgetedFittedQ:
                  policy_network,
                  betas_for_duplication,
                  betas_for_discretisation,
-                 N_actions,
                  device,
                  actions_str=None,
                  optimizer=None,
@@ -266,11 +265,11 @@ class PytorchBudgetedFittedQ:
         self.disp_states_ids = disp_states_ids
         self.do_dynamic_disp_state = not self.disp_states
         self.workspace = workspace
-        self.N_actions = N_actions
+        self.N_actions = policy_network.out_features
         if actions_str is None:
-            self.actions_str = [str(a) for a in range(N_actions)]
-        else:
-            self.actions_str = actions_str
+            actions_str = [str(i) for i in range(policy_network.out_features)]
+        self.actions_str = actions_str
+
         if type(betas_for_duplication) == type(""):
             self.betas_for_duplication= eval(betas_for_duplication)
         else:

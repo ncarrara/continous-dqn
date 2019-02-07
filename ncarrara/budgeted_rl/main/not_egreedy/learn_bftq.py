@@ -24,7 +24,7 @@ def main():
 
 
     policy_network_bftq = NetBFTQ(size_state=len(feature(e.reset(), e)),
-                                  layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
+                                  intra_layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
                                   **C["bftq_net_params"])
 
     import numpy as np

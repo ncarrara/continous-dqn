@@ -271,7 +271,7 @@ class PytorchBudgetedFittedQ:
         self.actions_str = actions_str
 
         if type(betas_for_duplication) == type(""):
-            self.betas_for_duplication= eval(betas_for_duplication)
+            self.betas_for_duplication = eval(betas_for_duplication)
         else:
             self.betas_for_duplication = betas_for_duplication
         if type(betas_for_discretisation) == type(""):
@@ -360,7 +360,7 @@ class PytorchBudgetedFittedQ:
             reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
             constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
             state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
-            if len(self.betas_for_duplication)>0:
+            if len(self.betas_for_duplication) > 0:
                 for beta in self.betas_for_duplication:
                     beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
                     self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
@@ -875,30 +875,31 @@ class PytorchBudgetedFittedQ:
 
 
 class NetBFTQ(BaseModule):
-    def __init__(self, size_state, size_beta_encoder, layers,
+    def __init__(self, size_state, size_beta_encoder, intra_layers, n_actions,
                  activation_type="RELU",
                  reset_type="XAVIER",
                  normalize=False,
                  beta_encoder_type="LINEAR",
                  **kwargs):
         super(NetBFTQ, self).__init__(activation_type, reset_type, normalize)
-        sizes = layers
+        sizes = intra_layers
+        sizes.append([2 * n_actions])
         self.beta_encoder_type = beta_encoder_type
         self.size_state = size_state
         self.size_beta_encoder = size_beta_encoder
         self.size_action = sizes[-1] / 2
-        layers = []
+        intra_layers = []
         if size_beta_encoder > 1:
             if self.beta_encoder_type == "LINEAR":
                 self.beta_encoder = torch.nn.Linear(1, size_beta_encoder)
             self.concat_layer = torch.nn.Linear(size_state + size_beta_encoder, sizes[0])
         else:
             module = torch.nn.Linear(size_state + size_beta_encoder, sizes[0])
-            layers.append(module)
+            intra_layers.append(module)
         for i in range(0, len(sizes) - 2):
             module = torch.nn.Linear(sizes[i], sizes[i + 1])
-            layers.append(module)
-        self.linears = nn.ModuleList(layers)
+            intra_layers.append(module)
+        self.linears = nn.ModuleList(intra_layers)
         self.predict = torch.nn.Linear(sizes[-2], sizes[-1])
 
     def forward(self, x):

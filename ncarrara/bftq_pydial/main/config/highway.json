@@ -89,10 +89,10 @@
   "generate_envs": {
     "envs_str": "highway-v0",
     "envs_params": {
-        "lanes_count": [2],
-        "initial_spacing": [2],
-        "vehicles_count": [5],
-        "duration": [20],
+        "lanes_count": [4],
+        "initial_spacing": [3],
+        "vehicles_count": [50],
+        "duration": [40],
         "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
         "centering_position": [[0.3, 0.5]],
         "collision_reward": [0]

@@ -27,6 +27,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
     for data in datas:
         # if not data.a in 'hello()':
         r_ = data.r_
+        beta = data.info["beta"]
         s = feature(data.s, e)
         if data.done:
             s_ = None
@@ -40,7 +41,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
             reward_ftq /= (1. if max_r_ftq == 0. else max_r_ftq)
             reward_bftq /= (1. if max_r_bftq == 0. else max_r_bftq)
         t_ftq = Transition(s, a, reward_ftq, s_)
-        t_bftq = pbf.TransitionBFTQ(s, a, reward_bftq, s_, c_, None, None)
+        t_bftq = pbf.TransitionBFTQ(s, a, reward_bftq, s_, c_, beta, None)
         transitions_ftq.append(t_ftq)
         transitions_bftq.append(t_bftq)
     logger.info("nbdialogues : {}".format(nbNone))
@@ -62,7 +63,7 @@ def format_results(results):
     return (pp + " " + p)
 
 
-def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
+def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=None):
     dialogue = []
     pi.reset()
 
@@ -96,14 +97,22 @@ def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=1.0):
             for action in actions:
                 action_mask[action] = 1
 
+        beta = info_pi["beta"]
+
         info_pi = merge_two_dicts(info_pi, info_env)
+
+
         a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)
         if hasattr(env, "ID") and env.ID == "gym_pydial":
             s_, r_, end, info_env = env.step(a, is_master_act=is_master_action)
         else:
             s_, r_, end, info_env = env.step(a)
         c_ = info_env["c_"]
-        turn = (s, a if type(a) is str else int(a), r_, s_, end, info_env)
+
+        info = {**info_env}
+        info["beta"] = beta
+
+        turn = (s, a if type(a) is str else int(a), r_, s_, end, info)
         rew_r += r_
         rew_c += c_
         ret_r += r_ * (gamma_r ** i)

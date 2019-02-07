@@ -135,7 +135,7 @@ class BudgetedUtils():
             next_state = next_state.squeeze(0)
             stats = {}
             if i % np.ceil((N_batch / 5)) == 0:
-                logger.info("[id{}][compute_opts] processing optimal pia pib {}".format(self.id, i))
+                logger.info("[id={}][compute_opts] processing optimal pia pib {}".format(self.id, i))
             i_non_terminal += 1
             beta = beta.detach().item()
             opts[i] = self._optimal_pia_pib(beta, hulls[i], stats)
@@ -182,7 +182,7 @@ class BudgetedUtils():
                                 values=next_state_rewards.cpu().numpy().flatten(),
                                 path=self.workspace + "/histogram",
                                 labels=["next value"])
-            create_Q_histograms("id={}_Qc(s')_e={}".format(self.id),
+            create_Q_histograms("id={}_Qc(s')".format(self.id),
                                 values=next_state_constraints.cpu().numpy().flatten(),
                                 path=self.workspace + "/histogram",
                                 labels=["next value"])

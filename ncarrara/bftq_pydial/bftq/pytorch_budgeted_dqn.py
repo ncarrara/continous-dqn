@@ -10,6 +10,8 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import logging
 
+from ncarrara.utils_rl.visualization.toolsbox import fast_create_Q_histograms_for_actions
+
 logger = logging.getLogger(__name__)
 
 
@@ -33,6 +35,7 @@ class PytorchBudgetedDQN():
                  size_minibatch=32,
                  state_to_unique_str="id",
                  action_to_unique_str="id",
+                 actions_str=None
                  ):
         # TODO refaire proprement avec factory et functions
         if state_to_unique_str == "str":
@@ -64,6 +67,13 @@ class PytorchBudgetedDQN():
         self.memory = Memory(class_transition=TransitionBudgeted)
         self.i_episode = 0
         self.hulls_key_id = {}
+        self.N_actions = policy_net.predict.out_features // 2
+        if actions_str is None:
+            self.actions_str = [str(a) for a in range(self.N_actions)]
+        else:
+            self.actions_str = actions_str
+        logger.info('actions_str={}'.format(self.actions_str))
+        logger.info('N_actions={}'.format(self.N_actions))
         self.reset()
 
     def reset(self):
@@ -120,4 +130,29 @@ class PytorchBudgetedDQN():
             if self.i_episode % self.target_update == 0:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.target_net.load_state_dict(self.policy_net.state_dict())
+                if logger.getEffectiveLevel() is logging.INFO:
+                    if self.i_episode % 10 == 0:
+                        with torch.no_grad():
+                            logger.info("Creating histograms ...")
+                            zipped = TransitionBudgeted(*zip(*self.memory.memory))
+                            state_batch = torch.cat(zipped.state)
+                            beta_batch = torch.cat(zipped.beta_batch)
+                            state_beta_batch = torch.cat((state_batch, beta_batch), dim=2)
+                            QQ = self.policy_net(state_beta_batch)
+                            QQr = QQ[:, 0:self.N_actions]
+                            QQc = QQ[:, self.N_actions:2*self.N_actions]
+                            mask_action = np.zeros(self.N_actions)
+                            fast_create_Q_histograms_for_actions(
+                                title="actions_Qr(s)_pred_target_e={}".format(self.i_episode),
+                                QQ=QQr.cpu().numpy(),
+                                path=self.workspace + "/histogram",
+                                labels=self.actions_str,
+                                mask_action=mask_action)
+                            fast_create_Q_histograms_for_actions(
+                                title="actions_Qc(s)_pred_target_e={}".format(self.i_episode),
+                                QQ=QQc.cpu().numpy(),
+                                path=self.workspace + "/histogram",
+                                labels=self.actions_str,
+                                mask_action=mask_action)
+
         self.i_update += 1

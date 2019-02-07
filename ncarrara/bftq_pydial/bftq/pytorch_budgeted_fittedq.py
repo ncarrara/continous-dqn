@@ -179,6 +179,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
     # print rez
     return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
 
+
 def optimal_pia_pib(beta, hull, statistic):
     # statistic["len_hull"] = len(hull)
     if len(hull) == 0:
@@ -227,7 +228,7 @@ class PytorchBudgetedFittedQ:
 
     def __init__(self,
                  policy_network,
-                 betas,
+                 betas_for_duplication,
                  betas_for_discretisation,
                  N_actions,
                  device,
@@ -253,8 +254,8 @@ class PytorchBudgetedFittedQ:
                  action_to_unique_str=lambda a: str(a),
 
                  ):
-        self.state_to_unique_str =state_to_unique_str
-        self.action_to_unique_str =action_to_unique_str
+        self.state_to_unique_str = state_to_unique_str
+        self.action_to_unique_str = action_to_unique_str
         self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
@@ -270,8 +271,14 @@ class PytorchBudgetedFittedQ:
             self.actions_str = [str(a) for a in range(N_actions)]
         else:
             self.actions_str = actions_str
-        self.betas = betas
-        self.betas_for_discretisation = betas_for_discretisation
+        if type(betas_for_duplication) == type(""):
+            self.betas_for_duplication= eval(betas_for_duplication)
+        else:
+            self.betas_for_duplication = betas_for_duplication
+        if type(betas_for_discretisation) == type(""):
+            self.betas_for_discretisation = eval(betas_for_discretisation)
+        else:
+            self.betas_for_discretisation = betas_for_discretisation
         self._policy_network = policy_network.to(self.device)
         self._policy_network.reset()
         self._MAX_FTQ_EPOCH = max_ftq_epoch
@@ -345,18 +352,21 @@ class PytorchBudgetedFittedQ:
                 hull_id = torch.tensor([[[lastkeyid]]], device=self.device, dtype=torch.long)
                 lastkeyid += 1
                 hull_keys[hull_key] = hull_id
-            for beta in self.betas:
-                if t.next_state is not None:
-                    next_state = torch.tensor([[t.next_state]], device=self.device, dtype=torch.float)
-                else:
-                    next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=self.device,
-                                              dtype=torch.float)
-                action = torch.tensor([[t.action]], device=self.device, dtype=torch.long)
-                reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
-                constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
-                state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
-                beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
-
+            if t.next_state is not None:
+                next_state = torch.tensor([[t.next_state]], device=self.device, dtype=torch.float)
+            else:
+                next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=self.device,
+                                          dtype=torch.float)
+            action = torch.tensor([[t.action]], device=self.device, dtype=torch.long)
+            reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
+            constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
+            state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
+            if len(self.betas_for_duplication)>0:
+                for beta in self.betas_for_duplication:
+                    beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
+                    self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
+            else:
+                beta = torch.tensor([[[t.beta]]], device=self.device, dtype=torch.float)
                 self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
             key = self.state_to_unique_str(t.state) + self.action_to_unique_str(t.action)
@@ -440,7 +450,6 @@ class PytorchBudgetedFittedQ:
             logger.info("[epoch_bftq={:02}] #batch={}".format(self._id_ftq_epoch, len(self._state_beta_batch)))
             losses = self._ftq_epoch()
 
-
             logger.info("[epoch_bftq={:02}] delta={}".format(self._id_ftq_epoch, self.delta))
             if logger.getEffectiveLevel() is logging.INFO:
                 for i_s in dispstateidsrand:
@@ -486,7 +495,7 @@ class PytorchBudgetedFittedQ:
         pi = self.build_policy(self._policy_network)
 
         def pi_tmp(state, beta):
-            hull = self.convexe_hull(s=torch.tensor([state],device=self.device,
+            hull = self.convexe_hull(s=torch.tensor([state], device=self.device,
                                                     dtype=torch.float32),
                                      Q=copy.deepcopy(self._policy_network),
                                      action_mask=np.zeros(self.N_actions),
@@ -498,13 +507,18 @@ class PytorchBudgetedFittedQ:
 
         return pi
 
-    def save_policy(self,policy_name="policy"):
-        path = self.workspace+"/{}.pt".format(policy_name)
+    def save_policy(self, policy_path=None, policy_basename="policy"):
+        if policy_path is None:
+            policy_path = self.workspace
+        path = "{}/{}.pt".format(policy_path, policy_basename)
         logger.info("saving bftq policy at {}".format(path))
         torch.save(self._policy_network, path)
 
-    def load_policy(self,policy_name="policy"):
-        path = self.workspace+"/{}.pt".format(policy_name)
+    def load_policy(self, policy_path=None, policy_basename="policy"):
+
+        if policy_path is None:
+            policy_path = self.workspace
+        path = "{}/{}.pt".format(policy_path, policy_basename)
         logger.info("loading bftq policy at {}".format(path))
         network = torch.load(path, map_location=self.device)
         pi = self.build_policy(network)
@@ -636,7 +650,8 @@ class PytorchBudgetedFittedQ:
     def _ftq_epoch(self):
         with torch.no_grad():
             if self._id_ftq_epoch > 0:
-                hulls = self.compute_hulls(self._next_state_batch, self._hull_id_batch, self._policy_network, disp=False)
+                hulls = self.compute_hulls(self._next_state_batch, self._hull_id_batch, self._policy_network,
+                                           disp=False)
                 piapib, next_state_beta = self.compute_opts(hulls)
                 # torch.set_grad_enabled(False)
 
@@ -788,8 +803,6 @@ class PytorchBudgetedFittedQ:
         logger.info(("[epoch_bftq={:02}] computing hulls [DONE]".format(self._id_ftq_epoch)))
 
         return hulls
-
-
 
     def draw_Qr_and_Qc(self, s, Q, id):
         plt.clf()

@@ -33,7 +33,7 @@ class ConfigurationBFTQ(Configuration):
         self.path_dqn = self.workspace + "/dqn"
         self.path_bdqn_results = self.workspace + "/bdqn/results"
         self.path_bdqn = self.workspace + "/bdqn"
-        self.path_learn_bftq_egreedy = self.workspace + "/learn_bftq_egreedy"
+        self.path_learn_bftq_egreedy = self.path_bftq + "/learn_bftq_egreedy"
         return self
 
 

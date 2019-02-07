@@ -41,7 +41,7 @@ def main():
     bftq = PytorchBudgetedFittedQ(
         device=C.device,
         workspace=C.path_bftq,
-        betas=betas,
+        betas_for_duplication=betas,
         betas_for_discretisation=betas_for_discretisation,
         N_actions=e.action_space.n,
         actions_str=action_str,

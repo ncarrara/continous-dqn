@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from collections import namedtuple
@@ -46,6 +48,7 @@ class BudgetedUtils():
         self.workspace = workspace
         self.betas_for_discretization = beta_for_discretization
         self.id = id
+        raise Exception("Must be reviewed, way less computational efficient than classic BFTQ")
 
     def reset(self):
         # stateless

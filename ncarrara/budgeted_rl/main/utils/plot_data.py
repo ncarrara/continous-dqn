@@ -1,14 +1,16 @@
+import itertools
 import sys
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-from matplotlib import patches
+
 import logging
-import matplotlib.patches as mpatches
 import re
 import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+from matplotlib import patches
+import seaborn as sns
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -50,6 +52,7 @@ def parse_data(path, params):
             results = results.append(id_results, sort=False)
         results["algorithm"] = algo
         data = data.append(results, sort=False)
+    data.id = data.id.astype(int)
     return data
 
 
@@ -70,7 +73,7 @@ def plot_all(data, path, params):
                params=params, filename=os.path.join(path, "results_extra.png"))
     plot_patch(means_of_means, std_of_means, counts, x="C", y="R", curves="algorithm", points="parameter",
                params=params, filename=os.path.join(path, "results_intra.png"))
-    plot_group(data[data["algorithm"] == "dqn"], x='id', y='Rd', filename=os.path.join(path, "dqn.png"))
+    plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", filename=os.path.join(path, "results_disc_ids.png"))
 
 
 def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
@@ -87,39 +90,34 @@ def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
                                      2 * confidence_x, 2 * confidence_y,
                                      linewidth=1.0,
                                      fill=True,
-                                     edgecolor=params[group_label][0] + [1],
-                                     facecolor=params[group_label][0] + [0.2], zorder=0)
+                                     edgecolor=(*params[group_label][0], 1),
+                                     facecolor=(*params[group_label][0], 0.2), zorder=0)
             ax.add_patch(rect)
             plt.annotate("{:.2f}".format(float(param)), (point[x].values, point[y].values))
-    plt.legend(handles=[mpatches.Patch(label=param[1], color=param[0]) for _, param in params.items()])
+    plt.legend(handles=[patches.Patch(label=param[1], color=param[0]) for _, param in params.items()])
     if filename:
         plt.savefig(filename)
     plt.show()
     plt.close()
 
 
-def plot_group(data, x=None, y=None, filename=None):
-    if x:
-        data = data.groupby(x).mean()
-    if len(data)>0:
-        data[y].plot(legend=True)
-        if filename:
-            plt.savefig(filename)
-        plt.show()
-        plt.close()
-    else:
-        logger.info("data is empty for {}".format(filename))
+def plot_lines(data, x=None, y=None, filename=None, **kwargs):
+    fig, ax = plt.subplots()
+    sns.lineplot(data=data, x=x, y=y, ax=ax, estimator=None, **kwargs)
+    if filename:
+        plt.savefig(filename)
+    plt.show()
+    plt.close()
 
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
         raise ValueError("Usage: plot_data.py <path>")
     workspace = sys.argv[1]
+    palette = itertools.cycle(sns.color_palette())
     algos = {
-        "ftq": [[1, 0, 0], r"ftq($\lambda$)"],
-        "bftq": [[0, 1, 0], r"bftq($\beta$)"],
-        # "hdc": [[0, 0, 1], "hdc(safeness)"],
-        # "dqn": [[1, 1, 0], "dqn"]
+        "ftq": [next(palette), r"ftq($\lambda$)"],
+        "bftq": [next(palette), r"bftq($\beta$)"]
     }
     data = parse_data(workspace, algos)
     print(data)

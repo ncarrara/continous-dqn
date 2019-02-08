@@ -1,14 +1,14 @@
 {
   "general": {
-    "id": "test_highway",
+    "id": "bdqn",
     "seed": 0,
-    "workspace": "tmp/test_highway",
+    "workspace": "tmp/bdqn",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
       "formatters": {
         "standard": {
-          "format": "[%(levelname)s] %(message)s"
+          "format": "[%(levelname)s] %(message)s "
         }
       },
       "handlers": {
@@ -23,34 +23,6 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
-          "propagate": false
-        },
-        "ncarrara.bftq_pydial.tools.features": {
-          "handlers": [
-            "default"
-          ],
-          "level": "INFO",
-          "propagate": false
-        },
-        "ncarrara.utils_rl.algorithms.dqn": {
-          "handlers": [
-            "default"
-          ],
-          "level": "INFO",
-          "propagate": false
-        },
-        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
-          "handlers": [
-            "default"
-          ],
-          "level": "INFO",
-          "propagate": false
-        },
-        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
-          "handlers": [
-            "default"
-          ],
           "level": "INFO",
           "propagate": false
         },
@@ -61,44 +33,84 @@
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils.math": {
+        "ncarrara.utils_rl.environments.envs_factory": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils.os": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "ERROR",
           "propagate": false
         }
       }
     }
   },
-  "feature_str": "feature_identity",
+  "feature_str": "feature_basic",
   "generate_envs": {
-    "envs_str": "highway-v0",
+    "envs_str": "slot_filling_env_v0",
     "envs_params": {
-        "lanes_count": [2],
-        "initial_spacing": [2],
-        "vehicles_count": [2],
-        "duration": [3],
-        "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
-        "centering_position": [[0.3, 0.5]],
-        "collision_reward": [0]
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.25
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_bye": [
+        0.0
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_if_summarize_fail": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ],
+      "can_say_bye": [
+        false
+      ]
     }
   },
   "create_data": {
     "filename_data": "samples.data",
-    "as_json": false,
+    "as_json": true,
     "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 3,
+    "trajs_by_ftq_batch": 50,
     "lambda_": 0,
     "normalize_reward": true,
-    "N_trajs": 10,
+    "N_trajs": 5000,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.001
+    }
+  },
+  "learn_bftq_egreedy": {
+    "filename_data": "samples.data",
+    "as_json": true,
+    "trajs_by_ftq_batch": 250,
+    "normalize_reward": true,
+    "N_trajs": 5000,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.001
@@ -106,17 +118,16 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data": "tmp/test_highway/0",
+    "path_data": null,
     "normalize_reward": true,
-    "N_trajs": 10
+    "N_trajs": 1000
   },
   "bftq_params": {
-
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 10,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -130,35 +141,38 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 5,
+    "size_beta_encoder": 50,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      32
+      256,
+      128,
+      64
     ]
   },
-  "nb_trajs_between_epoch": 2,
-  "lambdas": "[0.]",
-  "betas": "np.linspace(0.,1.,4)",
-  "betas_test": "np.linspace(0.,1.,4)",
+  "nb_trajs_between_epoch": 30,
+  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+  "betas": "np.linspace(0.,1.,10)",
+  "betas_test": "np.linspace(0.,1.,10)",
+  "betas_for_discretisation": "np.linspace(0.,1.,10)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 20,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0005,
-    "batch_size_experience_replay": "ALL_BATCH",
-        "step_test_policy_nn_epoch": 10
-
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH"
   },
   "net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
+      128,
+      64,
       32
     ]
   },
@@ -172,6 +186,23 @@
     "lr": 0.001,
     "weight_decay": 0.0005,
     "workspace": "dqn"
+  },
+  "bdqn_params": {
+    "optimizer_params": {
+      "lr": 0.001,
+      "weight_decay": 0.0005,
+      "optimizer_type": "ADAM"
+    },
+    "loss_function": "l2",
+    "loss_function_c": "l2",
+    "target_update": 10,
+    "size_minibatch": 128,
+    "state_to_unique_str": "str",
+    "action_to_unique_str": "str",
+    "weights_losses": [
+      1,
+      1
+    ]
   }
 }
 

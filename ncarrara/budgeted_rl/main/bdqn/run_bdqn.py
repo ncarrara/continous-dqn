@@ -1,8 +1,8 @@
 # coding=utf-8
-from ncarrara.bftq_pydial.bftq.budgeted_network import BudgetedNetwork
-from ncarrara.bftq_pydial.bftq.pytorch_budgeted_dqn import PytorchBudgetedDQN
-from ncarrara.bftq_pydial.tools.configuration import C
-from ncarrara.bftq_pydial.tools.features import feature_factory
+from ncarrara.budgeted_rl.bftq.budgeted_network import BudgetedNetwork
+from ncarrara.budgeted_rl.bftq.pytorch_budgeted_dqn import PytorchBudgetedDQN
+from ncarrara.budgeted_rl.tools.configuration import C
+from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import epsilon_decay, set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN

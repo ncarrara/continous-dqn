@@ -64,7 +64,7 @@ class PytorchFittedQ:
         self.device = device
         self.test_policy = test_policy
         if action_str is None:
-            action_str = [str(i) for i in range(policy_network.out_features)]
+            action_str = [str(i) for i in range(policy_network.predict.out_features)]
         self.action_str = action_str
         self.workspace = workspace
         self.nn_stop_loss_condition = nn_loss_stop_condition
@@ -311,19 +311,17 @@ class PytorchFittedQ:
         self.optimizer.step()
         return loss.item()
 
-    def save_policy(self, policy_path=None, policy_basename="policy"):
+    def save_policy(self, policy_path=None):
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        self.logger.info("saving ftq policy at {}".format(path))
-        torch.save(self._policy_network, path)
+            policy_path = self.workspace+"/policy.pt"
+        self.logger.info("saving ftq policy at {}".format(policy_path))
+        torch.save(self._policy_network, policy_path)
 
-    def load_policy(self, policy_path=None, policy_basename="policy"):
+    def load_policy(self, policy_path=None):
 
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        self.logger.info("loading bftq policy at {}".format(path))
-        network = torch.load(path, map_location=self.device)
+            policy_path = self.workspace+"/policy.pt"
+        self.logger.info("loading ftq policy at {}".format(policy_path))
+        network = torch.load(policy_path, map_location=self.device)
         pi = self.build_policy(network)
         return pi

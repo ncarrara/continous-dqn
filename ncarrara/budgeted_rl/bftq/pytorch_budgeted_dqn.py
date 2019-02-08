@@ -4,7 +4,7 @@ import torch
 import copy
 import torch.nn.functional as F
 
-from ncarrara.bftq_pydial.bftq.budgeted_utils import BudgetedUtils, TransitionBudgeted
+from ncarrara.budgeted_rl.bftq.budgeted_utils import BudgetedUtils, TransitionBudgeted
 from ncarrara.utils.torch import optimizer_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym

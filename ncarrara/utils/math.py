@@ -2,6 +2,9 @@ import numpy as np
 import logging
 import random
 import matplotlib.pyplot as plt
+
+from ncarrara.utils.os import makedirs
+
 logger = logging.getLogger(__name__)
 
 def generate_random_point_on_simplex_not_uniform(coeff, bias, min_x, max_x):
@@ -58,6 +61,7 @@ def set_seed(seed, env=None):
             env.reset()
 
 def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
+    makedirs(savepath)
     decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
     logger.info("Epsilons (decayed) : [{}]".format(''.join(["{:.2f} ".format(eps) for eps in decays])))
     if logger.getEffectiveLevel() is logging.INFO:

@@ -14,7 +14,7 @@ import os
 from ncarrara.utils.math import update_lims
 from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.bftq_pydial.tools.configuration import C
+from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
     fast_create_Q_histograms_for_actions
 import logging
@@ -181,6 +181,8 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
 
 
 def optimal_pia_pib(beta, hull, statistic):
+    # print(beta)
+    # exit()
     # statistic["len_hull"] = len(hull)
     if len(hull) == 0:
         raise Exception("Hull is empty")
@@ -230,7 +232,6 @@ class PytorchBudgetedFittedQ:
                  policy_network,
                  betas_for_duplication,
                  betas_for_discretisation,
-                 N_actions,
                  device,
                  actions_str=None,
                  optimizer=None,
@@ -266,13 +267,13 @@ class PytorchBudgetedFittedQ:
         self.disp_states_ids = disp_states_ids
         self.do_dynamic_disp_state = not self.disp_states
         self.workspace = workspace
-        self.N_actions = N_actions
+        self.N_actions = policy_network.predict.out_features//2
         if actions_str is None:
-            self.actions_str = [str(a) for a in range(N_actions)]
-        else:
-            self.actions_str = actions_str
+            actions_str = [str(i) for i in range(self.N_actions)]
+        self.actions_str = actions_str
+
         if type(betas_for_duplication) == type(""):
-            self.betas_for_duplication= eval(betas_for_duplication)
+            self.betas_for_duplication = eval(betas_for_duplication)
         else:
             self.betas_for_duplication = betas_for_duplication
         if type(betas_for_discretisation) == type(""):
@@ -361,7 +362,7 @@ class PytorchBudgetedFittedQ:
             reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
             constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
             state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
-            if len(self.betas_for_duplication)>0:
+            if len(self.betas_for_duplication) > 0:
                 for beta in self.betas_for_duplication:
                     beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
                     self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
@@ -507,20 +508,18 @@ class PytorchBudgetedFittedQ:
 
         return pi
 
-    def save_policy(self, policy_path=None, policy_basename="policy"):
+    def save_policy(self, policy_path=None):
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        logger.info("saving bftq policy at {}".format(path))
-        torch.save(self._policy_network, path)
+            policy_path = self.workspace + "/policy.pt"
+        logger.info("saving bftq policy at {}".format(policy_path))
+        torch.save(self._policy_network, policy_path)
 
-    def load_policy(self, policy_path=None, policy_basename="policy"):
+    def load_policy(self, policy_path=None):
 
         if policy_path is None:
-            policy_path = self.workspace
-        path = "{}/{}.pt".format(policy_path, policy_basename)
-        logger.info("loading bftq policy at {}".format(path))
-        network = torch.load(path, map_location=self.device)
+            policy_path = self.workspace + "/policy.pt"
+        logger.info("loading bftq policy at {}".format(policy_path))
+        network = torch.load(policy_path, map_location=self.device)
         pi = self.build_policy(network)
         return pi
 
@@ -876,30 +875,30 @@ class PytorchBudgetedFittedQ:
 
 
 class NetBFTQ(BaseModule):
-    def __init__(self, size_state, size_beta_encoder, layers,
+    def __init__(self, size_state, size_beta_encoder, intra_layers, n_actions,
                  activation_type="RELU",
                  reset_type="XAVIER",
                  normalize=False,
                  beta_encoder_type="LINEAR",
                  **kwargs):
         super(NetBFTQ, self).__init__(activation_type, reset_type, normalize)
-        sizes = layers
+        sizes = intra_layers + [2 * n_actions]
         self.beta_encoder_type = beta_encoder_type
         self.size_state = size_state
         self.size_beta_encoder = size_beta_encoder
         self.size_action = sizes[-1] / 2
-        layers = []
+        intra_layers = []
         if size_beta_encoder > 1:
             if self.beta_encoder_type == "LINEAR":
                 self.beta_encoder = torch.nn.Linear(1, size_beta_encoder)
             self.concat_layer = torch.nn.Linear(size_state + size_beta_encoder, sizes[0])
         else:
             module = torch.nn.Linear(size_state + size_beta_encoder, sizes[0])
-            layers.append(module)
+            intra_layers.append(module)
         for i in range(0, len(sizes) - 2):
             module = torch.nn.Linear(sizes[i], sizes[i + 1])
-            layers.append(module)
-        self.linears = nn.ModuleList(layers)
+            intra_layers.append(module)
+        self.linears = nn.ModuleList(intra_layers)
         self.predict = torch.nn.Linear(sizes[-2], sizes[-1])
 
     def forward(self, x):

@@ -16,6 +16,12 @@
           "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
+        },
+        "file": {
+          "level": "INFO",
+          "formatter": "standard",
+          "filename": "highway_easy.log",
+          "class": "logging.FileHandler"
         }
       },
       "loggers": {

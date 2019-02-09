@@ -2,9 +2,9 @@
 
 {
   "general": {
-    "id": "test_egreedy",
+    "id": "highway_test",
     "seed": 0,
-    "workspace": "tmp/test_egreedy",
+    "workspace": "tmp/highway_test",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

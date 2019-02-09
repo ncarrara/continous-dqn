@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway_eps_simple",
+    "id": "highway_easy",
     "seed": 0,
-    "workspace": "tmp/highway_eps",
+    "workspace": "tmp/highway_easy",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

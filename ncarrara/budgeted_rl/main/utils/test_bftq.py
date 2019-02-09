@@ -61,6 +61,6 @@ if __name__ == "__main__":
     main(device=C.device,
          seed=C.seed,
          workspace=C.path_learn_bftq_egreedy,
-         path_results=C.path_learn_bftq_egreedy,
+         path_results=C.path_bftq_results,
          **C.dict["test_bftq"],
          **C.dict)

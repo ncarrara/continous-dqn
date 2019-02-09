@@ -1,3 +1,9 @@
+import json
+import os
+
+from ncarrara.utils.os import makedirs
+
+
 class Configuration(object):
 
     def __init__(self, *args, **kwargs):
@@ -100,3 +106,11 @@ class Configuration(object):
             self.device = _device
             self.logger.info("DEVICE : {}".format(self.device))
         return self
+
+    def dump_to_workspace(self, filename="config.json"):
+        """
+        Dump the configuration a json file in the workspace.
+        """
+        makedirs(self.workspace)
+        with open(os.path.join(self.workspace, filename), 'w') as f:
+            json.dump(self.dict, f, indent=2)

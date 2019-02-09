@@ -50,6 +50,7 @@ def main(config_file, override_param_grid, f):
             tochange[keys[-1]] = v
         dict["general"]["workspace"] = workspace + "/" + str(i_config)
         C.load(dict).create_fresh_workspace(force=True)
+        C.dump_to_workspace()
 
         print("\n-------- i_config={} ----------\n".format(i_config))
         f(C)

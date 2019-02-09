@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 logger = logging.getLogger(__name__)
-
+logger.setLevel(logging.INFO)
 
 def parse_data(path, params):
     with open(path + "/" + "params") as f:
@@ -24,6 +24,7 @@ def parse_data(path, params):
         for id in ids:
             # Results directory
             file_id = "{}/{}/{}/results".format(path, id, algo)
+            logger.info("------------------------------")
             logger.info("processing {}".format(file_id))
             if not os.path.exists(file_id):
                 logging.warning("{} does not exist , skipping it".format(file_id))
@@ -33,6 +34,7 @@ def parse_data(path, params):
             id_results = pd.DataFrame()
             for file_param in os.listdir(file_id):
                 m = re.search("=(.*).result", file_param)
+                logger.info("processing {}".format(file_param))
                 if m:  # valid filename
                     param = m.group(1)
                     res = pd.read_csv(file_id + "/" + file_param, sep=' ', names=['R', 'C', 'Rd', 'Cd'])
@@ -40,6 +42,7 @@ def parse_data(path, params):
                     id_results = id_results.append(res, sort=False)
                 else:
                     continue
+            # logger.info("id_results : \n{}".format(id_results))
             if id_results.empty:
                 logging.warning("Could not find any result at {}".format(file_id))
                 continue
@@ -75,7 +78,7 @@ def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
     ax = fig.add_subplot(1, 1, 1)
     result = pd.concat([mean, std.add_suffix("_std"), counts.add_suffix("_count")], axis=1, sort=False)
     for group_label, data in result.groupby(curves):
-        data.plot.scatter(x=x, y=y, ax=ax, c=params[group_label][0], zorder=2)
+        data.plot.scatter(x=x, y=y, ax=ax, c=[params[group_label][0]], zorder=2)
         for param, point in data.groupby(points):
             sqr_n = np.sqrt(point[x + "_count"].values)
             confidence_x = 1.96 * (point[x + "_std"].values / sqr_n)
@@ -98,11 +101,14 @@ def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
 def plot_group(data, x=None, y=None, filename=None):
     if x:
         data = data.groupby(x).mean()
-    data[y].plot(legend=True)
-    if filename:
-        plt.savefig(filename)
-    plt.show()
-    plt.close()
+    if len(data)>0:
+        data[y].plot(legend=True)
+        if filename:
+            plt.savefig(filename)
+        plt.show()
+        plt.close()
+    else:
+        logger.info("data is empty for {}".format(filename))
 
 
 if __name__ == "__main__":
@@ -112,7 +118,9 @@ if __name__ == "__main__":
     algos = {
         "ftq": [[1, 0, 0], r"ftq($\lambda$)"],
         "bftq": [[0, 1, 0], r"bftq($\beta$)"],
-        "hdc": [[0, 0, 1], "hdc(safeness)"],
-        "dqn": [[1, 1, 0], "dqn"]
+        # "hdc": [[0, 0, 1], "hdc(safeness)"],
+        # "dqn": [[1, 1, 0], "dqn"]
     }
-    plot_all(parse_data(workspace, algos), workspace, algos)
+    data = parse_data(workspace, algos)
+    print(data)
+    plot_all(data, workspace, algos)

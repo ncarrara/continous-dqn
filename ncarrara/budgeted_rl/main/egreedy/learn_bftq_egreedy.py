@@ -66,7 +66,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             for sample in trajectory:
                 rm.push(*sample)
 
-            if i_traj > 0 and (i_traj + 1) % trajs_by_ftq_batch == 0:
+            if (i_traj + 1) % trajs_by_ftq_batch == 0:
                 transitions_ftq, transition_bftq = urpy.datas_to_transitions(
                     rm.memory, e, feature, 0, normalize_reward)
                 logger.info("[BATCH={}]---------------------------------------".format(batch))

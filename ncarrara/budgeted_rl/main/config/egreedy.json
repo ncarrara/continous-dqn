@@ -105,6 +105,15 @@
   "gamma_c": 1.0,
   "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
 
+  "learn_ftq_egreedy": {
+    "trajs_by_ftq_batch": 100,
+    "normalize_reward": true,
+    "N_trajs": 500,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.01
+    }
+  },
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 100,
     "normalize_reward": true,

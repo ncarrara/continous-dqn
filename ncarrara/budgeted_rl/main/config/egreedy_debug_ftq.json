@@ -103,7 +103,7 @@
   },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+  "lambdas": "[0.,100.]",
 
   "learn_ftq_egreedy": {
     "trajs_by_ftq_batch": 1000,

@@ -4,7 +4,7 @@ from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy, PytorchFittedPolicy
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 from ncarrara.utils_rl.environments import envs_factory
 
 

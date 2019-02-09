@@ -4,7 +4,7 @@ from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import set_seed
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 
 import logging
 

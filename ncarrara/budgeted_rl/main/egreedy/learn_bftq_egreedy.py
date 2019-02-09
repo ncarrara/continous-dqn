@@ -7,7 +7,7 @@ from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import RandomBudgetedPolicy, PytorchBudgetedFittedPolicy
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
 
 import numpy as np
@@ -59,7 +59,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         else:
             init_betas = betas_for_exploration
         for beta in init_betas:
-            trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
+            trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_trajectory(
                 e, pi_epsilon_greedy, gamma_r=gamma, gamma_c=gamma_c, beta=beta)
             rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])
             for sample in trajectory:

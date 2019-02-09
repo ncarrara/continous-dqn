@@ -7,7 +7,7 @@ from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy, RandomPolicy, HandcraftedSlotFillingEnv
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
 
 import numpy as np
@@ -61,7 +61,7 @@ def main():
         if i % 50 == 0: logger.info(i)
         pi_epsilon_greedy.epsilon = decays[i]
         pi_epsilon_greedy.pi_greedy = pi_greedy
-        trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
+        trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_trajectory(
             e, pi_epsilon_greedy, gamma_r=C["gamma"], gamma_c=C["gamma_c"], beta=1.0)
         rez[i] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:

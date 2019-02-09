@@ -7,7 +7,7 @@ from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 import logging
 import numpy as np
 

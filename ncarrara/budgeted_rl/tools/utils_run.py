@@ -63,7 +63,7 @@ def format_results(results):
     return (pp + " " + p)
 
 
-def execute_policy_one_dialogue(env, pi, gamma_r=1.0, gamma_c=1.0, beta=None):
+def execute_policy_one_trajectory(env, pi, gamma_r=1.0, gamma_c=1.0, beta=None):
     dialogue = []
     pi.reset()
 
@@ -128,7 +128,7 @@ def execute_policy(env, pi, gamma_r=1.0, gamma_c=1.0, N_dialogues=10, beta=1., s
     result = np.zeros((N_dialogues, 4))
     turn = 0
     for d in range(N_dialogues):
-        dialogue, rew_r, rew_c, ret_r, ret_c = execute_policy_one_dialogue(env, pi, gamma_r, gamma_c, beta)
+        dialogue, rew_r, rew_c, ret_r, ret_c = execute_policy_one_trajectory(env, pi, gamma_r, gamma_c, beta)
         dialogues.append(dialogue)
         result[d] = np.array([rew_r, rew_c, ret_r, ret_c])
         turn += len(dialogue)

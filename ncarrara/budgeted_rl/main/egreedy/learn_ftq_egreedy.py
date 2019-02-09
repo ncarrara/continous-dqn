@@ -1,14 +1,13 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils import math
-from ncarrara.utils.math import epsilon_decay, set_seed
+from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments import envs_factory
-from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy, RandomPolicy
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
 import numpy as np
 import logging
@@ -47,7 +46,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         if i_traj % 50 == 0: logger.info(i_traj)
         pi_epsilon_greedy.epsilon = decays[i_traj]
         pi_epsilon_greedy.pi_greedy = pi_greedy
-        trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_dialogue(
+        trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_trajectory(
             e, pi_epsilon_greedy, gamma_r=gamma, gamma_c=gamma_c)
         rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])
         for sample in trajectory:

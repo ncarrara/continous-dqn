@@ -5,11 +5,8 @@ from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments import envs_factory
-from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
-import ncarrara.budgeted_rl.tools.utils_run_pydial as urpy
-import logging
-import matplotlib.pyplot as plt
+import ncarrara.budgeted_rl.tools.utils_run as urpy
 import numpy as np
 
 

@@ -39,4 +39,4 @@ class ConfigurationBFTQ(Configuration):
         return self
 
 
-C = ConfigurationBFTQ() #.load_pytorch()  # BFTQ_PYDIAL().load_pytorch()
+C = ConfigurationBFTQ()

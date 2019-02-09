@@ -24,6 +24,10 @@ class ConfigurationBFTQ(Configuration):
 
     def load(self, config):
         super(ConfigurationBFTQ, self).load(config)
+        self.update_paths()
+        return self
+
+    def update_paths(self):
         self.path_hdc_results = self.workspace + "/hdc/results"
         self.path_hdc = self.workspace + "/hdc"
         self.path_ftq_results = self.workspace + "/ftq/results"
@@ -36,7 +40,6 @@ class ConfigurationBFTQ(Configuration):
         self.path_bdqn = self.workspace + "/bdqn"
         self.path_learn_bftq_egreedy = self.path_bftq + "/learn_bftq_egreedy"
         self.path_learn_ftq_egreedy = self.path_ftq + "/learn_ftq_egreedy"
-        return self
 
 
 C = ConfigurationBFTQ()

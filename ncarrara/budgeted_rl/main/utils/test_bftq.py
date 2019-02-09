@@ -51,13 +51,23 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
 if __name__ == "__main__":
     import sys
 
+    # Workspace from config and id
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
     else:
         config_file = "../config/test_egreedy.json"
+    if len(sys.argv) > 2:
+        id = sys.argv[2]
+    else:
+        id = None
+
     from ncarrara.budgeted_rl.tools.configuration import C
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
+    if id:
+        C.workspace += "/{}/".format(id)
+        C.update_paths()
+
     main(device=C.device,
          seed=C.seed,
          workspace=C.path_learn_bftq_egreedy,

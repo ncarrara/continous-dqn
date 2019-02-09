@@ -27,7 +27,7 @@
       "loggers": {
         "": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false

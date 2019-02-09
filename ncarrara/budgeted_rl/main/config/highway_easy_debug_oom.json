@@ -37,14 +37,14 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils.os": {
           "handlers": [
             "default"
           ],
-          "level": "ERROR",
+          "level": "INFO",
           "propagate": false
         }
       }
@@ -97,12 +97,12 @@
   },
   "bftq_params": {
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,100000)",
+    "betas_for_duplication": "np.linspace(0.,1.,10000)",
     "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 400,
+    "max_nn_epoch": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 15,
+    "max_ftq_epoch": 2,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.0,

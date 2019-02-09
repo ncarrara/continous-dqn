@@ -457,6 +457,11 @@ class PytorchBudgetedFittedQ:
 
         return pi
 
+    def empty_cache(self):
+        self.info("{}empty cache ...{}".format(Color.BOLD,Color.END))
+        torch.cuda.empty_cache()
+        self.info("empty cache ... done")
+
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
@@ -640,9 +645,11 @@ class PytorchBudgetedFittedQ:
 
     def _optimize_model(self, sb_batch, a_batch, expected_state_action_rewards, expected_state_action_constraints):
         self.info("optimize model ...")
-        self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,
-                                        expected_state_action_constraints,
-                                        with_weight=False).item()
+        with torch.no_grad():
+            self.info("computing delta ...")
+            # no need gradient just for computing delta ....
+            self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,expected_state_action_constraints,with_weight=False).item()
+            self.info("computing delta ... done")
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
         if self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH:
             self._policy_network.reset()
@@ -650,6 +657,7 @@ class PytorchBudgetedFittedQ:
         nn_epoch = 0
         losses = []
         last_loss = np.inf
+        self.info("gradient descent ...")
         while not stop:
             loss = self._gradient_step(sb_batch, a_batch, expected_state_action_rewards,
                                        expected_state_action_constraints)
@@ -666,8 +674,10 @@ class PytorchBudgetedFittedQ:
         if not cvg:
             for i in range(3):
                 self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch - 3 + i, losses[-3 + i]))
-        del expected_state_action_rewards
-        del expected_state_action_constraints
+        self.info("gradient descent ... end")
+        # del expected_state_action_rewards
+        # del expected_state_action_constraints
+        self.empty_cache()
         self.info("optimize model ... done")
         return losses
 
@@ -733,7 +743,7 @@ class PytorchBudgetedFittedQ:
         self.info("hulls actually computed : {}".format(i_computation))
         self.info("total hulls (=next_states) : {}".format(len(states)))
         self.info("computing hulls [DONE] ")
-
+        self.empty_cache()
         return hulls
 
     def draw_Qr_and_Qc(self, s, Q, id):

@@ -13,6 +13,9 @@ class Configuration(object):
         self.__check__()
         return self.dict[arg]
 
+    def has_key(self,key):
+        return key in self.dict
+
     def __str__(self):
         import pprint
         return pprint.pformat(self.dict)

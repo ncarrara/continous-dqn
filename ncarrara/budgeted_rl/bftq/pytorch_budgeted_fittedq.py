@@ -470,6 +470,7 @@ class PytorchBudgetedFittedQ:
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
                 self.info("Q next")
                 Q_next = self._policy_network(next_state_beta)
+                self.empty_cache()
                 self.info("Q next end")
                 next_state_rewards, next_state_constraints = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
             else:

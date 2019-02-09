@@ -307,11 +307,9 @@ class PytorchBudgetedFittedQ:
 
         self.min_print_q = -0.1
         self.max_print_q = 1
-        self.memory = Memory(class_transition=TransitionBFTQ)
         self.reset()
 
     def reset(self, reset_weight=True):
-        self.memory.reset()
         if reset_weight:
             self._policy_network.reset()
         self.optimizer = optimizer_factory(self.optimizer_type,
@@ -325,6 +323,7 @@ class PytorchBudgetedFittedQ:
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
+        memory = Memory(class_transition=TransitionBFTQ)
         if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
             self.disp_states_ids = []
             self.disp_next_states_ids = []
@@ -356,10 +355,10 @@ class PytorchBudgetedFittedQ:
             if len(self.betas_for_duplication) > 0:
                 for beta in self.betas_for_duplication:
                     beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
-                    self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
+                    memory.push(state, action, reward, next_state, constraint, beta, hull_id)
             else:
                 beta = torch.tensor([[[t.beta]]], device=self.device, dtype=torch.float)
-                self.memory.push(state, action, reward, next_state, constraint, beta, hull_id)
+                memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
             if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
                 self.disp_states_ids.append(len(self.disp_states))
@@ -376,7 +375,7 @@ class PytorchBudgetedFittedQ:
 
         self.nb_unique_hull_to_compute = lastkeyid
 
-        batch = self.memory.sample(len(self.memory))
+        batch = memory.sample(len(memory))
         self.size_batch = len(batch)
         zipped = TransitionBFTQ(*zip(*batch))
         action_batch = torch.cat(zipped.action)
@@ -394,7 +393,7 @@ class PytorchBudgetedFittedQ:
 
         self.info("[_construct_batch] nbhull to compute : {}".format(lastkeyid))
         self.info(
-            "[_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}".format(len(self.memory),
+            "[_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}".format(len(memory),
                                                                                                     len(means)))
         self.info("[_construct_batch] sum of constraint : {}".format(constraint_batch.sum()))
         self.info("[_construct_batch] nb reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))

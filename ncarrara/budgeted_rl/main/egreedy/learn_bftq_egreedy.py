@@ -52,14 +52,14 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     i_traj = 0
     # for i_traj in range(N_trajs):
     while i_traj < N_trajs:
-        if i_traj % 50 == 0: logger.info(i_traj)
-        pi_epsilon_greedy.epsilon = decays[i_traj]
-        pi_epsilon_greedy.pi_greedy = pi_greedy
         if len(betas_for_exploration) == 0:
             init_betas = [np.random.sample()]
         else:
             init_betas = betas_for_exploration
         for beta in init_betas:
+            if i_traj % 50 == 0: logger.info(i_traj)
+            pi_epsilon_greedy.epsilon = decays[i_traj]
+            pi_epsilon_greedy.pi_greedy = pi_greedy
             trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_trajectory(
                 e, pi_epsilon_greedy, gamma_r=gamma, gamma_c=gamma_c, beta=beta)
             rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])

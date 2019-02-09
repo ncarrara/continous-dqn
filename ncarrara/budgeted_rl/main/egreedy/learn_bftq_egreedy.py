@@ -49,8 +49,9 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     rez = np.zeros((N_trajs, 4))
     rm = Memory()
     batch = 0
-
-    for i_traj in range(N_trajs):
+    i_traj = 0
+    # for i_traj in range(N_trajs):
+    while i_traj < N_trajs:
         if i_traj % 50 == 0: logger.info(i_traj)
         pi_epsilon_greedy.epsilon = decays[i_traj]
         pi_epsilon_greedy.pi_greedy = pi_greedy
@@ -64,21 +65,23 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])
             for sample in trajectory:
                 rm.push(*sample)
-        if i_traj > 0 and (i_traj + 1) % trajs_by_ftq_batch == 0:
-            transitions_ftq, transition_bftq = urpy.datas_to_transitions(
-                rm.memory, e, feature, 0, normalize_reward)
-            logger.info("[BATCH={}]---------------------------------------".format(batch))
-            logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}"
-                        .format(batch, len(transitions_ftq), i_traj + 1))
-            logger.info("[BATCH={}]---------------------------------------".format(batch))
-            bftq.reset(True)
-            bftq.workspace = workspace + "/batch={}".format(batch)
-            makedirs(bftq.workspace)
-            pi = bftq.fit(transition_bftq)
-            bftq.save_policy()
-            os.system("cp {}/policy.pt {}/final_policy.pt".format(bftq.workspace, workspace))
-            pi_greedy = PytorchBudgetedFittedPolicy(pi, e, feature)
-            batch += 1
+
+            if i_traj > 0 and (i_traj + 1) % trajs_by_ftq_batch == 0:
+                transitions_ftq, transition_bftq = urpy.datas_to_transitions(
+                    rm.memory, e, feature, 0, normalize_reward)
+                logger.info("[BATCH={}]---------------------------------------".format(batch))
+                logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}"
+                            .format(batch, len(transitions_ftq), i_traj + 1))
+                logger.info("[BATCH={}]---------------------------------------".format(batch))
+                bftq.reset(True)
+                bftq.workspace = workspace + "/batch={}".format(batch)
+                makedirs(bftq.workspace)
+                pi = bftq.fit(transition_bftq)
+                bftq.save_policy()
+                os.system("cp {}/policy.pt {}/final_policy.pt".format(bftq.workspace, workspace))
+                pi_greedy = PytorchBudgetedFittedPolicy(pi, e, feature)
+                batch += 1
+            i_traj += 1
 
 
 if __name__ == "__main__":

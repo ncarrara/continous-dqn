@@ -37,18 +37,18 @@ def main(config):
             **config.dict["test_ftq"], **config.dict
         )
 
-    # learn_bftq_egreedy.main(
-    #     device=config.device, seed=config.seed,
-    #     workspace=config.path_learn_bftq_egreedy,
-    #     **config.dict["learn_bftq_egreedy"],
-    #     **config.dict
-    # )
-    # test_bftq.main(
-    #     device=config.device, seed=config.seed,
-    #     workspace=config.path_learn_bftq_egreedy,
-    #     path_results=config.path_bftq_results,
-    #     **config.dict["test_bftq"], **config.dict
-    # )
+    learn_bftq_egreedy.main(
+        device=config.device, seed=config.seed,
+        workspace=config.path_learn_bftq_egreedy,
+        **config.dict["learn_bftq_egreedy"],
+        **config.dict
+    )
+    test_bftq.main(
+        device=config.device, seed=config.seed,
+        workspace=config.path_learn_bftq_egreedy,
+        path_results=config.path_bftq_results,
+        **config.dict["test_bftq"], **config.dict
+    )
 
 
 override_param_grid = {

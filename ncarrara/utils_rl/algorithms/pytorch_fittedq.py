@@ -63,6 +63,8 @@ class PytorchFittedQ:
         self.logger = logging.getLogger(__name__)
         self.device = device
         self.test_policy = test_policy
+        if action_str is None:
+            action_str = [str(i) for i in range(policy_network.predict.out_features)]
         self.action_str = action_str
         self.workspace = workspace
         self.nn_stop_loss_condition = nn_loss_stop_condition
@@ -166,7 +168,7 @@ class PytorchFittedQ:
 
             if self.logger.getEffectiveLevel() is logging.INFO and self.test_policy is not None:
                 title = "epoch={}.png".format(self._id_ftq_epoch)
-                stats = self.test_policy(self.construct_pi(self._policy_network))
+                stats = self.test_policy(self.build_policy(self._policy_network))
                 rewards.append(stats[0])
                 returns.append(stats[2])
                 plt.clf()
@@ -188,11 +190,11 @@ class PytorchFittedQ:
                 self.logger.info("Q({})={}".format(state, self._policy_network(
                     torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
 
-        pi = self.construct_pi(final_network)
+        pi = self.build_policy(final_network)
 
         return pi
 
-    def construct_pi(self, network):
+    def build_policy(self, network):
         def pi(state, action_mask):
             with torch.no_grad():
                 if not type(action_mask) == type(np.zeros(1)):
@@ -257,7 +259,7 @@ class PytorchFittedQ:
                     self.logger.info("[epoch_ftq={:02}][epoch_nn={:03}] loss={:.4f}"
                                      .format(self._id_ftq_epoch, nn_epoch, loss))
                     if self.test_policy is not None:
-                        stats = self.test_policy(self.construct_pi(self._policy_network))
+                        stats = self.test_policy(self.build_policy(self._policy_network))
                         rewards.append(stats[0])
                         returns.append(stats[2])
             cvg = loss < self.nn_stop_loss_condition
@@ -308,3 +310,18 @@ class PytorchFittedQ:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
         return loss.item()
+
+    def save_policy(self, policy_path=None):
+        if policy_path is None:
+            policy_path = self.workspace+"/policy.pt"
+        self.logger.info("saving ftq policy at {}".format(policy_path))
+        torch.save(self._policy_network, policy_path)
+
+    def load_policy(self, policy_path=None):
+
+        if policy_path is None:
+            policy_path = self.workspace+"/policy.pt"
+        self.logger.info("loading ftq policy at {}".format(policy_path))
+        network = torch.load(policy_path, map_location=self.device)
+        pi = self.build_policy(network)
+        return pi

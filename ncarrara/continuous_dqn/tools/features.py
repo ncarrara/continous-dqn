@@ -35,7 +35,7 @@ def feature_autoencoder_identity(transition):
     rez = s + [a] + [r] + s_
     return rez
 
-from ncarrara.bftq_pydial.tools.features import feature_basic
+from ncarrara.budgeted_rl.tools.features import feature_basic
 def feature_autoencoder_slot_filling(transition, e):
     s, a, r, s_, done, info = transition
     s=feature_basic(s)

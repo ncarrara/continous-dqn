@@ -662,9 +662,11 @@ class PytorchBudgetedFittedQ:
                                            disp=False)
                 piapib, next_state_beta = self.compute_opts(hulls)
                 # torch.set_grad_enabled(False)
+                logger.info("Q next")
                 self.log_memory_map()
                 Q_next = self._policy_network(next_state_beta)
                 self.log_memory_map()
+                logger.info("Q next end")
                 next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
             else:
                 next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)

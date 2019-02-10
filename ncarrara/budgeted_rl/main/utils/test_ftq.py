@@ -29,7 +29,13 @@ def main(device, workspace, policy_path, generate_envs, ftq_net_params, ftq_para
         **ftq_params
     )
 
-    pi = algo.load_policy(policy_path=workspace + "/" + policy_path)
+    import os
+    if not os.path.isabs(policy_path):
+        actual_policy_path = workspace + "/" + policy_path
+    else:
+        actual_policy_path = policy_path
+
+    pi = algo.load_policy(policy_path=actual_policy_path)
 
     pi = PytorchFittedPolicy(pi, e, feature)
     makedirs(path_results)

@@ -30,7 +30,13 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
 
     )
 
-    pi = algo.load_policy(policy_path=workspace + "/" + policy_path)
+    import os
+    if not os.path.isabs(policy_path):
+        actual_policy_path = workspace + "/" +policy_path
+    else:
+        actual_policy_path = policy_path
+
+    pi = algo.load_policy(policy_path=actual_policy_path)
 
     pi = PytorchBudgetedFittedPolicy(pi, e, feature)
 
@@ -51,13 +57,16 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) > 1:
+    if len(sys.argv) >2:
         config_file = sys.argv[1]
+        path_policy = sys.argv[2]
     else:
         config_file = "../config/test_egreedy.json"
     from ncarrara.budgeted_rl.tools.configuration import C
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
+    if path_policy is not None:
+        C["test_bftq"]["policy_path"]=path_policy
     main(device=C.device,
          seed=C.seed,
          workspace=C.path_learn_bftq_egreedy,

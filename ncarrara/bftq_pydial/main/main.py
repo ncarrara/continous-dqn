@@ -96,9 +96,9 @@ for i_config,params in enumerate(grid):
     print("Learning DQN")
     run_dqn.main()
 
-    print("Learning and testing FTQ")
-    lambdas = eval(C["lambdas"])
-    run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
+    # print("Learning and testing FTQ")
+    # lambdas = eval(C["lambdas"])
+    # run_ftq.main(lambdas_=lambdas, empty_previous_test=True)
 
     print("Learning BFTQ")
     betas_test = eval(C["betas_test"])

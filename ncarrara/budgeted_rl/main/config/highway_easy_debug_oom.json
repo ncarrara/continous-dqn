@@ -44,7 +44,7 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "ERROR",
           "propagate": false
         }
       }

@@ -3,9 +3,10 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 import logging
-
+import os
+import re
 logger = logging.getLogger(__name__)
-
+from subprocess import PIPE, run
 
 def get_gpu_memory_map():
     result = subprocess.check_output(
@@ -15,6 +16,13 @@ def get_gpu_memory_map():
         ])
     gpu_memory = [int(x) for x in result.split()]
     return gpu_memory
+
+def get_memory_for_pid(pid):
+    command="nvidia-smi"
+    result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True).stdout
+    m=re.search("\|.*[0-9].*"+str(pid)+".*C.*python.*?([0-9]+).*\|",result)
+    return int(m.group(1))
+
 
 
 def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False):

@@ -13,7 +13,7 @@ import os
 
 from ncarrara.utils.color import Color
 from ncarrara.utils.math import update_lims
-from ncarrara.utils.torch import optimizer_factory, BaseModule, get_gpu_memory_map
+from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
@@ -78,6 +78,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
                 all_betas[l] = beta
                 l += 1
                 i_a_ok_act += 1
+        del QQ
         i_beta += 1
 
     if disp or test:
@@ -319,11 +320,13 @@ class PytorchBudgetedFittedQ:
         self._id_ftq_epoch = None
 
     def info(self, message):
+        memoire = get_memory_for_pid(os.getpid())
+        # memoire=  get_gpu_memory_map()[self.device.index]
+
         if self._id_ftq_epoch is not None:
-            logger.info(
-                "[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, get_gpu_memory_map()[self.device.index], message))
+            logger.info("[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, memoire, message))
         else:
-            logger.info("[m={:05}]{}".format(get_gpu_memory_map()[self.device.index], message))
+            logger.info("[m={:05}]{}".format(memoire, message))
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
@@ -461,9 +464,11 @@ class PytorchBudgetedFittedQ:
         return pi
 
     def empty_cache(self):
-        self.info("{}empty cache ...{}".format(Color.BOLD, Color.END))
+        memoire_before = get_memory_for_pid(os.getpid())
         torch.cuda.empty_cache()
-        self.info("empty cache ... done")
+        memoire_after = get_memory_for_pid(os.getpid())
+        self.info("empty cache {} -> {}".format(memoire_before, memoire_after))
+
 
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
@@ -473,9 +478,11 @@ class PytorchBudgetedFittedQ:
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
                 self.info("Q next")
                 Q_next = self._policy_network(next_state_beta)
-                self.empty_cache()
                 self.info("Q next end")
+                del next_state_beta
+                self.empty_cache()
                 next_state_rewards, next_state_constraints = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
+                del Q_next, piapib
             else:
                 next_state_rewards = torch.zeros(self.size_batch, device=self.device)
                 next_state_constraints = torch.zeros(self.size_batch, device=self.device)
@@ -483,12 +490,19 @@ class PytorchBudgetedFittedQ:
             expected_state_action_rewards = r_batch + (self._GAMMA * next_state_rewards)
             expected_state_action_constraints = c_batch + (self._GAMMA_C * next_state_constraints)
 
+            del next_state_constraints, next_state_rewards,
+            self.empty_cache()
+
         losses = self._optimize_model(sb_batch, a_batch, expected_state_action_rewards,
                                       expected_state_action_constraints)
+
+        self.empty_cache()
         if logger.getEffectiveLevel() is logging.INFO:
             with torch.no_grad():
                 self.info("Creating histograms ...")
+                self.info("forward pass ...")
                 QQ = self._policy_network(sb_batch)
+                self.info("forward pass ... end")
                 state_action_rewards = QQ.gather(1, a_batch)
                 state_action_constraints = QQ.gather(1, a_batch + self.N_actions)
                 create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
@@ -515,7 +529,10 @@ class PytorchBudgetedFittedQ:
                                                      path=self.workspace + "/histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
+                del QQ, state_action_rewards, state_action_constraints, QQr, QQc
 
+        del expected_state_action_rewards, expected_state_action_constraints
+        self.empty_cache()
         self.info("[_ftq_epoch] ... end")
         return losses
 
@@ -655,6 +672,7 @@ class PytorchBudgetedFittedQ:
             self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,
                                             expected_state_action_constraints, with_weight=False).item()
             self.info("computing delta ... done")
+            self.empty_cache()
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
         if self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH:
             self._policy_network.reset()
@@ -680,8 +698,7 @@ class PytorchBudgetedFittedQ:
             for i in range(3):
                 self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch - 3 + i, losses[-3 + i]))
         self.info("gradient descent ... end")
-        # del expected_state_action_rewards
-        # del expected_state_action_constraints
+        del expected_state_action_rewards, expected_state_action_constraints
         self.empty_cache()
         self.info("optimize model ... done")
         return losses

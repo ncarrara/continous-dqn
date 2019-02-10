@@ -595,6 +595,8 @@ class PytorchBudgetedFittedQ:
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
+            label_c = torch.clamp(label_c, min=0, max=1)
+            self.info("Clamp target constraints")
             self.getsizeof(label_r, "label_r")
             self.getsizeof(label_c, "label_c")
             # del ns_c, ns_r,

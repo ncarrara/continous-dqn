@@ -32,6 +32,13 @@
           "level": "INFO",
           "propagate": false
         },
+        "ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq": {
+          "handlers": [
+            "default", "file"
+          ],
+          "level": "DEBUG",
+          "propagate": false
+        },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
           "handlers": [
             "default"

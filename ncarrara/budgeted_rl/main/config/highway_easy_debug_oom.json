@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway_eps_simple_debug_oom",
+    "id": "highway_easy_debug_oom",
     "seed": 0,
-    "workspace": "tmp/highway_eps_simple_debug_oom",
+    "workspace": "tmp/highway_easy_debug_oom",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -16,12 +16,18 @@
           "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
+        },
+        "file": {
+          "level": "INFO",
+          "formatter": "standard",
+          "filename": "highway_easy.log",
+          "class": "logging.FileHandler"
         }
       },
       "loggers": {
         "": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false
@@ -63,32 +69,14 @@
         "collision_reward": [0]
     }
   },
-  "test_bftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150,
-    "betas_test": "np.linspace(0.,1.,11)"
-  },
-  "test_ftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150
-  },
   "gamma": 0.8,
   "gamma_c": 1.0,
-  "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
+  "lambdas": "[]",
 
-  "learn_ftq_egreedy": {
-    "trajs_by_ftq_batch": 1,
-    "normalize_reward": true,
-    "N_trajs": 1,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.002
-    }
-  },
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 1,
     "normalize_reward": false,
-    "N_trajs": 1,
+    "N_trajs": 10,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.002
@@ -97,7 +85,7 @@
   },
   "bftq_params": {
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,100000)",
+    "betas_for_duplication": "np.linspace(0.,1.,1e4)",
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 10,
     "optimizer": "ADAM",

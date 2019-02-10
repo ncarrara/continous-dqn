@@ -20,7 +20,7 @@
         "file": {
           "level": "INFO",
           "formatter": "standard",
-          "filename": "highway_easy.log",
+          "filename": "highway_easy_single_15000.log",
           "class": "logging.FileHandler"
         }
       },
@@ -81,45 +81,36 @@
     "N_trajs": 150,
     "betas_test": "np.linspace(0.,1.,11)"
   },
-  "test_ftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150
-  },
   "gamma": 0.8,
   "gamma_c": 1.0,
   "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
 
-  "learn_ftq_egreedy": {
-    "trajs_by_ftq_batch": 100,
-    "normalize_reward": true,
-    "N_trajs": 1200,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.002
-    }
-  },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 100,
+    "trajs_by_ftq_batch": 10000,
     "normalize_reward": false,
-    "N_trajs": 1200,
+    "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.002
+      "decay": 0.0002
     },
     "betas_for_exploration": "np.linspace(0.,1.,11)"
   },
   "bftq_params": {
+    "use_data_loader": false,
+    "use_data_parallel": true,
+    "use_extra_gpu_memory_threshold": 100,
+    "maximum_number_of_gpu": 2,
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
     "betas_for_duplication": "[]",
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 400,
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 15,
-    "learning_rate": 0.01,
+    "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.0,
-    "weight_decay": 0.0,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [

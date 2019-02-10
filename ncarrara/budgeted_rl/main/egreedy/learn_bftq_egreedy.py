@@ -81,6 +81,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                 pi_greedy = PytorchBudgetedFittedPolicy(pi, e, feature)
                 batch += 1
             i_traj += 1
+            if i_traj >= N_trajs:  # Needed because of the for-loop in betas
+                break              # which continues even after N_trajs is reached
 
 
 

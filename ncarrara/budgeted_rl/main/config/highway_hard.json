@@ -101,7 +101,8 @@
       "start": 1.0,
       "decay": 0.002
     },
-    "betas_for_exploration": "np.linspace(0.,1.,11)"
+    "betas_for_exploration": "np.linspace(0.,1.,11)",
+    "beta_range": [0, 1]
   },
   "bftq_params": {
     "use_data_loader": false,

@@ -303,6 +303,7 @@ class PytorchBudgetedFittedQ:
                  batch_size_experience_replay=50,
                  nn_loss_stop_condition=0.0,
                  weights_losses=[1., 1.],
+                 beta_range=[],
                  # disp_states=[],
                  # disp_next_states=[],
                  workspace="tmp",
@@ -327,6 +328,7 @@ class PytorchBudgetedFittedQ:
         self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
+        self.beta_range = beta_range
         self.stop_loss_value = nn_loss_stop_condition
         self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
         self.DELTA = delta_stop
@@ -562,7 +564,7 @@ class PytorchBudgetedFittedQ:
     def getsizeof(self, a, name):
         self.info("size {} : [{}{}{}]".format(name, Color.BOLD, getsizeof(a), Color.END))
 
-    def     fit(self, transitions):
+    def fit(self, transitions):
 
         self.track_memory("fit")
 
@@ -628,6 +630,11 @@ class PytorchBudgetedFittedQ:
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
+
+            if self.beta_range:
+                self.info("Clamp target constraints")
+                label_c = torch.clamp(label_c, min=self.beta_range[0], max=self.beta_range[1])
+
             print("Qr",torch.mean(label_r))
             print("Qc",torch.mean(label_c))
             print("Qr",torch.sum(label_r),"(sum)")

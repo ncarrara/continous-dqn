@@ -78,6 +78,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
                 all_betas[l] = beta
                 l += 1
                 i_a_ok_act += 1
+        del QQ
         i_beta += 1
 
     if disp or test:
@@ -463,9 +464,11 @@ class PytorchBudgetedFittedQ:
         return pi
 
     def empty_cache(self):
-        self.info("{}empty cache ...{}".format(Color.BOLD, Color.END))
+        memoire_before = get_memory_for_pid(os.getpid())
         torch.cuda.empty_cache()
-        self.info("empty cache ... done")
+        memoire_after = get_memory_for_pid(os.getpid())
+        self.info("empty cache {} -> {}".format(memoire_before, memoire_after))
+
 
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
@@ -476,14 +479,19 @@ class PytorchBudgetedFittedQ:
                 self.info("Q next")
                 Q_next = self._policy_network(next_state_beta)
                 self.info("Q next end")
+                del next_state_beta
                 self.empty_cache()
                 next_state_rewards, next_state_constraints = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
+                del Q_next, piapib
             else:
                 next_state_rewards = torch.zeros(self.size_batch, device=self.device)
                 next_state_constraints = torch.zeros(self.size_batch, device=self.device)
 
             expected_state_action_rewards = r_batch + (self._GAMMA * next_state_rewards)
             expected_state_action_constraints = c_batch + (self._GAMMA_C * next_state_constraints)
+
+            del next_state_constraints, next_state_rewards,
+            self.empty_cache()
 
         losses = self._optimize_model(sb_batch, a_batch, expected_state_action_rewards,
                                       expected_state_action_constraints)
@@ -523,6 +531,7 @@ class PytorchBudgetedFittedQ:
                                                      mask_action=mask_action)
                 del QQ, state_action_rewards, state_action_constraints, QQr, QQc
 
+        del expected_state_action_rewards, expected_state_action_constraints
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
         return losses
@@ -689,8 +698,7 @@ class PytorchBudgetedFittedQ:
             for i in range(3):
                 self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch - 3 + i, losses[-3 + i]))
         self.info("gradient descent ... end")
-        # del expected_state_action_rewards
-        # del expected_state_action_constraints
+        del expected_state_action_rewards, expected_state_action_constraints
         self.empty_cache()
         self.info("optimize model ... done")
         return losses

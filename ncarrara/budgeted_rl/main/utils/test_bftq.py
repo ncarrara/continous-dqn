@@ -30,7 +30,13 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
 
     )
 
-    pi = algo.load_policy(policy_path=workspace + "/" + policy_path)
+    import os
+    if not os.path.isabs(policy_path):
+        actual_policy_path = workspace + "/" +policy_path
+    else:
+        actual_policy_path = policy_path
+
+    pi = algo.load_policy(policy_path=actual_policy_path)
 
     pi = PytorchBudgetedFittedPolicy(pi, e, feature)
 

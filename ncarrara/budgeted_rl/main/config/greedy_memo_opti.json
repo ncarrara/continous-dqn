@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway_eps_simple_debug_oom",
+    "id": "greedy_memo_opti",
     "seed": 0,
-    "workspace": "tmp/highway_eps_simple_debug_oom",
+    "workspace": "tmp/greedy_memo_opti",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -37,76 +37,93 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "WARN",
           "propagate": false
         },
         "ncarrara.utils.os": {
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "ERROR",
           "propagate": false
         }
       }
     }
   },
-  "feature_str": "feature_identity",
+  "feature_str": "feature_basic",
   "generate_envs": {
-    "envs_str": "highway-v0",
+    "envs_str": "slot_filling_env_v0",
     "envs_params": {
-        "lanes_count": [4],
-        "initial_spacing": [3],
-        "vehicles_count": [50],
-        "duration": [40],
-        "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
-        "centering_position": [[0.3, 0.5]],
-        "collision_reward": [0]
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.25
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_bye": [
+        0.0
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_if_summarize_fail": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ],
+      "can_say_bye": [
+        false
+      ]
     }
   },
   "test_bftq": {
     "policy_path": "final_policy.pt",
-    "N_trajs": 150,
+    "N_trajs": 300,
     "betas_test": "np.linspace(0.,1.,11)"
   },
-  "test_ftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150
-  },
-  "gamma": 0.8,
-  "gamma_c": 1.0,
-  "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
 
-  "learn_ftq_egreedy": {
-    "trajs_by_ftq_batch": 1,
-    "normalize_reward": true,
-    "N_trajs": 1,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.002
-    }
-  },
+  "gamma": 1.0,
+  "gamma_c": 1.0,
+  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
+
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1,
-    "normalize_reward": false,
-    "N_trajs": 1,
+    "trajs_by_ftq_batch": 1000,
+    "normalize_reward": true,
+    "N_trajs": 5000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.002
+      "decay": 0.001
     },
-    "betas_for_exploration": "[1.]"
+    "betas_for_exploration": "np.linspace(0.,1.,10)"
   },
   "bftq_params": {
-    "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,100000)",
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 10,
+    "betas_for_discretisation": "np.linspace(0.,1.,21)",
+    "betas_for_duplication": "[]",
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
-    "learning_rate": 0.01,
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.0,
-    "weight_decay": 0.0,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [
@@ -126,15 +143,15 @@
     ]
   },
   "ftq_params": {
-    "nn_loss_stop_condition": 0.0,
-    "max_nn_epoch": 400,
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 2000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 15,
-    "learning_rate": 0.01,
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.0,
-    "weight_decay": 0.0,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH"
   },
   "ftq_net_params": {
@@ -147,3 +164,5 @@
     ]
   }
 }
+
+

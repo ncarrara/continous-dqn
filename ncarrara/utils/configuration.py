@@ -101,7 +101,7 @@ class Configuration(object):
         if self.device is not None:
             self.logger.warning("pytorch already loaded")
         else:
-            from ncarrara.utils.torch import get_the_device_with_most_available_memory
+            from ncarrara.utils.torch_utils import get_the_device_with_most_available_memory
             _device = get_the_device_with_most_available_memory()
             self.device = _device
             self.logger.info("DEVICE : {}".format(self.device))

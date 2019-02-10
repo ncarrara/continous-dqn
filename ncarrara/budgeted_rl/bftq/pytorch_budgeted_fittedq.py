@@ -319,7 +319,11 @@ class PytorchBudgetedFittedQ:
         self._id_ftq_epoch = None
 
     def info(self, message):
-        logger.info("[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, get_gpu_memory_map()[self.device.index], message))
+        if self._id_ftq_epoch is not None:
+            logger.info(
+                "[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, get_gpu_memory_map()[self.device.index], message))
+        else:
+            logger.info("[m={:05}]{}".format(get_gpu_memory_map()[self.device.index], message))
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
@@ -457,7 +461,7 @@ class PytorchBudgetedFittedQ:
         return pi
 
     def empty_cache(self):
-        self.info("{}empty cache ...{}".format(Color.BOLD,Color.END))
+        self.info("{}empty cache ...{}".format(Color.BOLD, Color.END))
         torch.cuda.empty_cache()
         self.info("empty cache ... done")
 
@@ -648,7 +652,8 @@ class PytorchBudgetedFittedQ:
         with torch.no_grad():
             self.info("computing delta ...")
             # no need gradient just for computing delta ....
-            self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,expected_state_action_constraints,with_weight=False).item()
+            self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,
+                                            expected_state_action_constraints, with_weight=False).item()
             self.info("computing delta ... done")
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
         if self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH:

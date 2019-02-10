@@ -14,72 +14,72 @@
       },
       "handlers": {
         "default": {
-          "level": "DEBUG",
+          "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
+        },
+        "file": {
+          "level": "INFO",
+          "formatter": "standard",
+          "filename": "highway.log",
+          "class": "logging.FileHandler"
         }
       },
       "loggers": {
         "": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "WARN",
           "propagate": false
         },
         "ncarrara.bftq_pydial.tools.features": {
           "handlers": [
-            "default"
-          ],
-          "level": "WARN",
-          "propagate": false
-        },"ncarrara.utils.math": {
-          "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.dqn": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false
         },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils.os": {
+        "ncarrara.utils.math": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
-          "level": "ERROR",
+          "level": "INFO",
           "propagate": false
         },
-        "ncarrara.bftq_pydial.main.run_dqn": {
+        "ncarrara.utils.os": {
           "handlers": [
-            "default"
+            "default", "file"
           ],
-          "level": "DEBUG",
+          "level": "INFO",
           "propagate": false
         }
       }

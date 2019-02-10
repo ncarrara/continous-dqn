@@ -28,13 +28,6 @@ TransitionBFTQ = namedtuple('TransitionBFTQ',
 logger = logging.getLogger(__name__)
 
 
-def info(self, message):
-    if self._id_ftq_epoch is not None:
-        logger.info(
-            "[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, get_gpu_memory_map()[self.device.index], message))
-    else:
-        logger.info("[m={:05}]{}".format(get_gpu_memory_map()[self.device.index], message))
-
 def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
@@ -310,6 +303,13 @@ class PytorchBudgetedFittedQ:
         self.max_print_q = 1
         self.memory = Memory(class_transition=TransitionBFTQ)
         self.reset()
+
+    def info(self, message):
+        if self._id_ftq_epoch is not None:
+            logger.info(
+                "[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, get_gpu_memory_map()[self.device.index], message))
+        else:
+            logger.info("[m={:05}]{}".format(get_gpu_memory_map()[self.device.index], message))
 
     def reset(self, reset_weight=True):
         self.memory.reset()

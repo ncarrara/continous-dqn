@@ -98,6 +98,11 @@ class Configuration(object):
         return self
 
     def load_pytorch(self):
+        # import torch.multiprocessing as multiprocessing
+        # multiprocessing.set_start_method('spawn')
+        self.logger.warning("maybe use this ? import torch.multiprocessing as multiprocessing")
+        self.logger.warning("maybe use this ? multiprocessing.set_start_method('spawn')")
+
         if self.device is not None:
             self.logger.warning("pytorch already loaded")
         else:

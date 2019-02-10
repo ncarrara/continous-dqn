@@ -328,7 +328,7 @@ class PytorchBudgetedFittedQ:
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
         memory = Memory(class_transition=TransitionBFTQ)
-        if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
+        if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
             self.disp_states_ids = []
             self.disp_next_states_ids = []
             self.disp_next_states = []
@@ -364,7 +364,7 @@ class PytorchBudgetedFittedQ:
                 beta = torch.tensor([[[t.beta]]], device=self.device, dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
-            if logger.getEffectiveLevel() is logging.INFO and self.do_dynamic_disp_state:
+            if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
                 self.disp_states_ids.append(len(self.disp_states))
                 self.disp_states.append(t.next_state)
                 self.disp_next_states_ids.append(len(self.disp_next_states))
@@ -396,9 +396,9 @@ class PytorchBudgetedFittedQ:
         self._policy_network.set_normalization_params(mean, std)
 
         self.info("[_construct_batch] nbhull to compute : {}".format(lastkeyid))
-        self.info(
-            "[_construct_batch] Nombre de samples : {}, nombre de couple (s,a) uniques : {}".format(len(memory),
-                                                                                                    len(means)))
+        self.info("[_construct_batch] Nombre de samples : {}".format(len(memory)))
+        if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
+            self.info("nombre de couple (s,a) uniques : {}".format(len(means)))
         self.info("[_construct_batch] sum of constraint : {}".format(constraint_batch.sum()))
         self.info("[_construct_batch] nb reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))
         self.info("[_construct_batch] constructing batch ... end {}")
@@ -410,14 +410,14 @@ class PytorchBudgetedFittedQ:
         self._policy_network.reset()
 
         sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch = self._construct_batch(transitions)
-        if logger.getEffectiveLevel() is logging.INFO:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             dispstateidsrand = np.random.random_integers(0, len(self.disp_states) - 1, 10)
         self.delta = np.inf
         while self._id_ftq_epoch < self._MAX_FTQ_EPOCH and self.delta > self.DELTA:
             self.info("-------------------------")
             _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch)
             self.info("delta={}".format(self.delta))
-            if logger.getEffectiveLevel() is logging.INFO:
+            if logger.getEffectiveLevel() <= logging.DEBUG:
                 for i_s in dispstateidsrand:
                     state = self.disp_next_states[i_s]
                     id = self.state_to_unique_str(self.disp_next_states_ids[i_s])
@@ -431,7 +431,7 @@ class PytorchBudgetedFittedQ:
                                               id="next_state_" + id, disp=True)
             self._id_ftq_epoch += 1
 
-        if logger.getEffectiveLevel() is logging.INFO:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             for i_s in dispstateidsrand:
                 state = self.disp_next_states[i_s]
                 id = str(self.disp_next_states_ids[i_s])
@@ -485,7 +485,7 @@ class PytorchBudgetedFittedQ:
 
         losses = self._optimize_model(sb_batch, a_batch, expected_state_action_rewards,
                                       expected_state_action_constraints)
-        if logger.getEffectiveLevel() is logging.INFO:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             with torch.no_grad():
                 self.info("Creating histograms ...")
                 QQ = self._policy_network(sb_batch)
@@ -629,7 +629,7 @@ class PytorchBudgetedFittedQ:
 
             i += 1
 
-        if logger.getEffectiveLevel() is logging.INFO:
+        if logger.getEffectiveLevel() <= logging.DEBUG:
             self.info("\n[compute_next_values] Q(s') sur le batch")
             create_Q_histograms("Qr(s')_e={}".format(self._id_ftq_epoch),
                                 values=next_state_rewards.cpu().numpy().flatten(),

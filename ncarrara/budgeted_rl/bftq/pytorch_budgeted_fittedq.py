@@ -283,14 +283,14 @@ class PytorchBudgetedFittedQ:
             self.betas_for_discretisation = betas_for_discretisation
 
         self._policy_network = policy_network
-
+        self.size_state = self._policy_network.size_state
         self.use_data_parallel = False
-        self.use_data_loader = True
+        self.use_data_loader = False
 
         if not self.use_data_parallel:
-            self.size_state = self._policy_network.size_state
+            pass
         else:
-            self.size_state = self._policy_network.module.size_state
+
             print("device !!!! : ", self.device)
             device_ids = [self.device.index]
             print(device_ids)
@@ -708,7 +708,7 @@ class PytorchBudgetedFittedQ:
                 logger.warning("<<< We are not computing delta >>>")
                 self.delta = np.nan
             else:
-                self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).item()
+                self.delta = self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).item()
             self.info("computing delta ... done")
             self.empty_cache()
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
@@ -722,7 +722,7 @@ class PytorchBudgetedFittedQ:
 
         if self.use_data_loader:
             dset = TensorDataset(sb_batch, a_batch, label_r, label_c)
-            dataloader = torch.utils.data.DataLoader(dset, batch_size=len(sb_batch)//10, shuffle=True, num_workers=0)
+            dataloader = torch.utils.data.DataLoader(dset, batch_size=len(sb_batch), shuffle=True, num_workers=0)
 
             # while not stop:
             loss_value = 0
@@ -738,6 +738,8 @@ class PytorchBudgetedFittedQ:
                     self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss_value))
                 nn_epoch += 1
                 stop = nn_epoch > self._MAX_NN_EPOCH or cvg
+                if stop:
+                    break
         else:
             while not stop:
                 loss = self._gradient_step(sb_batch, a_batch, label_r, label_c)
@@ -745,7 +747,7 @@ class PytorchBudgetedFittedQ:
                 if (min(last_loss, loss) / max(last_loss, loss) < 0.5 or nn_epoch in [0, 1, 2, 3]):
                     self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch, loss))
                 last_loss = loss
-                cvg = loss < self.NN_LOSS_STOP_CONDITION
+                cvg = loss < self.stop_loss_value
                 if cvg:
                     self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss))
                 nn_epoch += 1
@@ -896,20 +898,6 @@ class PytorchBudgetedFittedQ:
             plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")
             plt.close()
 
-
-class DatasetBFTQ(Dataset):
-    def __init__(self, sb_batch, a_batch, label_r, label_c):
-        self.sb_batch = sb_batch
-        self.label_r = label_r
-        self.label_c = label_c
-        self.a_batch = a_batch
-
-    def __getitem__(self, index):
-        print(self.sb_batch)
-        print(self.sb_batch[index])
-        rez = (self.sb_batch[index], self.a_batch[index], self.label_r[index], self.label_c[index])
-        print(rez)
-        return rez
 
     def __len__(self):
         return self.sb_batch.shape[0]

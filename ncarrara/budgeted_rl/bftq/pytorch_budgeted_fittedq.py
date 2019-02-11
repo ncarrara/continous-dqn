@@ -490,32 +490,21 @@ class PytorchBudgetedFittedQ:
                                               Q=self._policy_network,
                                               action_mask=np.zeros(self.N_actions),
                                               id="next_state_" + id, disp=True)
+                for i_s in dispstateidsrand:
+                    # i_s = 52
+                    state = self.disp_states[i_s]
+                    id = str(self.disp_states_ids[i_s])
+                    if state is not None:
+                        self.draw_Qr_and_Qc(state, self._policy_network,
+                                            "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
+
+                        _ = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                              Q=self._policy_network,
+                                              action_mask=np.zeros(self.N_actions),
+                                              id="state_final_hulls_" + id, disp=True)
             self._id_ftq_epoch += 1
 
-        if logger.getEffectiveLevel() <= logging.DEBUG:
-            for i_s in dispstateidsrand:
-                state = self.disp_next_states[i_s]
-                id = str(self.disp_next_states_ids[i_s])
-                if state is not None:
-                    self.draw_Qr_and_Qc(state, self._policy_network,
-                                        "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                    _ = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                          Q=self._policy_network,
-                                          action_mask=np.zeros(self.N_actions),
-                                          id="next_state_" + id, disp=True)
-            for i_s in dispstateidsrand:
-                # i_s = 52
-                state = self.disp_states[i_s]
-                id = str(self.disp_states_ids[i_s])
-                if state is not None:
-                    self.draw_Qr_and_Qc(state, self._policy_network,
-                                        "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
-
-                    _ = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                          Q=self._policy_network,
-                                          action_mask=np.zeros(self.N_actions),
-                                          id="state_final_hulls_" + id, disp=True)
 
         pi = self.build_policy(self._policy_network)
 

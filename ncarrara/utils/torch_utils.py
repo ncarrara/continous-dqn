@@ -20,9 +20,10 @@ def get_gpu_memory_map():
 def get_memory_for_pid(pid):
     command="nvidia-smi"
     result = run(command, stdout=PIPE, stderr=PIPE, universal_newlines=True, shell=True).stdout
-    m=re.search("\|.*[0-9].*"+str(pid)+".*C.*python.*?([0-9]+).*\|",result)
-    return int(m.group(1))
+    m=re.findall("\| *[0-9] *"+str(pid)+" *C *python.*? +([0-9]+).*\|",result,re.MULTILINE)
+    return [int(mem) for mem in m]
 
+# print(get_memory_for_pid(7355))
 
 
 def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False):

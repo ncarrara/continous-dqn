@@ -14,7 +14,7 @@ import os
 from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
 from ncarrara.utils.color import Color
-from ncarrara.utils.math import update_lims
+from ncarrara.utils.math_utils import update_lims
 from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.configuration import C
@@ -254,6 +254,9 @@ class PytorchBudgetedFittedQ:
                  print_q_function=False,
                  state_to_unique_str=lambda s: str(s),
                  action_to_unique_str=lambda a: str(a),
+                 use_data_loader=False,
+                 use_data_parallel=False,
+                 use_extra_gpu_memory_threshold=100,
 
                  ):
         self.state_to_unique_str = state_to_unique_str
@@ -284,20 +287,30 @@ class PytorchBudgetedFittedQ:
 
         self._policy_network = policy_network
         self.size_state = self._policy_network.size_state
-        self.use_data_parallel = False
-        self.use_data_loader = False
-
+        self.use_data_parallel = use_data_parallel
+        self.use_data_loader = use_data_loader
+        if self.use_data_loader:
+            raise Exception("""Not really working, please stick to basic data loading. 
+            Actualy data_loader is useless since the data are already load on gpu (it's not big files or something)""")
         if not self.use_data_parallel:
-            pass
+            self.devices = [self.device]
         else:
 
-            print("device !!!! : ", self.device)
+            print("Main device : ", self.device)
+            # device_ids = [self.device.index]
             device_ids = [self.device.index]
-            print(device_ids)
+            memory_map = get_gpu_memory_map()
+            logger.info("Memory map : {}".format(memory_map))
+            for i in range(len(memory_map)):
+                if memory_map[i] < use_extra_gpu_memory_threshold and i != self.device.index:
+                    device_ids.append(i)
+
+            logger.info("BFTQ will use those GPU : {}. GPU({}) is the main GPU.".format(device_ids, self.device.index))
             self._policy_network = torch.nn.DataParallel(
                 module=self._policy_network,
                 output_device=self.device.index,
                 device_ids=device_ids)
+            self.devices = device_ids
 
         self._policy_network = self._policy_network.to(self.device)
         # exit()
@@ -346,14 +359,21 @@ class PytorchBudgetedFittedQ:
                                            self.weight_decay)
         self._id_ftq_epoch = None
 
+    def format_memory(self, memoire):
+        for _ in range(len(self.devices) - len(memoire)):
+            memoire.append(0)
+        accolades = "".join(["{:05} " for _ in range(len(self.devices))])
+        accolades =accolades[:-1]
+        format = "[m = " + accolades + "]"
+        return format.format(*memoire)
+
     def info(self, message):
         memoire = get_memory_for_pid(os.getpid())
-        # memoire=  get_gpu_memory_map()[self.device.index]
 
         if self._id_ftq_epoch is not None:
-            logger.info("[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, memoire, message))
+            logger.info("[e={:02}]{}{}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
-            logger.info("[m={:05}]{}".format(memoire, message))
+            logger.info("[m={}]{}".format(self.format_memory(memoire), message))
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
@@ -500,7 +520,7 @@ class PytorchBudgetedFittedQ:
         memoire_before = get_memory_for_pid(os.getpid())
         torch.cuda.empty_cache()
         memoire_after = get_memory_for_pid(os.getpid())
-        self.info("empty cache {} -> {}".format(memoire_before, memoire_after))
+        self.info("empty cache {} -> {}".format(self.format_memory(memoire_before), self.format_memory(memoire_after)))
 
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
@@ -602,7 +622,7 @@ class PytorchBudgetedFittedQ:
         return pi
 
     def _is_terminal_state(self, state):
-        isnan = torch.sum(torch.isnan(state)) == self._policy_network.size_state
+        isnan = torch.sum(torch.isnan(state)) == self.size_state
         return isnan
 
     def compute_opts(self, ns_batch, b_batch, h_batch, hulls):
@@ -722,20 +742,25 @@ class PytorchBudgetedFittedQ:
 
         if self.use_data_loader:
             dset = TensorDataset(sb_batch, a_batch, label_r, label_c)
-            dataloader = torch.utils.data.DataLoader(dset, batch_size=len(sb_batch), shuffle=True, num_workers=0)
+            batch_size = len(sb_batch)
+            self.info("Data loader, batch_size={} (len_dataset={})".format(batch_size, len(dset)))
+            dataloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=True, num_workers=64)
 
             # while not stop:
-            loss_value = 0
-            for idata, data in enumerate(dataloader):
-                loss = self._gradient_step(*([x.to(self.device) for x in data]))
-                loss_value += loss
+
+            while not stop:
+                loss_value = 0.0
+                for idata, data in enumerate(dataloader):
+                    self.info("".join([str(x.shape) for x in data]))
+                    loss = self._gradient_step(*data)
+                    loss_value += loss
+                    self.info("[epoch_nn={:03}] loss_value={}".format(nn_epoch, loss_value))
                 losses.append(loss_value)
                 if (min(last_loss, loss_value) / max(last_loss, loss_value) < 0.5 or nn_epoch in [0, 1, 2, 3]):
                     self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch, loss_value))
                 last_loss = loss_value
                 cvg = loss_value < self.stop_loss_value
-                if cvg:
-                    self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss_value))
+                if cvg: self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss_value))
                 nn_epoch += 1
                 stop = nn_epoch > self._MAX_NN_EPOCH or cvg
                 if stop:
@@ -897,7 +922,6 @@ class PytorchBudgetedFittedQ:
             plt.grid()
             plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")
             plt.close()
-
 
     def __len__(self):
         return self.sb_batch.shape[0]

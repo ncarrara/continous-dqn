@@ -657,10 +657,10 @@ class PytorchBudgetedFittedQ:
                                 path=self.workspace + "/histogram",
                                 labels=["next value"])
 
-            self.info("[WARNING] qc < 0 percentage {:.2f}%".format(warning_qc_negatif / i_non_terminal * 100.))
-            self.info("[WARNING] qc_ < 0 percentage {:.2f}%".format(warning_qc__negatif / i_non_terminal * 100.))
-            self.info("[WARNING] next_state_constraints < 0 percentage {:.2f}%".format(
-                next_state_c_neg / i_non_terminal * 100.))
+        self.info("[WARNING] qc < 0 percentage {:.2f}%".format(warning_qc_negatif / i_non_terminal * 100.))
+        self.info("[WARNING] qc_ < 0 percentage {:.2f}%".format(warning_qc__negatif / i_non_terminal * 100.))
+        self.info("[WARNING] next_state_constraints < 0 percentage {:.2f}%".format(
+            next_state_c_neg / i_non_terminal * 100.))
         self.info("compute next values ... end")
         return next_state_rewards, next_state_constraints
 

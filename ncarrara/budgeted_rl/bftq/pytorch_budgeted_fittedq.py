@@ -256,7 +256,8 @@ class PytorchBudgetedFittedQ:
                  action_to_unique_str=lambda a: str(a),
                  use_data_loader=False,
                  use_data_parallel=False,
-                 use_extra_gpu_memory_threshold=100,
+                 use_extra_gpu_memory_threshold=0,
+                 maximum_number_of_gpu=1
 
                  ):
         self.state_to_unique_str = state_to_unique_str
@@ -302,7 +303,9 @@ class PytorchBudgetedFittedQ:
             memory_map = get_gpu_memory_map()
             logger.info("Memory map : {}".format(memory_map))
             for i in range(len(memory_map)):
-                if memory_map[i] < use_extra_gpu_memory_threshold and i != self.device.index:
+                if memory_map[i] < use_extra_gpu_memory_threshold \
+                        and i != self.device.index \
+                        and len(device_ids) < maximum_number_of_gpu:
                     device_ids.append(i)
 
             logger.info("BFTQ will use those GPU : {}. GPU({}) is the main GPU.".format(device_ids, self.device.index))
@@ -363,7 +366,7 @@ class PytorchBudgetedFittedQ:
         for _ in range(len(self.devices) - len(memoire)):
             memoire.append(0)
         accolades = "".join(["{:05} " for _ in range(len(self.devices))])
-        accolades =accolades[:-1]
+        accolades = accolades[:-1]
         format = "[m = " + accolades + "]"
         return format.format(*memoire)
 

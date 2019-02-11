@@ -73,7 +73,7 @@ def plot_all(data, path, params):
                params=params, filename=os.path.join(path, "results_extra.png"))
     plot_patch(means_of_means, std_of_means, counts, x="C", y="R", curves="algorithm", points="parameter",
                params=params, filename=os.path.join(path, "results_intra.png"))
-    plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", filename=os.path.join(path, "results_disc_ids.png"))
+    plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", points="parameter", filename=os.path.join(path, "results_disc_ids.png"))
 
 
 def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
@@ -101,9 +101,13 @@ def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):
     plt.close()
 
 
-def plot_lines(data, x=None, y=None, filename=None, **kwargs):
+def plot_lines(data, x=None, y=None, filename=None, points=None, **kwargs):
     fig, ax = plt.subplots()
     sns.lineplot(data=data, x=x, y=y, ax=ax, estimator=None, **kwargs)
+    if points:
+        for param, point in data.groupby(points):
+            for _, row in point.iterrows():
+                plt.annotate("{:.2f}".format(float(param)), (row[x], row[y]))
     if filename:
         plt.savefig(filename)
     plt.show()

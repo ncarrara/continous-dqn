@@ -1,8 +1,8 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils import math
-from ncarrara.utils.math import  set_seed
+from ncarrara.utils import math_utils
+from ncarrara.utils.math_utils import  set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory

@@ -1,7 +1,7 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils.math import epsilon_decay, set_seed
+from ncarrara.utils.math_utils import epsilon_decay, set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 from ncarrara.utils_rl.environments.envs_factory import generate_envs

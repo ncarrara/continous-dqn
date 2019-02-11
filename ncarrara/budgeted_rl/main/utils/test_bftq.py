@@ -2,7 +2,7 @@
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils.math import set_seed
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy

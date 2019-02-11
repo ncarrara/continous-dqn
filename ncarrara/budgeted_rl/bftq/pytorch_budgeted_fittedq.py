@@ -376,7 +376,7 @@ class PytorchBudgetedFittedQ:
         if self._id_ftq_epoch is not None:
             logger.info("[e={:02}]{}{}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
-            logger.info("[m={}]{}".format(self.format_memory(memoire), message))
+            logger.info("{}{}".format(self.format_memory(memoire), message))
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")

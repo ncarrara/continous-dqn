@@ -80,7 +80,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
                 all_betas[l] = beta
                 l += 1
                 i_a_ok_act += 1
-        del QQ
+
         i_beta += 1
 
     if disp or test:
@@ -525,10 +525,10 @@ class PytorchBudgetedFittedQ:
                 self.info("Q next")
                 Q_next = self._policy_network(next_state_beta)
                 self.info("Q next end")
-                del next_state_beta
+                #del next_state_beta
                 self.empty_cache()
                 ns_r, ns_c = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
-                del Q_next, piapib
+                #del Q_next, piapib
             else:
                 ns_r = torch.zeros(self.size_batch, device=self.device)
                 ns_c = torch.zeros(self.size_batch, device=self.device)
@@ -536,7 +536,7 @@ class PytorchBudgetedFittedQ:
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
 
-            del ns_c, ns_r,
+            #del ns_c, ns_r,
             self.empty_cache()
 
         losses = self._optimize_model(sb_batch, a_batch, label_r, label_c)
@@ -574,9 +574,9 @@ class PytorchBudgetedFittedQ:
                                                      path=self.workspace + "/histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
-                del QQ, state_action_rewards, state_action_constraints, QQr, QQc
+                #del QQ, state_action_rewards, state_action_constraints, QQr, QQc
 
-        del label_r, label_c
+        #del label_r, label_c
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
         return losses
@@ -776,7 +776,7 @@ class PytorchBudgetedFittedQ:
             for i in range(3):
                 self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch - 3 + i, losses[-3 + i]))
         self.info("gradient descent ... end")
-        del label_r, label_c
+        #del label_r, label_c
         self.empty_cache()
         self.info("optimize model ... done")
         return losses

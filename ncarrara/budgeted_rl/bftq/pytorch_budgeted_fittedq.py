@@ -367,7 +367,7 @@ class PytorchBudgetedFittedQ:
             memoire.append(0)
         accolades = "".join(["{:05} " for _ in range(len(self.devices))])
         accolades = accolades[:-1]
-        format = "[m = " + accolades + "]"
+        format = "[m=" + accolades + "]"
         return format.format(*memoire)
 
     def info(self, message):

@@ -73,7 +73,7 @@ class Configuration(object):
 
         self.seed = self.dict["general"]["seed"]
         if self.seed is not None:
-            from ncarrara.utils.math import set_seed
+            from ncarrara.utils.math_utils import set_seed
             set_seed(self.seed)
 
         import numpy as np
@@ -98,10 +98,15 @@ class Configuration(object):
         return self
 
     def load_pytorch(self):
-        # import torch.multiprocessing as multiprocessing
-        # multiprocessing.set_start_method('spawn')
-        self.logger.warning("maybe use this ? import torch.multiprocessing as multiprocessing")
-        self.logger.warning("maybe use this ? multiprocessing.set_start_method('spawn')")
+
+        self.logger.warning("we are using: import torch.multiprocessing as multiprocessing")
+        self.logger.warning("we are using: multiprocessing.set_start_method('spawn')")
+        import torch.multiprocessing as multiprocessing
+        try:
+            multiprocessing.set_start_method('spawn')
+        except RuntimeError as e:
+            self.logger.warning(str(e))
+
 
         if self.device is not None:
             self.logger.warning("pytorch already loaded")

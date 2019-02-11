@@ -3,7 +3,7 @@ import json
 
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools.configuration import C
-from ncarrara.utils.math import set_seed
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils_rl.transition.replay_memory import Memory
 import numpy as np
 

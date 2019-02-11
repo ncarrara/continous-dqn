@@ -62,7 +62,7 @@
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils.math": {
+        "ncarrara.utils.math_utils": {
           "handlers": [
             "default"
           ],

@@ -7,7 +7,7 @@ import numpy as np
 import logging
 
 from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder, build_feature_dqn
-from ncarrara.utils.math import epsilon_decay
+from ncarrara.utils.math_utils import epsilon_decay
 
 logger = logging.getLogger(__name__)
 import matplotlib.pyplot as plt

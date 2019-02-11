@@ -3,7 +3,7 @@ import numpy as np
 
 
 # from policy.HDCPolicy import HDCPolicy
-from ncarrara.utils.math import generate_random_point_on_simplex_not_uniform
+from ncarrara.utils.math_utils import generate_random_point_on_simplex_not_uniform
 
 
 class Policy:

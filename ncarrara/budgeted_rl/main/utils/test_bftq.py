@@ -2,7 +2,7 @@
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils.math import set_seed
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
     if id:
-        C.workspace += "/{}/".format(id)
+        C.workspace += "/{}".format(id)
         C.update_paths()
 
     main(device=C.device,

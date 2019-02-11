@@ -1,7 +1,6 @@
 from sklearn.model_selection import ParameterGrid
 import os
 from ncarrara.budgeted_rl.tools.configuration import C
-import sys
 import re
 
 from ncarrara.utils.os import makedirs

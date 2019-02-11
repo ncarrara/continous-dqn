@@ -1,8 +1,9 @@
+from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
 from ncarrara.budgeted_rl.main.egreedy import learn_ftq_egreedy, learn_bftq_egreedy
 import sys
 
-from ncarrara.budgeted_rl.tools.configuration import C
+
 
 seeds = None
 if len(sys.argv) > 1:

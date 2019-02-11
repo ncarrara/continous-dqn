@@ -1,14 +1,14 @@
 {
   "general": {
-    "id": "camera_ready_6.2",
+    "id": "core_dumped",
     "seed": 0,
-    "workspace": "tmp/camera_ready_6.2",
+    "workspace": "tmp/core_dumped",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
       "formatters": {
         "standard": {
-          "format": "[%(levelname)s] %(message)s"
+          "format": "[%(levelname)s] %(message)s "
         }
       },
       "handlers": {
@@ -23,35 +23,7 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
-          "propagate": false
-        },
-        "ncarrara.bftq_pydial.tools.features": {
-          "handlers": [
-            "default"
-          ],
-          "level": "WARN",
-          "propagate": false
-        },
-        "ncarrara.utils_rl.algorithms.dqn": {
-          "handlers": [
-            "default"
-          ],
-          "level": "WARN",
-          "propagate": false
-        },
-        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
-          "handlers": [
-            "default"
-          ],
-          "level": "WARN",
-          "propagate": false
-        },
-        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
-          "handlers": [
-            "default"
-          ],
-          "level": "WARN",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -61,7 +33,7 @@
           "level": "WARN",
           "propagate": false
         },
-        "ncarrara.utils.math_utils": {
+        "ncarrara.utils_rl.environments.envs_factory": {
           "handlers": [
             "default"
           ],
@@ -115,32 +87,49 @@
       "reward_if_sucess": [
         100.0
       ],
-      "can_say_bye": [false]
+      "can_say_bye": [
+        false
+      ]
     }
   },
-  "create_data": {
-    "filename_data": "samples.data",
-    "as_json": true,
-    "handcrafted_greedy_policy": true,
-    "trajs_by_ftq_batch": 50,
-    "lambda_": 0,
+  "test_bftq": {
+    "policy_path": "final_policy.pt",
+    "N_trajs": 500,
+    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
+  },
+  "test_ftq": {
+    "policy_path": "final_policy.pt",
+    "N_trajs": 500
+  },
+  "gamma": 1.0,
+  "gamma_c": 1.0,
+  "lambdas": "[0.,5.,10.,20.,30,40.,50.,75.,100.,250.,500.]",
+  "learn_ftq_egreedy": {
+    "trajs_by_ftq_batch": 1000,
     "normalize_reward": true,
-    "N_trajs": 5000,
+    "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.0005
     }
   },
-  "main": {
-    "filename_data": "samples.data",
-    "path_data": null,
+  "learn_bftq_egreedy": {
+    "trajs_by_ftq_batch": 1000,
     "normalize_reward": true,
-    "N_trajs": 1000
+    "N_trajs": 10000,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.0005
+    },
+    "betas_for_exploration": "[]"
   },
   "bftq_params": {
-
+    "use_data_loader": false,
+    "use_data_parallel": false,
+    "betas_for_discretisation": "np.linspace(0.,1.,11)",
+    "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
+    "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 12,
@@ -166,13 +155,9 @@
       64
     ]
   },
-  "nb_trajs_between_epoch": 30,
-  "lambdas": "[0.,10.,15.,20.,25.,30,40.,50.,75.,100.,250.,500.]",
-  "betas": "np.linspace(0.,1.,26)",
-  "betas_test": "np.linspace(0.,1.,26)",
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 2000,
+    "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 12,
@@ -182,7 +167,7 @@
     "weight_decay": 0.0005,
     "batch_size_experience_replay": "ALL_BATCH"
   },
-  "net_params": {
+  "ftq_net_params": {
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
@@ -190,17 +175,6 @@
       64,
       32
     ]
-  },
-  "gamma": 1.0,
-  "gamma_c": 1.0,
-  "dqn_params": {
-    "batch_size_experience_replay": 32,
-    "target_update": 10,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "lr": 0.001,
-    "weight_decay": 0.0005,
-    "workspace": "dqn"
   }
 }
 

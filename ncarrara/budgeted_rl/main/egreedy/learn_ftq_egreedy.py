@@ -1,7 +1,7 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils import math
-from ncarrara.utils.math import set_seed
+from ncarrara.utils import math_utils
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments import envs_factory
@@ -35,7 +35,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         **ftq_params
     )
 
-    decays = math.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
+    decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
     pi_greedy = RandomPolicy()
     pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy=pi_greedy, epsilon=decays[0], pi_random=RandomPolicy())
     rez = np.zeros((N_trajs, 4))

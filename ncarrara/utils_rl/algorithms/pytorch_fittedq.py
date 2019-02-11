@@ -6,7 +6,7 @@ import torch.nn.functional as F
 import copy
 import matplotlib.pyplot as plt
 
-from ncarrara.utils.torch import optimizer_factory, BaseModule
+from ncarrara.utils.torch_utils import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import Transition
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \

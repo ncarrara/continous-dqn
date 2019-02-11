@@ -7,7 +7,7 @@ from ncarrara import utils_rl as fs
 import os
 import numpy as np
 
-from ncarrara.utils.math import update_lims
+from ncarrara.utils.math_utils import update_lims
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.visualization.filled_step import stack_hist
 

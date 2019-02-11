@@ -11,8 +11,10 @@ import torch.nn.functional as F
 import copy
 import os
 
+from torch.utils.data import Dataset, ConcatDataset, TensorDataset
+
 from ncarrara.utils.color import Color
-from ncarrara.utils.math import update_lims
+from ncarrara.utils.math_utils import update_lims
 from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.configuration import C
@@ -252,6 +254,9 @@ class PytorchBudgetedFittedQ:
                  print_q_function=False,
                  state_to_unique_str=lambda s: str(s),
                  action_to_unique_str=lambda a: str(a),
+                 use_data_loader=False,
+                 use_data_parallel=False,
+                 use_extra_gpu_memory_threshold=100,
 
                  ):
         self.state_to_unique_str = state_to_unique_str
@@ -259,7 +264,7 @@ class PytorchBudgetedFittedQ:
         self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
-        self.NN_LOSS_STOP_CONDITION = nn_loss_stop_condition
+        self.stop_loss_value = nn_loss_stop_condition
         self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
         self.DELTA = delta_stop
         self.disp_states = disp_states
@@ -279,8 +284,37 @@ class PytorchBudgetedFittedQ:
             self.betas_for_discretisation = eval(betas_for_discretisation)
         else:
             self.betas_for_discretisation = betas_for_discretisation
-        self._policy_network = policy_network.to(self.device)
-        self._policy_network.reset()
+
+        self._policy_network = policy_network
+        self.size_state = self._policy_network.size_state
+        self.use_data_parallel = use_data_parallel
+        self.use_data_loader = use_data_loader
+        if self.use_data_loader:
+            raise Exception("""Not really working, please stick to basic data loading. 
+            Actualy data_loader is useless since the data are already load on gpu (it's not big files or something)""")
+        if not self.use_data_parallel:
+            self.devices = [self.device]
+        else:
+
+            print("Main device : ", self.device)
+            # device_ids = [self.device.index]
+            device_ids = [self.device.index]
+            memory_map = get_gpu_memory_map()
+            logger.info("Memory map : {}".format(memory_map))
+            for i in range(len(memory_map)):
+                if memory_map[i] < use_extra_gpu_memory_threshold and i != self.device.index:
+                    device_ids.append(i)
+
+            logger.info("BFTQ will use those GPU : {}. GPU({}) is the main GPU.".format(device_ids, self.device.index))
+            self._policy_network = torch.nn.DataParallel(
+                module=self._policy_network,
+                output_device=self.device.index,
+                device_ids=device_ids)
+            self.devices = device_ids
+
+        self._policy_network = self._policy_network.to(self.device)
+        # exit()
+        self.reset_network()
         self._MAX_FTQ_EPOCH = max_ftq_epoch
         self._MAX_NN_EPOCH = max_nn_epoch
         self._GAMMA_C = gamma_c
@@ -310,23 +344,36 @@ class PytorchBudgetedFittedQ:
         self.max_print_q = 1
         self.reset()
 
+    def reset_network(self):
+        if self.use_data_parallel:
+            self._policy_network.module.reset()
+        else:
+            self._policy_network.reset()
+
     def reset(self, reset_weight=True):
         if reset_weight:
-            self._policy_network.reset()
+            self.reset_network()
         self.optimizer = optimizer_factory(self.optimizer_type,
                                            self._policy_network.parameters(),
                                            self.learning_rate,
                                            self.weight_decay)
         self._id_ftq_epoch = None
 
+    def format_memory(self, memoire):
+        for _ in range(len(self.devices) - len(memoire)):
+            memoire.append(0)
+        accolades = "".join(["{:05} " for _ in range(len(self.devices))])
+        accolades =accolades[:-1]
+        format = "[m = " + accolades + "]"
+        return format.format(*memoire)
+
     def info(self, message):
         memoire = get_memory_for_pid(os.getpid())
-        # memoire=  get_gpu_memory_map()[self.device.index]
 
         if self._id_ftq_epoch is not None:
-            logger.info("[e={:02}][m={:05}]{}".format(self._id_ftq_epoch, memoire, message))
+            logger.info("[e={:02}]{}{}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
-            logger.info("[m={:05}]{}".format(memoire, message))
+            logger.info("[m={}]{}".format(self.format_memory(memoire), message))
 
     def _construct_batch(self, transitions):
         self.info("[_construct_batch] constructing batch ...")
@@ -347,24 +394,23 @@ class PytorchBudgetedFittedQ:
             if hull_key in hull_keys:
                 hull_id = hull_keys[hull_key]
             else:
-                hull_id = torch.tensor([[[lastkeyid]]], device=self.device, dtype=torch.long)
+                hull_id = torch.tensor([[[lastkeyid]]], dtype=torch.long)
                 lastkeyid += 1
                 hull_keys[hull_key] = hull_id
             if t.next_state is not None:
-                next_state = torch.tensor([[t.next_state]], device=self.device, dtype=torch.float)
+                next_state = torch.tensor([[t.next_state]], dtype=torch.float)
             else:
-                next_state = torch.tensor([[[np.nan] * self._policy_network.size_state]], device=self.device,
-                                          dtype=torch.float)
-            action = torch.tensor([[t.action]], device=self.device, dtype=torch.long)
-            reward = torch.tensor([t.reward], device=self.device, dtype=torch.float)
-            constraint = torch.tensor([t.constraint], device=self.device, dtype=torch.float)
-            state = torch.tensor([[t.state]], device=self.device, dtype=torch.float)
+                next_state = torch.tensor([[[np.nan] * self.size_state]], dtype=torch.float)
+            action = torch.tensor([[t.action]], dtype=torch.long)
+            reward = torch.tensor([t.reward], dtype=torch.float)
+            constraint = torch.tensor([t.constraint], dtype=torch.float)
+            state = torch.tensor([[t.state]], dtype=torch.float)
             if len(self.betas_for_duplication) > 0:
                 for beta in self.betas_for_duplication:
-                    beta = torch.tensor([[[beta]]], device=self.device, dtype=torch.float)
+                    beta = torch.tensor([[[beta]]], dtype=torch.float)
                     memory.push(state, action, reward, next_state, constraint, beta, hull_id)
             else:
-                beta = torch.tensor([[[t.beta]]], device=self.device, dtype=torch.float)
+                beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
             if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
@@ -394,10 +440,12 @@ class PytorchBudgetedFittedQ:
         next_state_batch = torch.cat(zipped.next_state)
         hull_id_batch = torch.cat(zipped.hull_id)
         state_beta_batch = torch.cat((state_batch, beta_batch), dim=2)
-        mean = torch.mean(state_beta_batch, 0)
-        std = torch.std(state_beta_batch, 0)
-        self._policy_network.set_normalization_params(mean, std)
-
+        mean = torch.mean(state_beta_batch, 0).to(self.device)
+        std = torch.std(state_beta_batch, 0).to(self.device)
+        if self.use_data_parallel:
+            self._policy_network.module.set_normalization_params(mean, std)
+        else:
+            self._policy_network.set_normalization_params(mean, std)
         self.info("[_construct_batch] nbhull to compute : {}".format(lastkeyid))
         self.info("[_construct_batch] Nombre de samples : {}".format(len(memory)))
         if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
@@ -405,12 +453,19 @@ class PytorchBudgetedFittedQ:
         self.info("[_construct_batch] sum of constraint : {}".format(constraint_batch.sum()))
         self.info("[_construct_batch] nb reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))
         self.info("[_construct_batch] constructing batch ... end {}")
-        return state_beta_batch, state_batch, action_batch, reward_batch, constraint_batch, next_state_batch, hull_id_batch, beta_batch
+        return state_beta_batch.to(self.device), \
+               state_batch.to(self.device), \
+               action_batch.to(self.device), \
+               reward_batch.to(self.device), \
+               constraint_batch.to(self.device), \
+               next_state_batch.to(self.device), \
+               hull_id_batch.to(self.device), \
+               beta_batch.to(self.device)
 
     def fit(self, transitions):
         self._id_ftq_epoch = 0
         self.info("[fit] reseting network ...")
-        self._policy_network.reset()
+        self.reset_network()
 
         sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch = self._construct_batch(transitions)
         if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -467,8 +522,7 @@ class PytorchBudgetedFittedQ:
         memoire_before = get_memory_for_pid(os.getpid())
         torch.cuda.empty_cache()
         memoire_after = get_memory_for_pid(os.getpid())
-        self.info("empty cache {} -> {}".format(memoire_before, memoire_after))
-
+        self.info("empty cache {} -> {}".format(self.format_memory(memoire_before), self.format_memory(memoire_after)))
 
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
@@ -481,20 +535,19 @@ class PytorchBudgetedFittedQ:
                 self.info("Q next end")
                 del next_state_beta
                 self.empty_cache()
-                next_state_rewards, next_state_constraints = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
+                ns_r, ns_c = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
                 del Q_next, piapib
             else:
-                next_state_rewards = torch.zeros(self.size_batch, device=self.device)
-                next_state_constraints = torch.zeros(self.size_batch, device=self.device)
+                ns_r = torch.zeros(self.size_batch, device=self.device)
+                ns_c = torch.zeros(self.size_batch, device=self.device)
 
-            expected_state_action_rewards = r_batch + (self._GAMMA * next_state_rewards)
-            expected_state_action_constraints = c_batch + (self._GAMMA_C * next_state_constraints)
+            label_r = r_batch + (self._GAMMA * ns_r)
+            label_c = c_batch + (self._GAMMA_C * ns_c)
 
-            del next_state_constraints, next_state_rewards,
+            del ns_c, ns_r,
             self.empty_cache()
 
-        losses = self._optimize_model(sb_batch, a_batch, expected_state_action_rewards,
-                                      expected_state_action_constraints)
+        losses = self._optimize_model(sb_batch, a_batch, label_r, label_c)
 
         self.empty_cache()
         if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -506,12 +559,12 @@ class PytorchBudgetedFittedQ:
                 state_action_rewards = QQ.gather(1, a_batch)
                 state_action_constraints = QQ.gather(1, a_batch + self.N_actions)
                 create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                    values=[expected_state_action_rewards.cpu().numpy(),
+                                    values=[label_r.cpu().numpy(),
                                             state_action_rewards.cpu().numpy().flatten()],
                                     path=self.workspace + "/histogram",
                                     labels=["target", "prediction"])
                 create_Q_histograms(title="Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
-                                    values=[expected_state_action_constraints.cpu().numpy(),
+                                    values=[label_c.cpu().numpy(),
                                             state_action_constraints.cpu().numpy().flatten()],
                                     path=self.workspace + "/histogram",
                                     labels=["target", "prediction"])
@@ -531,7 +584,7 @@ class PytorchBudgetedFittedQ:
                                                      mask_action=mask_action)
                 del QQ, state_action_rewards, state_action_constraints, QQr, QQc
 
-        del expected_state_action_rewards, expected_state_action_constraints
+        del label_r, label_c
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
         return losses
@@ -571,12 +624,12 @@ class PytorchBudgetedFittedQ:
         return pi
 
     def _is_terminal_state(self, state):
-        isnan = torch.sum(torch.isnan(state)) == self._policy_network.size_state
+        isnan = torch.sum(torch.isnan(state)) == self.size_state
         return isnan
 
     def compute_opts(self, ns_batch, b_batch, h_batch, hulls):
         self.info("computing ops ... ")
-        next_state_beta = torch.zeros((self.size_batch * 2, 1, self._policy_network.size_state + 1),
+        next_state_beta = torch.zeros((self.size_batch * 2, 1, self.size_state + 1),
                                       device=self.device)
         i = 0
         opts = [None] * self.size_batch
@@ -664,53 +717,86 @@ class PytorchBudgetedFittedQ:
         self.info("compute next values ... end")
         return next_state_rewards, next_state_constraints
 
-    def _optimize_model(self, sb_batch, a_batch, expected_state_action_rewards, expected_state_action_constraints):
+    def _optimize_model(self, sb_batch, a_batch, label_r, label_c):
+        sb_batch = sb_batch.to(self.device)
+        a_batch = a_batch.to(self.device)
+        label_r = label_r.to(self.device)
+        label_c = label_c.to(self.device)
         self.info("optimize model ...")
         with torch.no_grad():
             self.info("computing delta ...")
             # no need gradient just for computing delta ....
-            self.delta = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards,
-                                            expected_state_action_constraints, with_weight=False).item()
+            if self.use_data_loader:
+                logger.warning("<<< We are not computing delta >>>")
+                self.delta = np.nan
+            else:
+                self.delta = self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).item()
             self.info("computing delta ... done")
             self.empty_cache()
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))
         if self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH:
-            self._policy_network.reset()
+            self.reset_network()
         stop = False
         nn_epoch = 0
         losses = []
         last_loss = np.inf
         self.info("gradient descent ...")
-        while not stop:
-            loss = self._gradient_step(sb_batch, a_batch, expected_state_action_rewards,
-                                       expected_state_action_constraints)
-            losses.append(loss)
-            if (min(last_loss, loss) / max(last_loss, loss) < 0.5 or nn_epoch in [0, 1, 2, 3]):
-                self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch, loss))
-            last_loss = loss
-            cvg = loss < self.NN_LOSS_STOP_CONDITION
-            if cvg:
-                self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss))
-            nn_epoch += 1
-            stop = nn_epoch > self._MAX_NN_EPOCH or cvg
+
+        if self.use_data_loader:
+            dset = TensorDataset(sb_batch, a_batch, label_r, label_c)
+            batch_size = len(sb_batch)
+            self.info("Data loader, batch_size={} (len_dataset={})".format(batch_size, len(dset)))
+            dataloader = torch.utils.data.DataLoader(dset, batch_size=batch_size, shuffle=True, num_workers=64)
+
+            # while not stop:
+
+            while not stop:
+                loss_value = 0.0
+                for idata, data in enumerate(dataloader):
+                    self.info("".join([str(x.shape) for x in data]))
+                    loss = self._gradient_step(*data)
+                    loss_value += loss
+                    self.info("[epoch_nn={:03}] loss_value={}".format(nn_epoch, loss_value))
+                losses.append(loss_value)
+                if (min(last_loss, loss_value) / max(last_loss, loss_value) < 0.5 or nn_epoch in [0, 1, 2, 3]):
+                    self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch, loss_value))
+                last_loss = loss_value
+                cvg = loss_value < self.stop_loss_value
+                if cvg: self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss_value))
+                nn_epoch += 1
+                stop = nn_epoch > self._MAX_NN_EPOCH or cvg
+                if stop:
+                    break
+        else:
+            while not stop:
+                loss = self._gradient_step(sb_batch, a_batch, label_r, label_c)
+                losses.append(loss)
+                if (min(last_loss, loss) / max(last_loss, loss) < 0.5 or nn_epoch in [0, 1, 2, 3]):
+                    self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch, loss))
+                last_loss = loss
+                cvg = loss < self.stop_loss_value
+                if cvg:
+                    self.info("[epoch_nn={:03}] early stopping [loss={}]".format(nn_epoch, loss))
+                nn_epoch += 1
+                stop = nn_epoch > self._MAX_NN_EPOCH or cvg
 
         if not cvg:
             for i in range(3):
                 self.info("[epoch_nn={:03}] loss={:.4f}".format(nn_epoch - 3 + i, losses[-3 + i]))
         self.info("gradient descent ... end")
-        del expected_state_action_rewards, expected_state_action_constraints
+        del label_r, label_c
         self.empty_cache()
         self.info("optimize model ... done")
         return losses
 
-    def _compute_loss(self, sb_batch, a_batch, expected_state_action_rewards, expected_state_action_constraints,
-                      with_weight=True):
-        QQ = self._policy_network(sb_batch)
-        state_action_rewards = QQ.gather(1, a_batch)
+    def _compute_loss(self, sb_batch, a_batch, label_r, label_c, with_weight=True):
+        output = self._policy_network(sb_batch)
+        state_action_rewards = output.gather(1, a_batch)
         action_batch_qc = a_batch + self.N_actions
-        state_action_constraints = QQ.gather(1, action_batch_qc)
-        loss_Qc = self.loss_function_c(state_action_constraints, expected_state_action_constraints.unsqueeze(1))
-        loss_Qr = self.loss_function(state_action_rewards, expected_state_action_rewards.unsqueeze(1))
+        state_action_constraints = output.gather(1, action_batch_qc)
+
+        loss_Qc = self.loss_function_c(state_action_constraints, label_c.unsqueeze(1))
+        loss_Qr = self.loss_function(state_action_rewards, label_r.unsqueeze(1))
         w_r, w_c = self.weights_losses
         if with_weight:
             loss = w_c * loss_Qc + w_r * loss_Qr
@@ -718,8 +804,8 @@ class PytorchBudgetedFittedQ:
             loss = loss_Qc + loss_Qr
         return loss
 
-    def _gradient_step(self, sb_batch, a_batch, expected_state_action_rewards, expected_state_action_constraints):
-        loss = self._compute_loss(sb_batch, a_batch, expected_state_action_rewards, expected_state_action_constraints)
+    def _gradient_step(self, sb_batch, a_batch, label_r, label_c):
+        loss = self._compute_loss(sb_batch, a_batch, label_r, label_c)
         self.optimizer.zero_grad()
         loss.backward()
         for param in self._policy_network.parameters():
@@ -838,6 +924,12 @@ class PytorchBudgetedFittedQ:
             plt.grid()
             plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")
             plt.close()
+
+    def __len__(self):
+        return self.sb_batch.shape[0]
+
+    def __add__(self, other):
+        return ConcatDataset([self, other])
 
 
 class NetBFTQ(BaseModule):

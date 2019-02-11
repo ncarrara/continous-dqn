@@ -1,8 +1,8 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
 from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils import math
-from ncarrara.utils.math import  set_seed
+from ncarrara.utils import math_utils
+from ncarrara.utils.math_utils import  set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -28,20 +28,21 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
 
     betas_for_exploration = eval(betas_for_exploration)
 
-    bftq = PytorchBudgetedFittedQ(
-        device=device,
-        workspace=workspace + "/batch=0",
-        actions_str=None if not hasattr( e,"action_str") else e.action_str,
-        policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n, **bftq_net_params),
-        gamma=gamma,
-        gamma_c=gamma_c,
-        **bftq_params
+    def build_fresh_bftq():
+        bftq = PytorchBudgetedFittedQ(
+            device=device,
+            workspace=workspace + "/batch=0",
+            actions_str=None if not hasattr( e,"action_str") else e.action_str,
+            policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n, **bftq_net_params),
+            gamma=gamma,
+            gamma_c=gamma_c,
+            **bftq_params)
+        return bftq
 
-    )
 
     pi_greedy = None
 
-    decays = math.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
+    decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
 
     pi_random = RandomBudgetedPolicy()
     pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy, decays[0], pi_random=pi_random)
@@ -72,6 +73,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                 logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}"
                             .format(batch, len(transitions_ftq), i_traj + 1))
                 logger.info("[BATCH={}]---------------------------------------".format(batch))
+                bftq = build_fresh_bftq()
                 bftq.reset(True)
                 bftq.workspace = workspace + "/batch={}".format(batch)
                 makedirs(bftq.workspace)

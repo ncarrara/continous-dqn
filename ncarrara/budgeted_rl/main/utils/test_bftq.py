@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
     if id:
-        C.workspace += "/{}/".format(id)
+        C.workspace += "/{}".format(id)
         C.update_paths()
 
     main(device=C.device,

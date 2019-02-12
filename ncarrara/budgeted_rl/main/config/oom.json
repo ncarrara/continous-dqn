@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway_eps_simple_debug_oom",
+    "id": "oom",
     "seed": 0,
-    "workspace": "tmp/highway_eps_simple_debug_oom",
+    "workspace": "tmp/oom",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -50,17 +50,46 @@
       }
     }
   },
-  "feature_str": "feature_identity",
+    "feature_str": "feature_basic",
   "generate_envs": {
-    "envs_str": "highway-v0",
+    "envs_str": "slot_filling_env_v0",
     "envs_params": {
-        "lanes_count": [4],
-        "initial_spacing": [3],
-        "vehicles_count": [50],
-        "duration": [40],
-        "other_vehicles_type": ["highway_env.vehicle.behavior.IDMVehicle"],
-        "centering_position": [[0.3, 0.5]],
-        "collision_reward": [0]
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.25
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_bye": [
+        0.0
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_if_summarize_fail": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ],
+      "can_say_bye": [
+        false
+      ]
     }
   },
 
@@ -68,25 +97,25 @@
   "gamma_c": 1.0,
   "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1,
+    "trajs_by_ftq_batch": 10,
     "normalize_reward": false,
-    "N_trajs": 1,
+    "N_trajs": 10,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.002
     },
-    "betas_for_exploration": "[1.]"
+    "betas_for_exploration": "np.linspace(0.,1.,11)"
   },
   "bftq_params": {
     "use_data_loader": false,
     "use_data_parallel": false,
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,100000)",
+    "betas_for_duplication": "np.linspace(0.,1.,10)",
     "nn_loss_stop_condition": 0.0,
     "max_nn_epoch": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 3,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.0,

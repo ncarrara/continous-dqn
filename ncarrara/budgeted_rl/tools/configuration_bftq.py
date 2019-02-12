@@ -1,7 +1,7 @@
-from ncarrara.utils.configuration import Configuration
+import ncarrara
 
 
-class ConfigurationBFTQ(Configuration):
+class ConfigurationBFTQ(ncarrara.utils.configuration.Configuration):
     import logging
     logger = logging.getLogger(__name__)
 

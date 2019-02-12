@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import gc
+
+import psutil
+import sys
+
 import numpy as np
 from scipy.spatial import ConvexHull
 from scipy.spatial.qhull import QhullError
@@ -10,6 +15,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 import copy
 import os
+from sys import getsizeof
 
 from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
@@ -29,6 +35,23 @@ TransitionBFTQ = namedtuple('TransitionBFTQ',
                             ('state', 'action', 'reward', "next_state", 'constraint', 'beta', "hull_id"))
 
 logger = logging.getLogger(__name__)
+
+
+def memReport():
+    for obj in gc.get_objects():
+        if torch.is_tensor(obj):
+            print(type(obj), obj.size())
+
+
+def cpuStats():
+    print(sys.version)
+    print(psutil.cpu_percent())
+    print(psutil.virtual_memory())  # physical memory usage
+    pid = os.getpid()
+    py = psutil.Process(pid)
+    memoryUse = py.memory_info()[0] / 2. ** 30  # memory use in GB...I think
+    print('memory GB:', memoryUse)
+
 
 
 def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
@@ -465,6 +488,9 @@ class PytorchBudgetedFittedQ:
                hull_id_batch.to(self.device), \
                beta_batch.to(self.device)
 
+    def getsizeof(self,a,name):
+        self.info("size {} : [{}{}{}]".format(name,Color.BOLD,getsizeof(a),Color.END))
+
     def fit(self, transitions):
         self._id_ftq_epoch = 0
         self.info("[fit] reseting network ...")
@@ -475,6 +501,8 @@ class PytorchBudgetedFittedQ:
             dispstateidsrand = np.random.random_integers(0, len(self.disp_states) - 1, 10)
         self.delta = np.inf
         while self._id_ftq_epoch < self._MAX_FTQ_EPOCH and self.delta > self.DELTA:
+            cpuStats()
+            memReport()
             self.info("-------------------------")
             _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch)
             self.info("delta={}".format(self.delta))
@@ -519,6 +547,7 @@ class PytorchBudgetedFittedQ:
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
+            self.getsizeof(self._policy_network,"self._policy_network")
             if self._id_ftq_epoch > 0:
                 hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network, disp=False)
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
@@ -535,7 +564,8 @@ class PytorchBudgetedFittedQ:
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
-
+            self.getsizeof(label_r, "label_r")
+            self.getsizeof(label_c, "label_c")
             #del ns_c, ns_r,
             self.empty_cache()
 

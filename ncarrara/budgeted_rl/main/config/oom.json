@@ -63,28 +63,10 @@
         "collision_reward": [0]
     }
   },
-  "test_bftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150,
-    "betas_test": "np.linspace(0.,1.,11)"
-  },
-  "test_ftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 150
-  },
+
   "gamma": 0.8,
   "gamma_c": 1.0,
   "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
-
-  "learn_ftq_egreedy": {
-    "trajs_by_ftq_batch": 1,
-    "normalize_reward": true,
-    "N_trajs": 1,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.002
-    }
-  },
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 1,
     "normalize_reward": false,

@@ -1,0 +1,162 @@
+{
+  "general": {
+    "id": "graphe_memo_explo",
+    "seed": 0,
+    "workspace": "tmp/graphe_memo_explo",
+    "dictConfig": {
+      "version": 1,
+      "disable_existing_loggers": false,
+      "formatters": {
+        "standard": {
+          "format": "[%(levelname)s] %(message)s "
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler"
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.environments.envs_factory": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils.os": {
+          "handlers": [
+            "default"
+          ],
+          "level": "ERROR",
+          "propagate": false
+        }
+      }
+    }
+  },
+    "feature_str": "feature_basic",
+  "generate_envs": {
+    "envs_str": "slot_filling_env_v0",
+    "envs_params": {
+      "user_params": [
+        {
+          "cerr": -0.25,
+          "cok": 0.25,
+          "ser": 0.6,
+          "cstd": 0.6,
+          "proba_hangup": 0.25
+        }
+      ],
+      "max_turn": [
+        10
+      ],
+      "size_constraints": [
+        3
+      ],
+      "penalty_if_bye": [
+        0.0
+      ],
+      "penalty_if_hangup": [
+        0.0
+      ],
+      "penalty_if_summarize_fail": [
+        0.0
+      ],
+      "penalty_by_turn": [
+        0.0
+      ],
+      "penalty_if_max_turn": [
+        0.0
+      ],
+      "reward_if_sucess": [
+        100.0
+      ],
+      "can_say_bye": [
+        false
+      ]
+    }
+  },
+
+  "gamma": 0.8,
+  "gamma_c": 1.0,
+  "lambdas": "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20]",
+  "learn_bftq_egreedy": {
+    "trajs_by_ftq_batch": 10,
+    "normalize_reward": false,
+    "N_trajs": 10,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.002
+    },
+    "betas_for_exploration": "np.linspace(0.,1.,10)"
+  },
+  "bftq_params": {
+    "use_data_loader": false,
+    "use_data_parallel": false,
+    "betas_for_discretisation": "np.linspace(0.,1.,10)",
+    "betas_for_duplication": "[]",
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 10,
+    "learning_rate": 0.01,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.0,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH",
+    "loss_function_c": "l2",
+    "weights_losses": [
+      1.0,
+      1.0
+    ]
+  },
+  "bftq_net_params": {
+    "beta_encoder_type": "LINEAR",
+    "size_beta_encoder": 50,
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      256,
+      128,
+      64
+    ]
+  },
+  "ftq_params": {
+    "nn_loss_stop_condition": 0.0,
+    "max_nn_epoch": 400,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 15,
+    "learning_rate": 0.01,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.0,
+    "weight_decay": 0.0,
+    "batch_size_experience_replay": "ALL_BATCH"
+  },
+  "ftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      128,
+      64,
+      32
+    ]
+  }
+}

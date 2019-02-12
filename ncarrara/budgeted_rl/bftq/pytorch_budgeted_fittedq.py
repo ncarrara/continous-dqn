@@ -53,7 +53,7 @@ def cpuStats():
 
 
 
-def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, device, disp=False, path=None, id="default"):
+def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, device, disp=False, path="tmp", id="default"):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)

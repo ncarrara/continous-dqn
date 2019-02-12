@@ -2,8 +2,9 @@
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import PytorchBudgetedFittedQ, NetBFTQ
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils import math_utils
-from ncarrara.utils.math_utils import  set_seed
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import makedirs
+from ncarrara.utils.torch_utils import get_memory_for_pid
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import RandomBudgetedPolicy, PytorchBudgetedFittedPolicy
@@ -18,8 +19,17 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+def get_current_memory():
+    memory = get_memory_for_pid(os.getpid())
+    sum = 0
+    for mem in memory:
+        sum += mem
+
+    return sum
+
+
 def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq_params, bftq_net_params, N_trajs,
-         workspace, seed, device, normalize_reward, trajs_by_ftq_batch,epsilon_decay,**args):
+         workspace, seed, device, normalize_reward, trajs_by_ftq_batch, epsilon_decay, **args):
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     set_seed(seed, e)
@@ -32,13 +42,13 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         bftq = PytorchBudgetedFittedQ(
             device=device,
             workspace=workspace + "/batch=0",
-            actions_str=None if not hasattr( e,"action_str") else e.action_str,
-            policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n, **bftq_net_params),
+            actions_str=None if not hasattr(e, "action_str") else e.action_str,
+            policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
+                                   **bftq_net_params),
             gamma=gamma,
             gamma_c=gamma_c,
             **bftq_params)
         return bftq
-
 
     pi_greedy = None
 
@@ -52,6 +62,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     batch = 0
     i_traj = 0
     # for i_traj in range(N_trajs):
+    memory_by_batch = [get_current_memory()]
     while i_traj < N_trajs:
         if len(betas_for_exploration) == 0:
             init_betas = [np.random.sample()]
@@ -82,10 +93,33 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                 os.system("cp {}/policy.pt {}/final_policy.pt".format(bftq.workspace, workspace))
                 pi_greedy = PytorchBudgetedFittedPolicy(pi, e, feature)
                 batch += 1
+                import matplotlib.pyplot as plt
+                import matplotlib.pyplot as plt
+                plt.rcParams["figure.figsize"] = (30, 5)
+                plt.grid()
+                y_mem = np.asarray(bftq.memory_tracking)[:, 1]
+                y_mem = [int(mem) for mem in y_mem]
+                plt.plot(range(len(y_mem)), y_mem)
+                props = {'ha': 'center', 'va': 'center', 'bbox': {'fc': '0.8', 'pad': 0}}
+
+                for i, couple in enumerate(bftq.memory_tracking):
+                    id, memory = couple
+                    plt.scatter(i, memory, s=25)
+                    plt.text(i, memory, id, props, rotation=90)
+
+                plt.savefig(bftq.workspace + "/memory_tracking.png")
+                plt.close()
+                memory_by_batch.append(get_current_memory())
             i_traj += 1
             if i_traj >= N_trajs:  # Needed because of the for-loop in betas
-                break              # which continues even after N_trajs is reached
+                break  # which continues even after N_trajs is reached
+    import matplotlib.pyplot as plt
 
+    plt.plot(range(len(memory_by_batch)), memory_by_batch)
+    plt.grid()
+    plt.title("memory_by_batch")
+    plt.savefig(workspace + "/memory_by_batch.png")
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -93,11 +127,12 @@ if __name__ == "__main__":
 
     if len(sys.argv) > 2:
         config_file = sys.argv[1]
-        force=bool(sys.argv[2])
+        force = bool(sys.argv[2])
     else:
         config_file = "../config/test_egreedy.json"
-        force=True
+        force = True
     from ncarrara.budgeted_rl.tools.configuration import C
+
     C.load(config_file).create_fresh_workspace(force=force).load_pytorch().load_matplotlib('agg')
     main(device=C.device,
          seed=C.seed,

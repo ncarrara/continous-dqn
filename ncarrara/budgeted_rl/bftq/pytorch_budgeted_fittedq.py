@@ -183,47 +183,48 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
 
 
 def optimal_pia_pib(beta, hull, statistic):
-    # print(beta)
-    # exit()
-    # statistic["len_hull"] = len(hull)
-    if len(hull) == 0:
-        raise Exception("Hull is empty")
-    elif len(hull) == 1:
-        Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
-        res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
-        if beta == Qc_inf:
-            status = "exact"
-        elif beta > Qc_inf:
-            status = "too_much_budget"
-        else:
-            status = "not_solvable"
-    else:
-        Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
-        if beta < Qc_inf:
-            status = "not_solvable"
+    with torch.no_grad():
+        # print(beta)
+        # exit()
+        # statistic["len_hull"] = len(hull)
+        if len(hull) == 0:
+            raise Exception("Hull is empty")
+        elif len(hull) == 1:
+            Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
             res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
-        else:
-            founded = False
-            for k in range(1, len(hull)):
-                Qc_sup, Qr_sup, beta_sup, action_sup = hull[k]
-                if Qc_inf == beta:
-                    founded = True
-                    status = "exact"  # en realité avec Qc_inf <= beta and beta < Qc_sup ca devrait marcher aussi
-                    res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
-                    break
-                elif Qc_inf < beta and beta < Qc_sup:
-                    founded = True
-                    p = (beta - Qc_inf) / (Qc_sup - Qc_inf)
-                    status = "regular"
-                    res = OptimalPolicy(action_inf, action_sup, 1. - p, p, beta_inf, beta_sup)
-                    break
-                else:
-                    Qc_inf, Qr_inf, beta_inf, action_inf = Qc_sup, Qr_sup, beta_sup, action_sup
-            if not founded:  # we have at least Qc_sup budget
+            if beta == Qc_inf:
+                status = "exact"
+            elif beta > Qc_inf:
                 status = "too_much_budget"
-                res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)  # action_inf = action_sup, beta_inf=beta_sup
-    statistic["status"] = status
-    return res
+            else:
+                status = "not_solvable"
+        else:
+            Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
+            if beta < Qc_inf:
+                status = "not_solvable"
+                res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
+            else:
+                founded = False
+                for k in range(1, len(hull)):
+                    Qc_sup, Qr_sup, beta_sup, action_sup = hull[k]
+                    if Qc_inf == beta:
+                        founded = True
+                        status = "exact"  # en realité avec Qc_inf <= beta and beta < Qc_sup ca devrait marcher aussi
+                        res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
+                        break
+                    elif Qc_inf < beta and beta < Qc_sup:
+                        founded = True
+                        p = (beta - Qc_inf) / (Qc_sup - Qc_inf)
+                        status = "regular"
+                        res = OptimalPolicy(action_inf, action_sup, 1. - p, p, beta_inf, beta_sup)
+                        break
+                    else:
+                        Qc_inf, Qr_inf, beta_inf, action_inf = Qc_sup, Qr_sup, beta_sup, action_sup
+                if not founded:  # we have at least Qc_sup budget
+                    status = "too_much_budget"
+                    res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)  # action_inf = action_sup, beta_inf=beta_sup
+        statistic["status"] = status
+        return res
 
 
 class PytorchBudgetedFittedQ:

@@ -752,7 +752,7 @@ class PytorchBudgetedFittedQ:
                 logger.warning("<<< We are not computing delta >>>")
                 self.delta = np.nan
             else:
-                self.delta = self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).item()
+                self.delta = self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).detach().item()
             self.info("computing delta ... done")
             self.empty_cache()
         self.info("reset neural network ? {}".format(self.RESET_POLICY_NETWORK_EACH_FTQ_EPOCH))

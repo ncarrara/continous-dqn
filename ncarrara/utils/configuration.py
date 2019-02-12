@@ -99,13 +99,13 @@ class Configuration(object):
 
     def load_pytorch(self):
 
-        self.logger.warning("we are using: import torch.multiprocessing as multiprocessing")
-        self.logger.warning("we are using: multiprocessing.set_start_method('spawn')")
-        import torch.multiprocessing as multiprocessing
-        try:
-            multiprocessing.set_start_method('spawn')
-        except RuntimeError as e:
-            self.logger.warning(str(e))
+        # self.logger.warning("we are using: import torch.multiprocessing as multiprocessing")
+        # self.logger.warning("we are using: multiprocessing.set_start_method('spawn')")
+        # import torch.multiprocessing as multiprocessing
+        # try:
+        #     multiprocessing.set_start_method('spawn')
+        # except RuntimeError as e:
+        #     self.logger.warning(str(e))
 
 
         if self.device is not None:

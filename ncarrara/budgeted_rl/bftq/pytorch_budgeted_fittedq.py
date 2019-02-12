@@ -53,7 +53,7 @@ def cpuStats():
 
 
 
-def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, device, disp=False, path="tmp", id="default"):
+def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
@@ -213,7 +213,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
     bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
     sb = torch.cat((ss, bb), dim=2)
     Qsb = Q(sb)
-    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, device, disp=False, path=None, id="default")
+    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id)
 
 
 def optimal_pia_pib(beta, hull, statistic):

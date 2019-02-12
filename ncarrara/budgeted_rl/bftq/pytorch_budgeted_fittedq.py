@@ -946,8 +946,6 @@ class PytorchBudgetedFittedQ:
 
             # dict_unique_hll_top_compute = collections.OrderedDict(unique_hull_to_compute)
             hull_ids = unique_hull_to_compute[:, 0]
-            print(hull_ids)
-            print(type(hull_ids))
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
                 i_ns_unique = np.where(hull_ids == hull_id)

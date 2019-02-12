@@ -17,7 +17,6 @@ from ncarrara.utils.color import Color
 from ncarrara.utils.math_utils import update_lims
 from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
-from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
     fast_create_Q_histograms_for_actions
 import logging

@@ -91,7 +91,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         # Fit model
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}"
-                    .format(batch, len(transitions_ftq), i_traj + 1))
+                    .format(batch, len(transitions_ftq), i_traj))
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         bftq = build_fresh_bftq()
         bftq.reset(True)

@@ -1,4 +1,8 @@
 import abc
+import copy
+import importlib
+import logging
+import torch
 import numpy as np
 
 
@@ -19,51 +23,24 @@ class Policy:
     def execute(self, s, action_mask, info):
         pass
 
-# class OptimalHandcraftedSlotFillingEnv(Policy):
-#     def __init__(self, e,safeness=0.5):
-#         self.safeness = safeness
-#         self.e = e
-#
-#     
-#
-#     def execute(self, s, action_mask=None, info=None):
-#         turn = s["turn"]
-#         act = None
-#         reco_status = np.nan_to_num(np.array(s["recos_status"], dtype=np.float))
-#         if turn < 3:
-#             act = "ASK_ORAL({})".format(np.argmin(reco_status))
-#         else:
-#             usr_action = s['str_usr_actions'][s["turn"] - 1]
-#             if usr_action == "DENY_SUMMARIZE":
-#                 min_reco = np.inf
-#                 min_idx_reco = 0
-#                 for ireco, reco in enumerate(s["recos_status"]):
-#                     if reco is None:
-#                         min_idx_reco = ireco
-#                         break
-#                     else:
-#                         if reco < min_reco:
-#                             min_idx_reco = ireco
-#                             min_reco = reco
-#                 if np.random.rand() < self.safeness:
-#                     act = "ASK_ORAL({})".format(min_idx_reco)
-#                 else:
-#                     act = "ASK_NUM_PAD({})".format(min_idx_reco)
-#             else:
-#                 act = self.ask(s["recos_status"])
-#         return self.e.system_actions.index(act), False, info
+    @classmethod
+    def from_config(cls, config):
+        return cls(**config)
+
 
 class HandcraftedSlotFillingEnv(Policy):
-    def __init__(self, e,safeness=0.5):
+    def __init__(self, env, safeness=0.5, **kwargs):
         self.safeness = safeness
-        self.e = e
+        self.env = env
+
+    def reset(self):
+        pass
 
     def ask(self, recos_status):
         not_valid_idx = []
         for idx_reco, reco in enumerate(recos_status):
             if reco is None or reco < 0.75:
                 not_valid_idx.append(idx_reco)
-
 
         if len(not_valid_idx) == 0 :
             return "SUMMARIZE_AND_INFORM"
@@ -101,11 +78,11 @@ class HandcraftedSlotFillingEnv(Policy):
                     act = "ASK_NUM_PAD({})".format(min_idx_reco)
             else:
                 act = self.ask(s["recos_status"])
-        return self.e.system_actions.index(act), False, info
+        return self.env.system_actions.index(act), False, info
 
 
 class RandomPolicy(Policy):
-    def __init__(self):
+    def __init__(self, **kwargs):
         pass
 
     def reset(self):
@@ -121,7 +98,7 @@ class RandomPolicy(Policy):
 
 
 class FittedPolicy(Policy):
-    def __init__(self, pi):
+    def __init__(self, pi, **kwargs):
         self.pi = pi
 
     def reset(self):
@@ -131,9 +108,14 @@ class FittedPolicy(Policy):
         a = self.pi(s, actions)
         return a, False, info
 
+    @classmethod
+    def from_config(cls, config):
+        config["pi"] = policy_factory(config["pi"])
+        return super(PytorchFittedPolicy, cls).from_config(config)
+
 
 class PytorchFittedPolicy(Policy):
-    def __init__(self, pi, env, feature):
+    def __init__(self, pi, env, feature, **kwargs):
         self.env = env
         self.pi = pi
         self.feature = feature
@@ -145,9 +127,14 @@ class PytorchFittedPolicy(Policy):
         a = self.pi(self.feature(s, self.env), action_mask)
         return a, False, info
 
+    @classmethod
+    def from_config(cls, config):
+        config["pi"] = policy_factory(config["pi"])
+        return super(PytorchFittedPolicy, cls).from_config(config)
+
 
 class EpsilonGreedyPolicy(Policy):
-    def __init__(self, pi_greedy, epsilon,pi_random = RandomPolicy()):
+    def __init__(self, pi_greedy, epsilon, pi_random=RandomPolicy(), **kwargs):
         self.pi_greedy = pi_greedy
         self.pi_random = pi_random
         self.epsilon = epsilon
@@ -163,8 +150,18 @@ class EpsilonGreedyPolicy(Policy):
 
         return a, is_master_action, info
 
+    @classmethod
+    def from_config(cls, config):
+        config["pi_greedy"]["env"] = config.get("env", None)
+        config["pi_greedy"] = policy_factory(config["pi_greedy"])
+        if config["pi_random"]:
+            config["pi_random"]["env"] = config.get("env", None)
+            config["pi_random"] = policy_factory(config["pi_random"])
+        return super(EpsilonGreedyPolicy, cls).from_config(config)
+
+
 class RandomBudgetedPolicy(Policy):
-    def __init__(self):
+    def __init__(self, **kwargs):
         pass
 
     def reset(self):
@@ -230,3 +227,14 @@ class PytorchBudgetedFittedPolicy(Policy):
             a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
             b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
             return a, b
+
+
+def policy_factory(config):
+    if "__class__" in config:
+        path = config['__class__'].split("'")[1]
+        module_name, class_name = path.rsplit(".", 1)
+        policy_class = getattr(importlib.import_module(module_name), class_name)
+        policy = policy_class.from_config(config)
+        return policy
+    else:
+        raise ValueError("The configuration should specify the policy __class__")

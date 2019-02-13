@@ -194,7 +194,7 @@ if __name__ == "__main__":
     e.seed(1)
     from ncarrara.budgeted_rl.tools.policies import HandcraftedSlotFillingEnv
 
-    hdc_policy = HandcraftedSlotFillingEnv(e=e,safeness=1.0)
+    hdc_policy = HandcraftedSlotFillingEnv(env=e, safeness=1.0)
 
     for _ in range(10):
         hdc_policy.reset()

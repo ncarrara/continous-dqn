@@ -47,7 +47,7 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
                                          pi=pi,
                                          gamma_r=gamma,
                                          gamma_c=gamma_c,
-                                         N_dialogues=N_trajs,
+                                         n_trajectories=N_trajs,
                                          save_path="{}/beta={}.results".format(path_results, beta),
                                          beta=beta)
 

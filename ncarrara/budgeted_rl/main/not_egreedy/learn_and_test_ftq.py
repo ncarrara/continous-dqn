@@ -74,7 +74,7 @@ def main(lambdas_, empty_previous_test=False):
         _, results = urpy.execute_policy(e, pi,
                                          C["gamma"],
                                          C["gamma_c"],
-                                         N_dialogues=C["main"]["N_trajs"],
+                                         n_trajectories=C["main"]["N_trajs"],
                                          save_path="{}/lambda_={}.results".format(C.path_ftq_results, lambda_))
         print("FTQ({}) : {} ".format(lambda_, urpy.format_results(results)))
 

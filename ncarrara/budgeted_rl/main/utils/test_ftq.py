@@ -44,7 +44,7 @@ def main(device, workspace, policy_path, generate_envs, ftq_net_params, ftq_para
                                      pi=pi,
                                      gamma_r=gamma,
                                      gamma_c=gamma_c,
-                                     N_dialogues=N_trajs,
+                                     n_trajectories=N_trajs,
                                      save_path="{}/lambda={}.results".format(path_results, lambda_))
 
     print("FTQ({}) : {}".format(lambda_, urpy.format_results(results)))

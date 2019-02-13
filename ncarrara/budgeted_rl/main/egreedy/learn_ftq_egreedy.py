@@ -19,21 +19,23 @@ logger = logging.getLogger(__name__)
 
 def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
          device, epsilon_decay, N_trajs, trajs_by_ftq_batch, normalize_reward,
-         workspace, seed,lambda_=0, **args):
+         workspace, seed, lambda_=0, save_memory={"path": "learn_ftq_egreedy.data", "as_json": True},save_policy=True, **args):
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     set_seed(seed, e)
 
     feature = feature_factory(feature_str)
 
-    ftq = PytorchFittedQ(
-        device=device,
-        policy_network=NetFTQ(n_in=len(feature(e.reset(), e)), n_out=e.action_space.n, **ftq_net_params),
-        action_str=None if not hasattr(e, "action_str") else e.action_str,
-        test_policy=None,
-        gamma=gamma,
-        **ftq_params
-    )
+    def build_fresh_ftq():
+        ftq = PytorchFittedQ(
+            device=device,
+            policy_network=NetFTQ(n_in=len(feature(e.reset(), e)), n_out=e.action_space.n, **ftq_net_params),
+            action_str=None if not hasattr(e, "action_str") else e.action_str,
+            test_policy=None,
+            gamma=gamma,
+            **ftq_params
+        )
+        return ftq
 
     decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
     pi_greedy = RandomPolicy()
@@ -58,14 +60,18 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
             logger.info("[BATCH={}][learning ftq pi greedy] #samples={} #traj={}"
                         .format(batch, len(transitions_ftq), i_traj + 1))
             logger.info("[BATCH={}]---------------------------------------".format(batch))
+            ftq = build_fresh_ftq()
             ftq.reset(True)
             ftq.workspace = workspace + "/batch={}".format(batch)
             makedirs(ftq.workspace)
             pi = ftq.fit(transitions_ftq)
-            ftq.save_policy()
-            os.system("cp {}/policy.pt {}/final_policy.pt".format(ftq.workspace, workspace))
+            if save_policy:
+                ftq.save_policy()
+                os.system("cp {}/policy.pt {}/final_policy.pt".format(ftq.workspace, workspace))
             pi_greedy = PytorchFittedPolicy(pi, e, feature)
             batch += 1
+    if save_memory is not None:
+        rm.save_memory(workspace + "/" + save_memory["path"], save_memory["as_json"])
 
 
 if __name__ == "__main__":
@@ -74,15 +80,16 @@ if __name__ == "__main__":
     if len(sys.argv) > 2:
         config_file = sys.argv[1]
         lambda_ = float(sys.argv[2])
-        force=False
+        force = False
     else:
         config_file = "../config/test_egreedy.json"
         lambda_ = 0.
-        force=True
+        force = True
     from ncarrara.budgeted_rl.tools.configuration import C
+
     C.load(config_file).create_fresh_workspace(force=force).load_pytorch().load_matplotlib('agg')
     main(lambda_=lambda_,
-         seed = C.seed,
+         seed=C.seed,
          device=C.device,
          workspace=C.path_learn_ftq_egreedy,
          **C.dict["learn_ftq_egreedy"],

@@ -5,8 +5,12 @@ import re
 
 from ncarrara.utils.os import makedirs
 
+import logging
 
-def main(config_file, override_param_grid, f):
+logger = logging.getLogger(__name__)
+
+
+def main(config_file, override_param_grid, override_device_str=None, f=lambda x: print("Hello")):
     with open(config_file, 'r') as infile:
         import json
 
@@ -18,7 +22,9 @@ def main(config_file, override_param_grid, f):
         backend = dict["general"]["matplotlib_backend"]
     else:
         backend = "Agg"
-    C.load_pytorch().load_matplotlib(backend)
+
+    logger.info("override device : {}".format(override_device_str))
+    C.load_pytorch(override_device_str).load_matplotlib(backend)
 
     grid = ParameterGrid(override_param_grid)
 

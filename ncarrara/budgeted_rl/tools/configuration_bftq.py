@@ -7,19 +7,6 @@ class ConfigurationBFTQ(Configuration):
 
     def create_fresh_workspace(self, force=False):
         super(ConfigurationBFTQ, self).create_fresh_workspace(force)
-        # from ncarrara.utils.os import makedirs
-        # makedirs(self.path_bftq)
-        # makedirs(self.path_bftq_results)
-        # makedirs(self.path_ftq)
-        # makedirs(self.path_ftq_results)
-        # makedirs(self.path_hdc)
-        # makedirs(self.path_hdc_results)
-        # makedirs(self.path_dqn)
-        # makedirs(self.path_dqn_results)
-        # makedirs(self.path_bdqn)
-        # makedirs(self.path_bdqn_results)
-        # makedirs(self.path_learn_bftq_egreedy)
-        # makedirs(self.path_learn_ftq_egreedy)
         return self
 
     def load(self, config):
@@ -37,7 +24,7 @@ class ConfigurationBFTQ(Configuration):
         self.path_bftq_egreedy_results = os.path.join(self.workspace, self.id_bftq_egreedy, self.result_folder)
         self.path_ftq_egreedy = os.path.join(self.workspace, self.id_ftq_egreedy)
         self.path_ftq_egreedy_results = os.path.join(self.workspace, self.id_ftq_egreedy, self.result_folder)
-        self.path_ftq_duplicate = os.path.join(self.workspace, self.ftq_duplicate)
+        self.path_ftq_duplicate = os.path.join(self.workspace, self.id_ftq_duplicate)
         self.path_ftq_duplicate_results = os.path.join(self.workspace, self.id_ftq_duplicate, self.result_folder)
 
 

@@ -97,7 +97,7 @@ class Configuration(object):
             self.plt = plt
         return self
 
-    def load_pytorch(self):
+    def load_pytorch(self, override_device_str=None):
 
         # self.logger.warning("we are using: import torch.multiprocessing as multiprocessing")
         # self.logger.warning("we are using: multiprocessing.set_start_method('spawn')")
@@ -111,8 +111,12 @@ class Configuration(object):
         if self.device is not None:
             self.logger.warning("pytorch already loaded")
         else:
-            from ncarrara.utils.torch_utils import get_the_device_with_most_available_memory
-            _device = get_the_device_with_most_available_memory()
+            if override_device_str is not None:
+                import torch
+                _device = torch.device(override_device_str)
+            else:
+                from ncarrara.utils.torch_utils import get_the_device_with_most_available_memory
+                _device = get_the_device_with_most_available_memory()
             self.device = _device
             self.logger.info("DEVICE : {}".format(self.device))
         return self

@@ -116,8 +116,9 @@ if __name__ == "__main__":
     workspace = sys.argv[1]
     palette = itertools.cycle(sns.color_palette())
     algos = {
-        "ftq": [next(palette), r"ftq($\lambda$)"],
-        "bftq": [next(palette), r"bftq($\beta$)"]
+        "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
+        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
+        "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
     }
     data = parse_data(workspace, algos)
     print(data)

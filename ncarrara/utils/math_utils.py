@@ -7,6 +7,7 @@ from ncarrara.utils.os import makedirs
 
 logger = logging.getLogger(__name__)
 
+
 def generate_random_point_on_simplex_not_uniform(coeff, bias, min_x, max_x):
     """
     Warning, this is not uniform sampling. Need to found a way to not favorise the vertex (maybe look at dirichlet distribution)
@@ -40,6 +41,7 @@ def generate_random_point_on_simplex_not_uniform(coeff, bias, min_x, max_x):
     x[last_index] = bias / coeff[last_index]
     return x
 
+
 def to_onehot(vector, max_value):
     rez = [0] * (max_value + 1)
     for i in range(len(vector)):
@@ -47,6 +49,7 @@ def to_onehot(vector, max_value):
         index = i * (max_value + 1) + index
         rez[int(index)] = 1.
     return rez
+
 
 def set_seed(seed, env=None):
     if seed is not None:
@@ -60,9 +63,10 @@ def set_seed(seed, env=None):
             env.seed(seed)
             env.reset()
 
+
 def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
     makedirs(savepath)
-    decays = [np.exp(-n / (1. / decay)) * start for n in range(N)]
+    decays = np.exp(-np.arange(N) / (1. / decay)) * start
     if len(decays) < 10:
         str_decay = ''.join(["{:.2f} ".format(eps) for eps in decays])
     else:
@@ -77,6 +81,7 @@ def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
         plt.close()
     return decays
 
+
 def normalized(a):
     sum = 0.
     for v in a:
@@ -84,8 +89,10 @@ def normalized(a):
     rez = np.array([v / sum for v in a])
     return rez
 
+
 def update_lims(lims, values):
     return min(lims[0], np.amin(values)), max(lims[1], np.amax(values))
+
 
 # TODO check if ok
 def create_arrangements(nb_elements, size_arr, current_size_arr=0, arrs=None):
@@ -105,5 +112,24 @@ def create_arrangements(nb_elements, size_arr, current_size_arr=0, arrs=None):
                                    current_size_arr=current_size_arr + 1,
                                    arrs=new_arrs)
 
+
+def near_split(x, num_bins=None, size_bins=None):
+    """
+        Split a number into several bins with near-even distribution.
+
+        You can either set the number of bins, or their size.
+        The sum of bins always equals the total.
+    :param x: number to split
+    :param num_bins: number of bins
+    :param size_bins: size of bins
+    :return: list of bin sizes
+    """
+    if num_bins:
+        quotient, remainder = divmod(x, num_bins)
+    elif size_bins:
+        return near_split(x, num_bins=int(np.ceil(x / size_bins)))
+    return [quotient + 1] * remainder + [quotient] * (num_bins - remainder)
+
+
 if __name__=="__main__":
-    epsilon_decay(1.0,0.0005,10000,show=True)
+    epsilon_decay(1.0, 0.0005, 10000, show=True)

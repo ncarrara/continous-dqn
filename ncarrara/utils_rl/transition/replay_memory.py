@@ -34,19 +34,19 @@ class Memory(object):
         batch_size = len(self.memory) if batch_size > len(self.memory) else batch_size
         return random.sample(self.memory, batch_size)
 
-    def save_memory(self, path, filename, as_json=True, indent=0):
+    def save_memory(self, path, as_json=True, indent=0):
         self.logger.info("saving memory at {}".format(path))
-        makedirs(path)
+        makedirs(os.path.dirname(path))
         memory = [t._asdict() for t in self.memory]
         if as_json:
-            with open(path + os.path.sep + filename, 'w') as f:
+            with open(path , 'w') as f:
                 if indent > 0:
                     json_str = json.dumps(memory, indent=indent)
                 else:
                     json_str = json.dumps(memory)
                 f.write(json_str)
         else:
-            with open(path + os.path.sep + filename, 'wb') as f:
+            with open(path , 'wb') as f:
                 pickle.dump(memory, f)
 
     def load_memory(self, path, as_json=True):

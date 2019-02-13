@@ -114,7 +114,7 @@
     "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0005
+      "decay": 0.005
     }
   },
   "learn_ftq_duplicate": {

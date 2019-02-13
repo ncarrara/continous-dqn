@@ -67,7 +67,7 @@ def main():
         for sample in trajectory:
             rm.push(*sample)
         if C["create_data"]["handcrafted_greedy_policy"]:
-            pi_greedy = HandcraftedSlotFillingEnv(e=e, safeness=0.5)
+            pi_greedy = HandcraftedSlotFillingEnv(env=e, safeness=0.5)
         else:
             if i > 0 and i % C["create_data"]["trajs_by_ftq_batch"] == 0:
                 transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature,
@@ -85,7 +85,7 @@ def main():
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,
                                  gamma_r=C["gamma"], gamma_c=C["gamma_c"],
-                                 beta=1.0, N_dialogues=100)
+                                 beta=1.0, n_trajectories=100)
     print("greedy results")
     print(urpy.format_results(rez))
 

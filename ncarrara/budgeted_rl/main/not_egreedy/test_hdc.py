@@ -18,10 +18,10 @@ def main(safenesses):
 
     for safeness in safenesses:
         set_seed(C.seed, e)
-        _, results = execute_policy(e, HandcraftedSlotFillingEnv(e=e, safeness=safeness),
+        _, results = execute_policy(e, HandcraftedSlotFillingEnv(env=e, safeness=safeness),
                                     C["gamma"],
                                     C["gamma_c"],
-                                    N_dialogues=C["main"]["N_trajs"],
+                                    n_trajectories=C["main"]["N_trajs"],
                                     save_path="{}/safeness={}.results".format(C.path_hdc_results, safeness)
                                     )
         print("HDC({:.2f}) : {} ".format(safeness, format_results(results)))

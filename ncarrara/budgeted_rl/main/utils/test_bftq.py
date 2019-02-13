@@ -1,11 +1,13 @@
 # coding=utf-8
+import os
+
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import empty_directory, makedirs
 from ncarrara.utils_rl.environments import envs_factory
-from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
+from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy, policy_factory
 import ncarrara.budgeted_rl.tools.utils_run as urpy
 import numpy as np
 
@@ -19,26 +21,17 @@ def main(betas_test, policy_path, generate_envs, feature_str, device,
 
     betas_test = eval(betas_test)
 
-    algo = PytorchBudgetedFittedQ(
-        device=device,
-        workspace=workspace,
-        actions_str=None if not hasattr(e, "action_str") else e.action_str,
-        policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n, **bftq_net_params),
-        gamma=gamma,
-        gamma_c=gamma_c,
-        **bftq_params,
-
-    )
-
-    import os
     if not os.path.isabs(policy_path):
-        actual_policy_path = workspace + "/" +policy_path
-    else:
-        actual_policy_path = policy_path
+        policy_path = workspace + "/" + policy_path
 
-    pi = algo.load_policy(policy_path=actual_policy_path)
-
-    pi = PytorchBudgetedFittedPolicy(pi, e, feature)
+    pi = policy_factory({
+        "__class__": repr(PytorchBudgetedFittedPolicy),
+        "feature_str": feature_str,
+        "network_path": policy_path,
+        "betas_for_discretisation": eval(bftq_params["betas_for_discretisation"]),
+        "device": device,
+        "env": e
+    })
 
     makedirs(path_results)
     for beta in betas_test:

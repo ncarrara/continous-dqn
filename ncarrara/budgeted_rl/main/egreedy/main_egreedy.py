@@ -24,6 +24,7 @@ else:
 
 def main(config):
     if config.has_key("learn_ftq_duplicate"):
+        print("learn_ftq_duplicate")
         workspace = config.path_ftq_duplicate
         learn_ftq_egreedy.main(
             seed=config.seed, device=config.device,
@@ -32,11 +33,13 @@ def main(config):
         )
         lambdas = config.dict["learn_ftq_duplicate"]["lambdas"]
         if type(lambdas) is str:
+
             import numpy as np
             lambdas = eval(lambdas)
         config.dict["learn_ftq_duplicate"]["learn_ftq_full_batch"]["load_memory"]["path"] \
             = workspace + "/" + config.dict["learn_ftq_duplicate"]["learn_ftq_full_batch"]["load_memory"]["path"]
         for lambda_ in lambdas:
+            print("learn_ftq_duplicate, lambda={}".format(lambda_))
             torch.cuda.empty_cache()
             learn_ftq_full_batch.main(
                 lambda_=lambda_,
@@ -48,11 +51,13 @@ def main(config):
     torch.cuda.empty_cache()
 
     if config.has_key("test_ftq_duplicate"):
+        print("test_ftq_duplicate")
         lambdas = config.dict["learn_ftq_duplicate"]["lambdas"]
         if type(lambdas) is str:
             import numpy as np
             lambdas = eval(lambdas)
         for lambda_ in lambdas:
+            print("test_ftq_duplicate, lambda={}".format(lambda_))
             torch.cuda.empty_cache()
             workspace = config.path_ftq_duplicate + "/lambda={}".format(lambda_)
             test_ftq.main(
@@ -63,11 +68,13 @@ def main(config):
             )
     torch.cuda.empty_cache()
     if config.has_key("learn_ftq_egreedy"):
+        print("learn_ftq_egreedy")
         lambdas = config.dict["learn_ftq_egreedy"]["lambdas"]
         if type(lambdas) is str:
             import numpy as np
             lambdas = eval(lambdas)
         for lambda_ in lambdas:
+            print("learn_ftq_egreedy lambda={}".format(lambda_))
             torch.cuda.empty_cache()
             workspace = config.path_ftq_egreedy + "/lambda={}".format(lambda_)
             learn_ftq_egreedy.main(
@@ -77,11 +84,13 @@ def main(config):
             )
     torch.cuda.empty_cache()
     if config.has_key("test_ftq"):
+        print("test_ftq_greedy")
         lambdas = eval(config.dict["learn_ftq_egreedy"]["lambdas"])
         if type(lambdas) is str:
             import numpy as np
             lambdas = eval(lambdas)
         for lambda_ in lambdas:
+            print("test_ftq_greed lambda={}".format(lambda_))
             torch.cuda.empty_cache()
             workspace = config.path_ftq_egreedy + "/lambda={}".format(lambda_)
             test_ftq.main(
@@ -92,6 +101,7 @@ def main(config):
             )
     torch.cuda.empty_cache()
     if config.has_key("learn_bftq_egreedy"):
+        print("learn_bftq_greedy")
         learn_bftq_egreedy.main(
             device=config.device, seed=config.seed,
             workspace=config.path_bftq_egreedy,
@@ -100,6 +110,7 @@ def main(config):
         )
     torch.cuda.empty_cache()
     if config.has_key("test_bftq"):
+        print("test_bftq_greedy")
         test_bftq.main(
             device=config.device, seed=config.seed,
             workspace=config.path_bftq_egreedy,

@@ -101,16 +101,44 @@
     "policy_path": "final_policy.pt",
     "N_trajs": 500
   },
+  "test_ftq_duplicate": {
+    "N_trajs": 500,
+    "policy_path": "policy.pt"
+  },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "lambdas": "[0.,25.,50.,55.,60.,65.,70.,75.,100.,250.,500.]",
   "learn_ftq_egreedy": {
-    "trajs_by_ftq_batch": 500,
+    "lambdas": "np.linspace(0,100,10)",
+    "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
-    "N_trajs": 10000,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.0005
+    }
+  },
+  "learn_ftq_duplicate": {
+    "lambdas": "np.linspace(0,100,10)",
+    "generate_data": {
+      "lambda_": 0.0,
+      "trajs_by_ftq_batch": 1000,
+      "normalize_reward": true,
+      "N_trajs": 10000,
+      "epsilon_decay": {
+        "start": 1.0,
+        "decay": 0.0005
+      },
+      "save_memory": {
+        "path": "samples_for_duplicate.data",
+        "as_json": true
+      }
+    },
+    "learn_ftq_full_batch": {
+      "load_memory": {
+        "path": "samples_for_duplicate.data",
+        "as_json": true
+      },
+      "normalize_reward": true
     }
   },
   "learn_bftq_egreedy": {

@@ -62,11 +62,11 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
 
         dtype = [('Qc', 'f4'), ('Qr', 'f4'), ('beta', 'f4'), ('action', 'i4')]
 
-        path = path + "/interest_points/"
+        if path:
+            path = path + "/interest_points/"
         # print path
         colinearity = False
-        test = False
-        if disp or test:
+        if disp:
             if not os.path.exists(path):
                 os.makedirs(path)
 
@@ -111,7 +111,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
 
             i_beta += 1
 
-        if disp or test:
+        if disp:
             for i_a in range(0, N_OK_actions):  # len(Q_as)):
                 if action_mask[i_a] == 1:
                     pass
@@ -130,7 +130,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 betas.append(all_betas[k])
             k += 1
         points = np.array(points)
-        if disp or test:
+        if disp:
             # plt.plot(points[:, 0], points[:, 1], '-', linewidth=3, color="tab:cyan")
             plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
@@ -184,7 +184,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 if j >= len(hull.vertices):
                     stop = True
 
-        if disp or test:
+        if disp:
             plt.title("interest_points_colinear={}".format(colinearity))
             plt.plot(points[idxs_interest_points, 0], points[idxs_interest_points, 1], 'r--', lw=1, color="red")
             plt.plot(points[idxs_interest_points][:, 0], points[idxs_interest_points][:, 1], 'x', markersize=15,
@@ -216,7 +216,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
     return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id)
 
 
-def convex_hull(s, action_mask, Q, id, disp, betas, device, path=None):
+def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
     hull, colinearity = compute_interest_points_NN(
@@ -895,7 +895,13 @@ class PytorchBudgetedFittedQ:
                     if i_computation % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
                         self.info("hull computed : {}".format(i_computation))
                         # self.track_memory("hull computed : {}".format(i_computation))
-                    hull = self.convexe_hull(s=state.detach(), action_mask=np.zeros(self.N_actions), Q=Q, disp=False)
+                    hull = convex_hull(s=state.detach(),
+                                       action_mask=np.zeros(self.N_actions),
+                                       Q=Q,
+                                       disp=False,
+                                       betas=self.betas_for_discretisation,
+                                       device=self.device,
+                                       path=self.workspace)
                     computed_hulls[hull_id] = hull
                     i_computation += 1
                 hulls[i_s] = hull

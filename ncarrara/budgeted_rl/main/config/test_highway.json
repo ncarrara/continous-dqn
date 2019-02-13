@@ -76,9 +76,9 @@
   },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "lambdas": "[0.,10.]",
 
   "learn_ftq_egreedy": {
+    "lambdas": "[0.,10.]",
     "trajs_by_ftq_batch": 3,
     "normalize_reward": true,
     "N_trajs": 10,
@@ -88,6 +88,7 @@
     }
   },
   "learn_bftq_egreedy": {
+    "lambdas": "[0.,10.]",
     "trajs_by_ftq_batch": 10,
     "normalize_reward": true,
     "N_trajs": 30,

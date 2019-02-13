@@ -5,7 +5,7 @@ class ConfigurationBFTQ(Configuration):
     import logging
     logger = logging.getLogger(__name__)
 
-    def create_fresh_workspace(self,force=False):
+    def create_fresh_workspace(self, force=False):
         super(ConfigurationBFTQ, self).create_fresh_workspace(force)
         # from ncarrara.utils.os import makedirs
         # makedirs(self.path_bftq)
@@ -38,8 +38,12 @@ class ConfigurationBFTQ(Configuration):
         self.path_dqn = self.workspace + "/dqn"
         self.path_bdqn_results = self.workspace + "/bdqn/results"
         self.path_bdqn = self.workspace + "/bdqn"
-        self.path_learn_bftq_egreedy = self.path_bftq + "/learn_bftq_egreedy"
-        self.path_learn_ftq_egreedy = self.path_ftq + "/learn_ftq_egreedy"
+        self.path_learn_bftq_egreedy = self.workspace + "/bftq_egreedy"
+        self.path_learn_bftq_egreedy_results = self.workspace + "/bftq_egreedy/results"
+        self.path_learn_ftq_egreedy = self.workspace + "/ftq_egreedy"
+        self.path_learn_ftq_egreedy_results = self.workspace + "/ftq_egreedy/results"
+        self.path_learn_ftq_duplicate = self.workspace + "/ftq_duplicate"
+        self.path_learn_ftq_duplicate_results = self.workspace + "/ftq_duplicate/results"
 
 
 C = ConfigurationBFTQ()

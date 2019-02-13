@@ -23,7 +23,7 @@
           "handlers": [
             "default"
           ],
-          "level": "INFO",
+          "level": "ERROR",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -108,7 +108,7 @@
   "gamma": 1.0,
   "gamma_c": 1.0,
   "learn_ftq_egreedy": {
-    "lambdas": "np.linspace(0,100,10)",
+    "lambdas": "[0.,10.,20.,30,40.,50.,60.,70.,80.,90.]",
     "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
     "N_trajs": 1000,
@@ -118,7 +118,7 @@
     }
   },
   "learn_ftq_duplicate": {
-    "lambdas": "np.linspace(0,100,10)",
+    "lambdas": "np.concatenate((np.linspace(0,50,11),np.linspace(60,100,5)))",
     "generate_data": {
       "lambda_": 0.0,
       "trajs_by_ftq_batch": 1000,

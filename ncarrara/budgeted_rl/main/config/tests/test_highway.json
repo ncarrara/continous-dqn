@@ -88,12 +88,12 @@
     }
   },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 3,
+    "trajs_by_ftq_batch": 10,
     "normalize_reward": true,
-    "N_trajs": 10,
+    "N_trajs": 30,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.01
+      "decay": 0.06
     },
     "betas_for_exploration": "np.linspace(0.,1.,3)"
   },

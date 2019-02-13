@@ -5,22 +5,6 @@ from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
 from ncarrara.budgeted_rl.main.egreedy import learn_ftq_egreedy, learn_bftq_egreedy, learn_ftq_full_batch
 import sys
 
-seeds = None
-override_device_str = None
-print(sys.argv)
-if len(sys.argv) > 1:
-    config_file = sys.argv[1]
-    if len(sys.argv) > 2:
-        seed_start = int(sys.argv[2])
-        number_seeds = int(sys.argv[3])
-        seeds = range(seed_start, seed_start + number_seeds)
-        if len(sys.argv) > 4:
-            override_device_str = sys.argv[4]
-else:
-    config_file = "../config/test_egreedy.json"
-    C.load(config_file).create_fresh_workspace(force=True)
-    seeds = [0, 1]
-
 
 def main(config):
     if config.has_key("learn_ftq_duplicate"):
@@ -119,8 +103,25 @@ def main(config):
         )
 
 
-override_param_grid = {}
-if seeds is not None:
-    override_param_grid['general.seed'] = seeds
+if __name__ == "__main__":
+    seeds = None
+    override_device_str = None
+    print(sys.argv)
+    if len(sys.argv) > 1:
+        config_file = sys.argv[1]
+        if len(sys.argv) > 2:
+            seed_start = int(sys.argv[2])
+            number_seeds = int(sys.argv[3])
+            seeds = range(seed_start, seed_start + number_seeds)
+            if len(sys.argv) > 4:
+                override_device_str = sys.argv[4]
+    else:
+        config_file = "../config/test_egreedy.json"
+        C.load(config_file).create_fresh_workspace(force=True)
+        seeds = [0, 1]
 
-abstract_main.main(config_file, override_param_grid,override_device_str, main)
+    override_param_grid = {}
+    if seeds is not None:
+        override_param_grid['general.seed'] = seeds
+
+    abstract_main.main(config_file, override_param_grid, override_device_str, main)

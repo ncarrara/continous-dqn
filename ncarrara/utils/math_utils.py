@@ -1,3 +1,5 @@
+import itertools
+
 import numpy as np
 import logging
 import random
@@ -129,6 +131,17 @@ def near_split(x, num_bins=None, size_bins=None):
     elif size_bins:
         return near_split(x, num_bins=int(np.ceil(x / size_bins)))
     return [quotient + 1] * remainder + [quotient] * (num_bins - remainder)
+
+
+def zip_with_singletons(*args):
+    """
+        Zip lists and singletons by repeating singletons
+
+        Behaves usually for lists and repeat other arguments (including other iterables such as tuples np.array!)
+    :param args: arguments to zip x1, x2, .. xn
+    :return: zipped tuples (x11, x21, ..., xn1), ... (x1m, x2m, ..., xnm)
+    """
+    return zip(*(arg if isinstance(arg, list) else itertools.repeat(arg) for arg in args))
 
 
 if __name__=="__main__":

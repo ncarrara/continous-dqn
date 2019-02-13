@@ -2,7 +2,8 @@ import abc
 import numpy as np
 
 
-# from policy.HDCPolicy import HDCPolicy
+from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import convex_hull, optimal_pia_pib
+from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math_utils import generate_random_point_on_simplex_not_uniform
 
 
@@ -188,11 +189,16 @@ class RandomBudgetedPolicy(Policy):
         info["beta"] = beta_
         return a, False, info
 
+
 class PytorchBudgetedFittedPolicy(Policy):
-    def __init__(self, pi, env, feature):
+    def __init__(self, env, feature_str, network_path, betas_for_discretisation, device, **kwargs):
         self.env = env
-        self.feature = feature
-        self.pi = pi
+        self.feature = feature_factory(feature_str)
+        self.betas_for_discretisation = betas_for_discretisation
+        self.device = device
+        self.network = None
+        if network_path:
+            self.load_network(network_path)
 
     def reset(self):
         pass
@@ -201,3 +207,26 @@ class PytorchBudgetedFittedPolicy(Policy):
         a, beta = self.pi(self.feature(s, self.env), info["beta"], action_mask)
         info["beta"] = beta
         return a, False, info
+
+    def load_network(self, network_path):
+        logging.info("loading bftq policy at {}".format(network_path))
+        self.network = torch.load(network_path, map_location=self.device)
+
+    def set_network(self, network):
+        self.network = copy.deepcopy(network)
+
+    def pi(self, state, beta, action_mask):
+        with torch.no_grad():
+            if not type(action_mask) == type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
+            hull = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                               Q=self.network,
+                               action_mask=action_mask,
+                               id="run_" + str(state), disp=False,
+                               betas=self.betas_for_discretisation,
+                               device=self.device)
+            opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
+            rand = np.random.random()
+            a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
+            b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
+            return a, b

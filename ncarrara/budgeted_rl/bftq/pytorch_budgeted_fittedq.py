@@ -216,6 +216,20 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
     return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id)
 
 
+def convex_hull(s, action_mask, Q, id, disp, betas, device, path=None):
+    if not type(action_mask) == type(np.zeros(1)):
+        action_mask = np.asarray(action_mask)
+    hull, colinearity = compute_interest_points_NN(
+        s=s,
+        Q=Q,
+        action_mask=action_mask,
+        betas=betas,
+        device=device,
+        disp=disp,
+        path=path,
+        id=id)
+    return hull
+
 def optimal_pia_pib(beta, hull, statistic):
     with torch.no_grad():
         # print(beta)
@@ -541,10 +555,13 @@ class PytorchBudgetedFittedQ:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                        _ = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                              Q=self._policy_network,
-                                              action_mask=np.zeros(self.N_actions),
-                                              id="next_state_" + id, disp=True)
+                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                        Q=self._policy_network,
+                                        action_mask=np.zeros(self.N_actions),
+                                        id="next_state_" + id, disp=True,
+                                        betas=self.betas_for_discretisation,
+                                        device=self.device,
+                                        path=self.workspace)
                 for i_s in dispstateidsrand:
                     # i_s = 52
                     state = self.disp_states[i_s]
@@ -553,15 +570,16 @@ class PytorchBudgetedFittedQ:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
 
-                        _ = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                              Q=self._policy_network,
-                                              action_mask=np.zeros(self.N_actions),
-                                              id="state_final_hulls_" + id, disp=True)
+                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                        Q=self._policy_network,
+                                        action_mask=np.zeros(self.N_actions),
+                                        id="next_state_" + id, disp=True,
+                                        betas=self.betas_for_discretisation,
+                                        device=self.device,
+                                        path=self.workspace)
             self._id_ftq_epoch += 1
 
-        pi = self.build_policy(self._policy_network)
-
-        return pi
+        return self._policy_network
 
     def empty_cache(self):
         memoire_before = get_memory_for_pid(os.getpid())
@@ -648,34 +666,9 @@ class PytorchBudgetedFittedQ:
             policy_path = self.workspace + "/policy.pt"
         self.info("saving bftq policy at {}".format(policy_path))
         torch.save(self._policy_network, policy_path)
+        return policy_path
 
-    def load_policy(self, policy_path=None):
 
-        if policy_path is None:
-            policy_path = self.workspace + "/policy.pt"
-        self.info("loading bftq policy at {}".format(policy_path))
-        network = torch.load(policy_path, map_location=self.device)
-        pi = self.build_policy(network)
-        return pi
-
-    def build_policy(self, network):
-        final_network = copy.deepcopy(network)
-
-        def pi(state, beta, action_mask):
-            with torch.no_grad():
-                if not type(action_mask) == type(np.zeros(1)):
-                    action_mask = np.asarray(action_mask)
-                hull = self.convexe_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                         Q=final_network,
-                                         action_mask=action_mask,
-                                         id="run_" + str(state), disp=False)
-                opt = optimal_pia_pib(beta=beta, hull=hull, statistic={})
-                rand = np.random.random()
-                a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
-                b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup
-                return a, b
-
-        return pi
 
     def _is_terminal_state(self, state):
         isnan = torch.sum(torch.isnan(state)) == self.size_state
@@ -796,7 +789,7 @@ class PytorchBudgetedFittedQ:
             self.info("computing delta ...")
             # no need gradient just for computing delta ....
             if self.use_data_loader:
-                logger.warning("<<< We are not computing delta >>>")
+                logger.warning("--- We are not computing delta ---")
                 self.delta = np.inf
             else:
                 self.delta = self._compute_loss(sb_batch, a_batch, label_r, label_c, with_weight=False).detach().item()
@@ -884,20 +877,6 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-    def convexe_hull(self, s, action_mask, Q, disp, id="default"):
-        with torch.no_grad():
-            if not type(action_mask) == type(np.zeros(1)):
-                action_mask = np.asarray(action_mask)
-            hull, colinearity = compute_interest_points_NN(
-                s=s,
-                Q=Q,
-                action_mask=action_mask,
-                betas=self.betas_for_discretisation,
-                device=self.device,
-                disp=disp,
-                path=self.workspace,
-                id=id)
-            return hull
 
     def compute_hulls(self, ns_batch, h_batch, Q):
         with torch.no_grad():

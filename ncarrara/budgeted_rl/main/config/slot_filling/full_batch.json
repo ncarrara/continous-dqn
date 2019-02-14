@@ -97,7 +97,7 @@
   "test_bftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 500,
-    "betas_test": "np.linspace(0.,0.5,101))"
+    "betas_test": "np.linspace(0.,0.5,101)"
   },
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 10000,
@@ -111,7 +111,7 @@
   },
   "bftq_params": {
     "use_compute_hull_parallel": {
-      "pool": 2
+      "pool": null
     },
     "use_data_loader": false,
     "use_data_parallel": false,

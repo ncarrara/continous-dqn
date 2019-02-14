@@ -356,6 +356,7 @@ class PytorchBudgetedFittedQ:
         if not self.use_data_parallel:
             self.devices = [self.device]
         else:
+            raise Exception("""Not really working. Must debug model saving and loading.""")
             logger.info("Main device : {}", self.device)
             # device_ids = [self.device.index]
             device_ids = [self.device.index]

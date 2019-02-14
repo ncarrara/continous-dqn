@@ -83,7 +83,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         # bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
         # sb = torch.cat((ss,bb),dim=2)
         # Qsb = Q(sb)
-        for ibeta,beta in enumerate(betas):
+        for ibeta, beta in enumerate(betas):
 
             # b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
             # sb = torch.cat((s.float(), b_), 1)
@@ -208,6 +208,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         # print rez
         return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
 
+
 def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
     ss = s.repeat((len(betas), 1, 1))
     bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
@@ -238,6 +239,7 @@ def optimal_pia_pib(beta, hull, statistic):
         if len(hull) == 0:
             raise Exception("Hull is empty")
         elif len(hull) == 1:
+            # print(hull)
             Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
             res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
             if beta == Qc_inf:
@@ -524,8 +526,18 @@ class PytorchBudgetedFittedQ:
         self.info("[_construct_batch] nb reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))
         self.info("[_construct_batch] constructing batch ... end {}")
         self.track_memory("_construct_batch (end)")
+
+        unique_hull_to_compute = []
+        hull_ids = []
+        for idx_in_batch, hull_id in enumerate(hull_id_batch):
+            hull_id = hull_id.item()
+            if hull_id not in hull_ids and not self._is_terminal_state(next_state_batch[idx_in_batch]):
+                unique_hull_to_compute.append([hull_id, idx_in_batch])
+                hull_ids.append(hull_id)
+        unique_hull_to_compute = np.array(unique_hull_to_compute)
+
         return state_beta_batch, state_batch, action_batch, reward_batch, \
-               constraint_batch, next_state_batch, hull_id_batch, beta_batch
+               constraint_batch, next_state_batch, hull_id_batch, beta_batch, unique_hull_to_compute
 
     def getsizeof(self, a, name):
         self.info("size {} : [{}{}{}]".format(name, Color.BOLD, getsizeof(a), Color.END))
@@ -536,7 +548,8 @@ class PytorchBudgetedFittedQ:
         self.info("[fit] reseting network ...")
         self.reset_network()
 
-        sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch = self._construct_batch(transitions)
+        sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute = self._construct_batch(
+            transitions)
         if logger.getEffectiveLevel() <= logging.DEBUG:
             dispstateidsrand = np.random.random_integers(0, len(self.disp_states) - 1, 10)
         self.delta = np.inf
@@ -545,7 +558,7 @@ class PytorchBudgetedFittedQ:
             # cpuStats()
             # memReport()
             self.info("-------------------------")
-            _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch)
+            _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute)
             self.info("delta={}".format(self.delta))
             if logger.getEffectiveLevel() <= logging.DEBUG:
                 for i_s in dispstateidsrand:
@@ -587,12 +600,12 @@ class PytorchBudgetedFittedQ:
         memoire_after = get_memory_for_pid(os.getpid())
         self.info("empty cache {} -> {}".format(self.format_memory(memoire_before), self.format_memory(memoire_after)))
 
-    def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch):
+    def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute):
         self.track_memory("ftq_epoch")
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
             if self._id_ftq_epoch > 0:
-                hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network)
+                hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network, unique_hull_to_compute)
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
                 self.info("Q next")
                 self.track_memory("Q_next")
@@ -868,37 +881,52 @@ class PytorchBudgetedFittedQ:
         return loss.detach().item()
 
 
-    def compute_hulls(self, ns_batch, h_batch, Q):
+    def compute_hulls(self, ns_batch, h_batch, Q, unique_hull_to_compute):
         with torch.no_grad():
             self.track_memory("compute hulls")
             self.info("computing hulls ...")
-            hulls = np.array([None] * len(ns_batch))
+
             i_computation = 0
 
-            computed_hulls = np.array([None] * self.nb_unique_hull_to_compute)
-            for i_s, state in enumerate(ns_batch):
+            ns_batch_unique = ns_batch[unique_hull_to_compute[:, 1]]
+            ss = ns_batch_unique \
+                .squeeze() \
+                .repeat((1, len(self.betas_for_discretisation))) \
+                .reshape(-1) \
+                .reshape((len(ns_batch_unique) * len(self.betas_for_discretisation), self.size_state))
+            bb = torch.from_numpy(self.betas_for_discretisation).float().unsqueeze(1).to(device=self.device)
+            bb = bb.repeat((len(ns_batch_unique), 1))
+            sb = torch.cat((ss, bb), dim=1)
+            sb = sb.unsqueeze(1)
+            Qsb = Q(sb)
 
-                hull_id = h_batch[i_s]
-                hull = computed_hulls[hull_id]
-                if hull is None and not self._is_terminal_state(state):
+            computed_hulls = np.array([None] * len(ns_batch_unique))
+            for i_ns_unique in range(len(ns_batch_unique)):
+                if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
+                    self.info("hull computed : {}".format(i_ns_unique))
+                hull, _ = compute_interest_points_NN_Qsb(
+                    Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                    action_mask=np.zeros(self.N_actions),
+                    betas=self.betas_for_discretisation,
+                    disp=False,
+                    path=self.workspace)
+                computed_hulls[i_ns_unique] = hull
 
-                    if i_computation % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-                        self.info("hull computed : {}".format(i_computation))
-                        # self.track_memory("hull computed : {}".format(i_computation))
-                    hull = convex_hull(s=state.detach(),
-                                       action_mask=np.zeros(self.N_actions),
-                                       Q=Q,
-                                       disp=False,
-                                       betas=self.betas_for_discretisation,
-                                       device=self.device,
-                                       path=self.workspace)
-                    computed_hulls[hull_id] = hull
-                    i_computation += 1
-                hulls[i_s] = hull
-                # if i_s % np.ceil(len(ns_batch) / 10) == 0 or i_s == len(ns_batch) - 1:
-                #     self.track_memory("i_s : {}".format(i_s))
+            hulls = np.array([None] * len(ns_batch))
 
-
+            # dict_unique_hll_top_compute = collections.OrderedDict(unique_hull_to_compute)
+            hull_ids = unique_hull_to_compute[:, 0]
+            for i_ns, state in enumerate(ns_batch):
+                hull_id = h_batch[i_ns].item()
+                i_ns_unique = np.where(hull_ids == hull_id)
+                hull = computed_hulls[i_ns_unique]
+                if len(hull) <=0 :
+                    pass # ca veut dire que c'est un etat None terminal
+                elif len(hull) > 1:
+                    raise Exception("Number of unique hulls hull_ids should not be > 1")
+                else:
+                    hull = hull[0]
+                hulls[i_ns] = hull
 
             self.track_memory("compute_hull (end boucle)")
             self.info("hulls actually computed : {}".format(i_computation))

@@ -55,13 +55,15 @@ def cpuStats():
 
 def f(params):
     Qsb_, action_mask, betas_for_discretisation, path = params
-    hull, _ = compute_interest_points_NN_Qsb(
-        Qsb=Qsb_,
-        action_mask=action_mask,
-        betas=betas_for_discretisation,
-        disp=False,
-        path=path)
-    return hull
+    # hull, _ = compute_interest_points_NN_Qsb(
+    #     Qsb=Qsb_,
+    #     action_mask=action_mask,
+    #     betas=betas_for_discretisation,
+    #     disp=False,
+    #     path=path)
+
+    print(params)
+    return 0  # hull
 
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
@@ -130,10 +132,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             k += 1
         points = np.array(points)
         if disp:
-            # plt.plot(points[:, 0], points[:, 1], '-', linewidth=3, color="tab:cyan")
             plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
-            #
             plt.grid()
         try:
             hull = ConvexHull(points)
@@ -901,56 +901,55 @@ class PytorchBudgetedFittedQ:
             # TODO parralelise this part
             self.info("actually computing hulls")
             if self.use_compute_hull_parallel is not None:
+                # args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                #          np.zeros(self.N_actions),
+                #          self.betas_for_discretisation,
+                #          self.workspace) for i_ns_unique in range(len(ns_batch_unique))
+                #         ]
+                args = [i for i in range(len(ns_batch_unique))]
 
                 with Pool(self.use_compute_hull_parallel["pool"]) as p:
-                    computed_hulls = p.map(f,
-                                           [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                                             np.zeros(self.N_actions),
-                                             self.betas_for_discretisation,
-                                             self.workspace) for i_ns_unique in range(len(ns_batch_unique))
-                                            ])
+                    computed_hulls = p.map(f, args)
+                    hulls = np.array([None] * len(ns_batch))
 
-            else:
-                computed_hulls = np.array([None] * len(ns_batch_unique))
-                for i_ns_unique in range(len(ns_batch_unique)):
-                    if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-                        self.info("hull computed : {}".format(i_ns_unique))
-                    hull, _ = compute_interest_points_NN_Qsb(
-                        Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                        action_mask=np.zeros(self.N_actions),
-                        betas=self.betas_for_discretisation,
-                        disp=False,
-                        path=self.workspace)
-                    computed_hulls[i_ns_unique] = hull
+                    # dict_unique_hll_top_compute = collections.OrderedDict(unique_hull_to_compute)
+                    hull_ids = unique_hull_to_compute[:, 0]
+                    for i_ns, state in enumerate(ns_batch):
+                        hull_id = h_batch[i_ns].item()
+                        i_ns_unique = np.where(hull_ids == hull_id)
+                        i_ns_unique = i_ns_unique[0]
+
+                        if len(i_ns_unique) <= 0:
+                            pass  # ca veut dire que c'est un etat None terminal
+                        elif len(i_ns_unique) > 1:
+                            raise Exception("Number of unique hulls hull_ids should not be > 1")
+                        else:
+                            i_ns_unique = i_ns_unique[0]
+                            hull = computed_hulls[i_ns_unique]
+
+                            hulls[i_ns] = hull
+                    self.track_memory("compute_hull (end boucle)")
+                    self.info("hulls actually computed : {}".format(len(computed_hulls)))
+                    self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
+                    self.info("computing hulls [DONE] ")
+                    self.empty_cache()
+                    self.track_memory("compute hulls (end)")
+                    return hulls
+
+            # else:
+            #     computed_hulls = np.array([None] * len(ns_batch_unique))
+            #     for i_ns_unique in range(len(ns_batch_unique)):
+            #         if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
+            #             self.info("hull computed : {}".format(i_ns_unique))
+            #         hull, _ = compute_interest_points_NN_Qsb(
+            #             Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+            #             action_mask=np.zeros(self.N_actions),
+            #             betas=self.betas_for_discretisation,
+            #             disp=False,
+            #             path=self.workspace)
+            #         computed_hulls[i_ns_unique] = hull
 
             # DONE parralelisation
-
-            hulls = np.array([None] * len(ns_batch))
-
-            # dict_unique_hll_top_compute = collections.OrderedDict(unique_hull_to_compute)
-            hull_ids = unique_hull_to_compute[:, 0]
-            for i_ns, state in enumerate(ns_batch):
-                hull_id = h_batch[i_ns].item()
-                i_ns_unique = np.where(hull_ids == hull_id)
-                i_ns_unique = i_ns_unique[0]
-
-                if len(i_ns_unique) <= 0:
-                    pass  # ca veut dire que c'est un etat None terminal
-                elif len(i_ns_unique) > 1:
-                    raise Exception("Number of unique hulls hull_ids should not be > 1")
-                else:
-                    i_ns_unique = i_ns_unique[0]
-                    hull = computed_hulls[i_ns_unique]
-
-                    hulls[i_ns] = hull
-
-            self.track_memory("compute_hull (end boucle)")
-            self.info("hulls actually computed : {}".format(len(computed_hulls)))
-            self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
-            self.info("computing hulls [DONE] ")
-            self.empty_cache()
-            self.track_memory("compute hulls (end)")
-            return hulls
 
     def draw_Qr_and_Qc(self, s, Q, id):
         with torch.no_grad():

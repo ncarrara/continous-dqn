@@ -111,8 +111,6 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None, l
     cols=[]
     hats =[]
     for i,lab in enumerate(labels):
-        # print("---------------------")
-        # print(lab)
         cols.append(colors[i%len(colors)])
         hats.append(hatchs[i%len(hatchs)])
 

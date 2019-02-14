@@ -82,7 +82,7 @@ class PytorchBudgetedDQN():
         self.target_net = copy.deepcopy(self.policy_net)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
-        print(self.optimizer_params)
+        # print(self.optimizer_params)
         self.optimizer = optimizer_factory(params=self.policy_net.parameters(), **self.optimizer_params)
         self.i_episode = 0
         self.current_hull_id = 0

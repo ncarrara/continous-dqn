@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import gc
+from multiprocessing import Pool
 
 import psutil
 import sys
@@ -52,19 +53,27 @@ def cpuStats():
     print('memory GB:', memoryUse)
 
 
+def f(params):
+    Qsb_, action_mask, betas_for_discretisation, path = params
+    hull, _ = compute_interest_points_NN_Qsb(
+        Qsb=Qsb_,
+        action_mask=action_mask,
+        betas=betas_for_discretisation,
+        disp=False,
+        path=path)
+    return hull
+
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
-        # print betas
         N_OK_actions = int(len(action_mask) - np.sum(action_mask))
 
         dtype = [('Qc', 'f4'), ('Qr', 'f4'), ('beta', 'f4'), ('action', 'i4')]
 
         if path:
             path = path + "/interest_points/"
-        # print path
         colinearity = False
         if disp:
             if not os.path.exists(path):
@@ -79,17 +88,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         x = np.zeros((N_OK_actions, len(betas)))
         y = np.zeros((N_OK_actions, len(betas)))
         i_beta = 0
-        # ss = s.repeat((len(betas),1,1)) #.squeeze() #torch.full(size=(len(betas)),value=s,device=device)
-        # bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
-        # sb = torch.cat((ss,bb),dim=2)
-        # Qsb = Q(sb)
         for ibeta, beta in enumerate(betas):
-
-            # b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
-            # sb = torch.cat((s.float(), b_), 1)
-            # sb = sb.unsqueeze(0)
-            # QQ = Q(sb)[0]
-            # QQ = QQ.cpu().detach().numpy()
             QQ = Qsb[ibeta]
             for i_a, mask in enumerate(action_mask):
                 i_a_ok_act = 0
@@ -205,7 +204,6 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             rez = np.sort(rez, order="Qc")
         else:
             rez = np.flip(rez, 0)  # normalement si ya pas colinearité c'est deja trié dans l'ordre decroissant
-        # print rez
         return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
 
 
@@ -231,15 +229,12 @@ def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default")
         id=id)
     return hull
 
+
 def optimal_pia_pib(beta, hull, statistic):
     with torch.no_grad():
-        # print(beta)
-        # exit()
-        # statistic["len_hull"] = len(hull)
         if len(hull) == 0:
             raise Exception("Hull is empty")
         elif len(hull) == 1:
-            # print(hull)
             Qc_inf, Qr_inf, beta_inf, action_inf = hull[0]
             res = OptimalPolicy(action_inf, 0, 1., 0., beta_inf, 0.)
             if beta == Qc_inf:
@@ -310,9 +305,11 @@ class PytorchBudgetedFittedQ:
                  use_data_loader=False,
                  use_data_parallel=False,
                  use_extra_gpu_memory_threshold=0,
-                 maximum_number_of_gpu=1
+                 maximum_number_of_gpu=1,
+                 use_compute_hull_parallel=None
 
                  ):
+        self.use_compute_hull_parallel = use_compute_hull_parallel
         self.memory_tracking = []
         # self.track_memory("init")
         self.state_to_unique_str = state_to_unique_str
@@ -399,7 +396,7 @@ class PytorchBudgetedFittedQ:
             raise Exception("unknow loss_c {}".format(self.loss_function_c))
 
         self.min_print_q = -0.1
-        self.max_print_q = 1
+        self.max_print_q = 1.1
         self.reset()
         self.track_memory("__init__ (end)")
 
@@ -671,8 +668,6 @@ class PytorchBudgetedFittedQ:
         torch.save(self._policy_network, policy_path)
         return policy_path
 
-
-
     def _is_terminal_state(self, state):
         isnan = torch.sum(torch.isnan(state)) == self.size_state
         return isnan
@@ -880,14 +875,14 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-
     def compute_hulls(self, ns_batch, h_batch, Q, unique_hull_to_compute):
         with torch.no_grad():
             self.track_memory("compute hulls")
             self.info("computing hulls ...")
+            self.info("forward pass of all nextstate/beta_duplication")
 
-            i_computation = 0
-
+            # gather all s,beta to compute in one foward pass (may increase the pic of memory used temporary)
+            # but essential for multiprocessing hull computing bellow
             ns_batch_unique = ns_batch[unique_hull_to_compute[:, 1]]
             ss = ns_batch_unique \
                 .squeeze() \
@@ -898,19 +893,37 @@ class PytorchBudgetedFittedQ:
             bb = bb.repeat((len(ns_batch_unique), 1))
             sb = torch.cat((ss, bb), dim=1)
             sb = sb.unsqueeze(1)
+            self.track_memory("Qsb (compute_hull) ")
             Qsb = Q(sb)
+            self.track_memory("Qsb (compute_hull) (end)")
+            Qsb = Qsb.detach().cpu()
 
-            computed_hulls = np.array([None] * len(ns_batch_unique))
-            for i_ns_unique in range(len(ns_batch_unique)):
-                if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-                    self.info("hull computed : {}".format(i_ns_unique))
-                hull, _ = compute_interest_points_NN_Qsb(
-                    Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                    action_mask=np.zeros(self.N_actions),
-                    betas=self.betas_for_discretisation,
-                    disp=False,
-                    path=self.workspace)
-                computed_hulls[i_ns_unique] = hull
+            # TODO parralelise this part
+            self.info("actually computing hulls")
+            if self.use_compute_hull_parallel is not None:
+
+                with Pool(self.use_compute_hull_parallel["pool"]) as p:
+                    computed_hulls = p.map(f,
+                                           [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                                             np.zeros(self.N_actions),
+                                             self.betas_for_discretisation,
+                                             self.workspace) for i_ns_unique in range(len(ns_batch_unique))
+                                            ])
+
+            else:
+                computed_hulls = np.array([None] * len(ns_batch_unique))
+                for i_ns_unique in range(len(ns_batch_unique)):
+                    if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
+                        self.info("hull computed : {}".format(i_ns_unique))
+                    hull, _ = compute_interest_points_NN_Qsb(
+                        Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                        action_mask=np.zeros(self.N_actions),
+                        betas=self.betas_for_discretisation,
+                        disp=False,
+                        path=self.workspace)
+                    computed_hulls[i_ns_unique] = hull
+
+            # DONE parralelisation
 
             hulls = np.array([None] * len(ns_batch))
 
@@ -919,17 +932,20 @@ class PytorchBudgetedFittedQ:
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
                 i_ns_unique = np.where(hull_ids == hull_id)
-                hull = computed_hulls[i_ns_unique]
-                if len(hull) <=0 :
-                    pass # ca veut dire que c'est un etat None terminal
-                elif len(hull) > 1:
+                i_ns_unique = i_ns_unique[0]
+
+                if len(i_ns_unique) <= 0:
+                    pass  # ca veut dire que c'est un etat None terminal
+                elif len(i_ns_unique) > 1:
                     raise Exception("Number of unique hulls hull_ids should not be > 1")
                 else:
-                    hull = hull[0]
-                hulls[i_ns] = hull
+                    i_ns_unique = i_ns_unique[0]
+                    hull = computed_hulls[i_ns_unique]
+
+                    hulls[i_ns] = hull
 
             self.track_memory("compute_hull (end boucle)")
-            self.info("hulls actually computed : {}".format(i_computation))
+            self.info("hulls actually computed : {}".format(len(computed_hulls)))
             self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
             self.info("computing hulls [DONE] ")
             self.empty_cache()
@@ -947,9 +963,7 @@ class PytorchBudgetedFittedQ:
             yr = np.zeros((len(betas), self.N_actions))
             yc = np.zeros((len(betas), self.N_actions))
             for idx, beta in enumerate(betas):
-                # print( s
                 qrqc = Q(torch.tensor([[np.append(s, beta)]], device=self.device).float()).cpu().detach().numpy()
-                # print( qrqc
                 yr[idx] = qrqc[0][:self.N_actions]
                 yc[idx] = qrqc[0][self.N_actions:]
 

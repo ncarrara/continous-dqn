@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "run2",
+    "id": "test_full",
     "seed": 0,
-    "workspace": "tmp/run2",
+    "workspace": "tmp/test_full",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -23,7 +23,7 @@
           "handlers": [
             "default"
           ],
-          "level": "DEBUG",
+          "level": "INFO",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -92,38 +92,36 @@
       ]
     }
   },
-  "gamma": 1.0,
-  "gamma_c": 1.0,
   "test_bftq": {
     "policy_path": "final_policy.pt",
-    "N_trajs": 500,
-    "betas_test": "np.linspace(0.,0.5,101))"
+    "N_trajs": 5,
+    "betas_test": "np.concatenate((np.linspace(0.,0.5,2),np.linspace(0.6,1.,2)))"
   },
+  "gamma": 1.0,
+  "gamma_c": 1.0,
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1000,
+    "trajs_by_ftq_batch": 5,
     "normalize_reward": true,
-    "N_trajs": 10000,
+    "N_trajs": 10,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.0005
     },
-    "betas_for_exploration": "np.array([])"
+    "betas_for_exploration": "[]"
   },
   "bftq_params": {
-    "use_compute_hull_parallel": {
-      "pool": 25
-    },
+    "use_compute_hull_parallel": false,
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,51)",
-    "betas_for_duplication": "np.array([])",
+    "betas_for_discretisation": "np.linspace(0.,1.,2)",
+    "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 5000,
+    "max_nn_epoch": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 10,
+    "max_ftq_epoch": 2,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -137,21 +135,19 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 2,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
-      128,
-      64
+      16
     ]
   },
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 5000,
+    "max_nn_epoch": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch": 2,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -162,9 +158,7 @@
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      128,
-      64,
-      32
+      16
     ]
   }
 }

@@ -60,7 +60,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     # Main loop
     for batch, batch_size in enumerate(batch_sizes):
         # Prepare workers
-        cpu_processes = min(general["cpu"]["processes"] or os.cpu_count(), batch_size)
+        cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), batch_size)
         workers_n_trajectories = near_split(batch_size, cpu_processes)
         workers_start = np.cumsum(workers_n_trajectories)
         workers_traj_indexes = [np.arange(*times) for times in zip(np.insert(workers_start[:-1], 0, 0), workers_start)]
@@ -83,8 +83,13 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                                                   general["dictConfig"]))
         # Collect trajectories
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
-        with Pool(processes=cpu_processes) as pool:
-            results = pool.starmap(execute_policy_from_config, workers_params)
+        if cpu_processes ==1:
+            # print(workers_params[0])
+            # exit()
+            results = [execute_policy_from_config(*workers_params[0])]
+        else:
+            with Pool(processes=cpu_processes) as pool:
+                results = pool.starmap(execute_policy_from_config, workers_params)
         i_traj += sum([len(trajectories) for trajectories, _ in results])
 
         # Fill memory

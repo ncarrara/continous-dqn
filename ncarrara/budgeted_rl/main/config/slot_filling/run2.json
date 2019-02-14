@@ -2,6 +2,10 @@
   "general": {
     "id": "run2",
     "seed": 0,
+    "cpu": {
+      "processes": null,
+      "processes_when_linked_with_gpu": 1
+    },
     "workspace": "tmp/run2",
     "dictConfig": {
       "version": 1,
@@ -99,10 +103,6 @@
     "N_trajs": 500,
     "betas_test": "np.linspace(0.,0.5,101))"
   },
-<<<<<<< HEAD
-
-=======
->>>>>>> multicpu_convexehulls
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 1000,
     "normalize_reward": true,
@@ -111,33 +111,20 @@
       "start": 1.0,
       "decay": 0.0005
     },
-<<<<<<< HEAD
-    "betas_for_exploration": "[]"
-  },
-  "bftq_params": {
-=======
     "betas_for_exploration": "np.array([])"
   },
   "bftq_params": {
-    "use_compute_hull_parallel": {
-      "pool": 25
-    },
->>>>>>> multicpu_convexehulls
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
     "betas_for_discretisation": "np.linspace(0.,1.,51)",
-<<<<<<< HEAD
-    "betas_for_duplication": "[]",
-=======
     "betas_for_duplication": "np.array([])",
->>>>>>> multicpu_convexehulls
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 10,
+    "max_ftq_epoch": 1,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -165,7 +152,7 @@
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch": 10,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,

@@ -46,7 +46,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     # Prepare learning
     i_traj = 0
     decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
-    betas_for_exploration = eval(betas_for_exploration)
+    betas_for_exploration = np.array(eval(betas_for_exploration))
     memory_by_batch = [get_current_memory()]
     batch_sizes = near_split(N_trajs, size_bins=trajs_by_ftq_batch)
     pi_epsilon_greedy_config = {

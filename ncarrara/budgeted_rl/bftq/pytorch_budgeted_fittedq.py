@@ -21,7 +21,7 @@ from sys import getsizeof
 from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
 from ncarrara.utils.color import Color
-from ncarrara.utils.math_utils import update_lims
+from ncarrara.utils.math_utils import update_lims, near_split
 from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
@@ -54,16 +54,16 @@ def cpuStats():
 
 
 def f(params):
-    # Qsb_, action_mask, betas_for_discretisation, path = params
-    # hull, _ = compute_interest_points_NN_Qsb(
-    #     Qsb=Qsb_,
-    #     action_mask=action_mask,
-    #     betas=betas_for_discretisation,
-    #     disp=False,
-    #     path=path)
+    Qsb_, action_mask, betas_for_discretisation, path = params
+    hull, _ = compute_interest_points_NN_Qsb(
+        Qsb=Qsb_,
+        action_mask=action_mask,
+        betas=betas_for_discretisation,
+        disp=False,
+        path=path)
 
-    print(params)
-    return 0  # hull
+    # print(params)
+    return hull
 
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
@@ -309,7 +309,7 @@ class PytorchBudgetedFittedQ:
                  use_compute_hull_parallel=None
 
                  ):
-        self.use_compute_hull_parallel = use_compute_hull_parallel
+
         self.memory_tracking = []
         # self.track_memory("init")
         self.state_to_unique_str = state_to_unique_str
@@ -340,6 +340,7 @@ class PytorchBudgetedFittedQ:
 
         self._policy_network = policy_network
         self.size_state = self._policy_network.size_state
+        self.use_compute_hull_parallel = use_compute_hull_parallel
         self.use_data_parallel = use_data_parallel
         self.use_data_loader = use_data_loader
         if self.use_data_loader:
@@ -348,8 +349,7 @@ class PytorchBudgetedFittedQ:
         if not self.use_data_parallel:
             self.devices = [self.device]
         else:
-
-            logger.info("Main device : ", self.device)
+            logger.info("Main device : {}", self.device)
             # device_ids = [self.device.index]
             device_ids = [self.device.index]
             memory_map = get_gpu_memory_map()
@@ -894,19 +894,34 @@ class PytorchBudgetedFittedQ:
             sb = torch.cat((ss, bb), dim=1)
             sb = sb.unsqueeze(1)
             self.track_memory("Qsb (compute_hull) ")
-            Qsb = Q(sb)
+            num_bins = 5
+            batch_sizes = near_split(x=len(sb), num_bins=num_bins)
+            y = []
+            self.info("Splitting x in minibatch to avoid out of memory")
+            self.info("Batch sizes : {}".format(batch_sizes))
+            offset = 0
+            for i in range(num_bins):
+                self.info("mini batch {}".format(i))
+                self.track_memory("mini_batch={}".format(i))
+                mini_batch = sb[offset:offset+batch_sizes[i]]
+                # print(mini_batch.shape)
+                offset += batch_sizes[i]
+                y.append(Q(mini_batch))
+                torch.cuda.empty_cache()
+            Qsb = torch.cat(y)
+            # Qsb = Q(sb)
             self.track_memory("Qsb (compute_hull) (end)")
-            Qsb = Qsb.detach().cpu()
+            Qsb = Qsb.detach().cpu().numpy()
 
             # TODO parralelise this part
             self.info("actually computing hulls")
             if self.use_compute_hull_parallel is not None:
-                # args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                #          np.zeros(self.N_actions),
-                #          self.betas_for_discretisation,
-                #          self.workspace) for i_ns_unique in range(len(ns_batch_unique))
-                #         ]
-                args = [i for i in range(len(ns_batch_unique))]
+                args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                         np.zeros(self.N_actions),
+                         self.betas_for_discretisation,
+                         self.workspace) for i_ns_unique in range(len(ns_batch_unique))
+                        ]
+                # args = [i for i in range(len(ns_batch_unique))]
 
                 with Pool(self.use_compute_hull_parallel["pool"]) as p:
                     computed_hulls = p.map(f, args)

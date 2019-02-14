@@ -229,6 +229,11 @@ def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default")
         id=id)
     return hull
 
+def optimal_pia_pib_parralle(args):
+    if args is None:
+        return None
+    else:
+        return optimal_pia_pib(*args)
 
 def optimal_pia_pib(beta, hull, statistic):
     with torch.no_grad():
@@ -680,8 +685,7 @@ class PytorchBudgetedFittedQ:
             next_state_beta = torch.zeros((self.size_batch * 2, 1, self.size_state + 1),
                                           device=self.device)
             self.info("after zeros (for next_state_betas)")
-            i = 0
-            opts = [None] * self.size_batch
+            # opts = [None] * self.size_batch
 
             status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
             len_hull = 0
@@ -689,8 +693,22 @@ class PytorchBudgetedFittedQ:
             self.info("before zip")
             zipped = zip(ns_batch, b_batch, h_batch)
             self.info("after zip")
-            for next_state, beta, hull_id in zipped:
 
+            args = []
+            i= 0
+            for next_state, beta, hull_id in zipped:
+                if self._is_terminal_state(next_state):
+                    args.append(None)
+                else:
+                    beta = beta.detach().item()
+                    args.append((beta, hulls[i], {}))
+                i+=1
+            self.info("computing optimal_pia_pib in parralle ...")
+            with Pool(self.use_compute_hull_parallel["pool"]) as p:
+                opts = p.map(optimal_pia_pib_parralle, args)
+
+            i=0
+            for next_state, beta, hull_id in zipped:
                 stats = {}
                 if i % np.ceil((self.size_batch / 5)) == 0:
                     self.info("[_ftq_epoch] processing optimal pia pib {}".format(i))
@@ -698,8 +716,8 @@ class PytorchBudgetedFittedQ:
                     pass
                 else:
                     i_non_terminal += 1
-                    beta = beta.detach().item()
-                    opts[i] = optimal_pia_pib(beta, hulls[i], stats)
+                    # beta = beta.detach().item()
+                    # opts[i] = optimal_pia_pib(beta, hulls[i], stats)
                     len_hull += len(hulls[i])
                     status[stats["status"]] += 1
                     next_state_beta[i * 2 + 0][0] = torch.cat(
@@ -709,9 +727,8 @@ class PytorchBudgetedFittedQ:
                         (next_state, torch.tensor([[opts[i].budget_sup]], device=self.device, dtype=torch.float32)),
                         dim=1)
                 i += 1
-            self.info("[compute_opts] status : {} for {} transitions. Len(hull)={}".format(status, i_non_terminal,
-                                                                                           len_hull / float(
-                                                                                               i_non_terminal)))
+            self.info("[compute_opts] status : {} for {} transitions. There are {} hulls (for non terminal states)".format(status, i_non_terminal,
+                                                                                           len_hull - i_non_terminal))
             self.info("computing opts ... end")
             self.track_memory("compute_opt (end)")
             return opts, next_state_beta

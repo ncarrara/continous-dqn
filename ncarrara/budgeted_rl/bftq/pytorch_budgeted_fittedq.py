@@ -313,9 +313,10 @@ class PytorchBudgetedFittedQ:
                  use_data_parallel=False,
                  use_extra_gpu_memory_threshold=0,
                  maximum_number_of_gpu=1,
-                 use_compute_hull_parallel=None
+                 cpu_processes=None
 
                  ):
+        self.cpu_processes = cpu_processes
 
         self.memory_tracking = []
         # self.track_memory("init")
@@ -347,7 +348,6 @@ class PytorchBudgetedFittedQ:
 
         self._policy_network = policy_network
         self.size_state = self._policy_network.size_state
-        self.use_compute_hull_parallel = use_compute_hull_parallel
         self.use_data_parallel = use_data_parallel
         self.use_data_loader = use_data_loader
         if self.use_data_loader:
@@ -701,7 +701,7 @@ class PytorchBudgetedFittedQ:
                     args.append((beta, hulls[i], {}))
                 i += 1
 
-            with Pool(self.use_compute_hull_parallel["pool"]) as p:
+            with Pool(self.cpu_processes) as p:
                 opts_and_status = p.map(optimal_pia_pib_parralle, args)
             # print(opts_and_status)
             zipped = list(zip(*opts_and_status))
@@ -940,26 +940,26 @@ class PytorchBudgetedFittedQ:
 
             # TODO parralelise this part
             self.info("actually computing hulls")
-            if self.use_compute_hull_parallel is not None:
-                args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                         np.zeros(self.N_actions),
-                         self.betas_for_discretisation,
-                         self.workspace) for i_ns_unique in range(len(ns_batch_unique))
-                        ]
-                with Pool(self.use_compute_hull_parallel["pool"]) as p:
-                    computed_hulls = p.map(f, args)
-            else:
-                computed_hulls = np.array([None] * len(ns_batch_unique))
-                for i_ns_unique in range(len(ns_batch_unique)):
-                    if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-                        self.info("hull computed : {}".format(i_ns_unique))
-                    hull, _ = compute_interest_points_NN_Qsb(
-                        Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                        action_mask=np.zeros(self.N_actions),
-                        betas=self.betas_for_discretisation,
-                        disp=False,
-                        path=self.workspace)
-                    computed_hulls[i_ns_unique] = hull
+            # if self.use_compute_hull_parallel is not None:
+            args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                     np.zeros(self.N_actions),
+                     self.betas_for_discretisation,
+                     self.workspace) for i_ns_unique in range(len(ns_batch_unique))
+                    ]
+            with Pool(self.cpu_processes) as p:
+                computed_hulls = p.map(f, args)
+            # else:
+            #     computed_hulls = np.array([None] * len(ns_batch_unique))
+            #     for i_ns_unique in range(len(ns_batch_unique)):
+            #         if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
+            #             self.info("hull computed : {}".format(i_ns_unique))
+            #         hull, _ = compute_interest_points_NN_Qsb(
+            #             Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+            #             action_mask=np.zeros(self.N_actions),
+            #             betas=self.betas_for_discretisation,
+            #             disp=False,
+            #             path=self.workspace)
+            #         computed_hulls[i_ns_unique] = hull
 
             hulls = np.array([None] * len(ns_batch))
             hull_ids = unique_hull_to_compute[:, 0]

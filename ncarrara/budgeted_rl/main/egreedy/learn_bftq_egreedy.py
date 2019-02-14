@@ -40,6 +40,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                                    **bftq_net_params),
             gamma=gamma,
             gamma_c=gamma_c,
+            cpu_processes= general["cpu"]["processes"],
             **bftq_params)
         return bftq
 

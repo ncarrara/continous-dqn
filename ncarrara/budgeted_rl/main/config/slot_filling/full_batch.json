@@ -3,6 +3,9 @@
     "id": "full_batch",
     "seed": 0,
     "workspace": "tmp/full_batch",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -110,9 +113,6 @@
     "betas_for_exploration": "np.array([])"
   },
   "bftq_params": {
-    "use_compute_hull_parallel": {
-      "pool": null
-    },
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,

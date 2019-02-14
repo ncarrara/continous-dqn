@@ -2,6 +2,9 @@
   "general": {
     "id": "test_full",
     "seed": 0,
+    "cpu": {
+      "processes": null
+    },
     "workspace": "tmp/test_full",
     "dictConfig": {
       "version": 1,
@@ -110,9 +113,6 @@
     "betas_for_exploration": "np.array([])"
   },
   "bftq_params": {
-    "use_compute_hull_parallel":  {
-      "pool": 2
-    },
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,

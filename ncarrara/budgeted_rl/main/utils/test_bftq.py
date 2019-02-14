@@ -1,50 +1,56 @@
 # coding=utf-8
 import os
+from multiprocessing.pool import Pool
 
-from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
-
-from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils.math_utils import set_seed
-from ncarrara.utils.os import empty_directory, makedirs
-from ncarrara.utils_rl.environments import envs_factory
-from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy, policy_factory
-import ncarrara.budgeted_rl.tools.utils_run as urpy
+from ncarrara.budgeted_rl.tools.utils_run import execute_policy_from_config, format_results
+from ncarrara.utils.math_utils import set_seed, near_split, zip_with_singletons
+from ncarrara.utils.os import makedirs
+from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
 import numpy as np
 
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-def main(betas_test, policy_path, generate_envs, feature_str, device,
-         workspace, gamma, gamma_c, bftq_net_params, bftq_params, seed, N_trajs, path_results, **args):
-    envs, params = envs_factory.generate_envs(**generate_envs)
-    e = envs[0]
-    e.reset()
-    feature = feature_factory(feature_str)
 
-    betas_test = eval(betas_test)
-
+def main(betas_test, policy_path, generate_envs, feature_str, device, workspace, gamma, gamma_c,
+         bftq_params, seed, N_trajs, path_results, general, **args):
     if not os.path.isabs(policy_path):
         policy_path = workspace + "/" + policy_path
 
-    pi = policy_factory({
+    pi_config = {
         "__class__": repr(PytorchBudgetedFittedPolicy),
         "feature_str": feature_str,
         "network_path": policy_path,
         "betas_for_discretisation": eval(bftq_params["betas_for_discretisation"]),
-        "device": device,
-        "env": e
-    })
+        "device": device
+    }
 
     makedirs(path_results)
-    for beta in betas_test:
-        set_seed(seed, e)
-        _, results = urpy.execute_policy(env=e,
-                                         pi=pi,
-                                         gamma_r=gamma,
-                                         gamma_c=gamma_c,
-                                         n_trajectories=N_trajs,
-                                         save_path="{}/beta={}.results".format(path_results, beta),
-                                         beta=beta)
 
-        print("BFTQ({}) : {}".format(beta, urpy.format_results(results)))
+    set_seed(seed)
+    for beta in eval(betas_test):
+        # Prepare workers
+        cpu_processes = min(general["cpu"]["processes"] or os.cpu_count(), N_trajs)
+        workers_n_trajectories = near_split(N_trajs, cpu_processes)
+        workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
+        workers_params = list(zip_with_singletons(generate_envs,
+                                                  pi_config,
+                                                  workers_seeds,
+                                                  gamma,
+                                                  gamma_c,
+                                                  workers_n_trajectories,
+                                                  beta,
+                                                  None,
+                                                  "{}/beta={}.results".format(path_results, beta),
+                                                  general["dictConfig"]))
+        # Collect trajectories
+        logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
+        with Pool(cpu_processes) as pool:
+            results = pool.starmap(execute_policy_from_config, workers_params)
+            results = np.concatenate([result for _, result in results], axis=0)
+
+        print("BFTQ({}) : {}".format(beta, format_results(results)))
 
 
 if __name__ == "__main__":

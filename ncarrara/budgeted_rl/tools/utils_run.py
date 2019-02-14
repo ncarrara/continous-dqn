@@ -165,7 +165,8 @@ def execute_policy(env, pi,
     logger.info("[execute_policy] mean length : {}".format(np.mean([len(t) for t in trajectories])))
     if save_path is not None:
         logger.info("[execute_policy] saving results at : {}".format(save_path))
-        np.savetxt(save_path, results)
+        with open(save_path, 'ab') as f:
+            np.savetxt(f, results)
     return trajectories, results
 
 

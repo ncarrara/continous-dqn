@@ -7,6 +7,25 @@ import sys
 
 
 def main(config):
+
+    if config.has_key("learn_bftq_egreedy"):
+        print("learn_bftq_greedy")
+        learn_bftq_egreedy.main(
+            device=config.device, seed=config.seed,
+            workspace=config.path_bftq_egreedy,
+            **config.dict["learn_bftq_egreedy"],
+            **config.dict
+        )
+    torch.cuda.empty_cache()
+    if config.has_key("test_bftq"):
+        print("test_bftq_greedy")
+        test_bftq.main(
+            device=config.device, seed=config.seed,
+            workspace=config.path_bftq_egreedy,
+            path_results=config.path_bftq_egreedy_results,
+            **config.dict["test_bftq"], **config.dict
+        )
+    torch.cuda.empty_cache()
     if config.has_key("learn_ftq_duplicate"):
         print("learn_ftq_duplicate")
         workspace = config.path_ftq_duplicate
@@ -83,24 +102,7 @@ def main(config):
                 path_results=config.path_ftq_egreedy_results,
                 **config.dict["test_ftq"], **config.dict
             )
-    torch.cuda.empty_cache()
-    if config.has_key("learn_bftq_egreedy"):
-        print("learn_bftq_greedy")
-        learn_bftq_egreedy.main(
-            device=config.device, seed=config.seed,
-            workspace=config.path_bftq_egreedy,
-            **config.dict["learn_bftq_egreedy"],
-            **config.dict
-        )
-    torch.cuda.empty_cache()
-    if config.has_key("test_bftq"):
-        print("test_bftq_greedy")
-        test_bftq.main(
-            device=config.device, seed=config.seed,
-            workspace=config.path_bftq_egreedy,
-            path_results=config.path_bftq_egreedy_results,
-            **config.dict["test_bftq"], **config.dict
-        )
+
 
 
 if __name__ == "__main__":

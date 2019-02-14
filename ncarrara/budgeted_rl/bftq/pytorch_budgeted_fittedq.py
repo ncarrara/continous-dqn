@@ -415,6 +415,7 @@ class PytorchBudgetedFittedQ:
             self._policy_network.reset()
 
     def reset(self, reset_weight=True):
+        torch.cuda.empty_cache()
         if reset_weight:
             self.reset_network()
         self.optimizer = optimizer_factory(self.optimizer_type,

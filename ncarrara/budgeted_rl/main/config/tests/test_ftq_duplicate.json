@@ -105,7 +105,6 @@
   "learn_ftq_duplicate": {
      "lambdas": "np.linspace(0,100,2)",
     "generate_data": {
-      "save_policy": false,
       "lambda_": 0.0,
       "trajs_by_ftq_batch": 10,
       "normalize_reward": true,

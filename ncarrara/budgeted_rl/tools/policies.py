@@ -5,10 +5,12 @@ import logging
 import torch
 import numpy as np
 
-
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import convex_hull, optimal_pia_pib
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math_utils import generate_random_point_on_simplex_not_uniform
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 class Policy:
@@ -115,10 +117,13 @@ class FittedPolicy(Policy):
 
 
 class PytorchFittedPolicy(Policy):
-    def __init__(self, pi, env, feature, **kwargs):
+    def __init__(self, env, feature_str, network_path, device, **kwargs):
         self.env = env
-        self.pi = pi
-        self.feature = feature
+        self.feature = feature_factory(feature_str)
+        self.device = device
+        self.network = None
+        if network_path:
+            self.load_network(network_path)
 
     def reset(self):
         pass
@@ -127,10 +132,19 @@ class PytorchFittedPolicy(Policy):
         a = self.pi(self.feature(s, self.env), action_mask)
         return a, False, info
 
-    @classmethod
-    def from_config(cls, config):
-        config["pi"] = policy_factory(config["pi"])
-        return super(PytorchFittedPolicy, cls).from_config(config)
+    def load_network(self, path):
+        logger.info("loading ftq policy at {}".format(path))
+        self.network = torch.load(path, map_location=self.device)
+
+    def pi(self, state, action_mask):
+        with torch.no_grad():
+            if not type(action_mask) == type(np.zeros(1)):
+                action_mask = np.asarray(action_mask)
+            action_mask[action_mask == 1.] = np.infty
+            action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
+            s = torch.tensor([[state]], device=self.device, dtype=torch.float)
+            a = self.network(s).sub(action_mask).max(1)[1].view(1, 1).item()
+            return a
 
 
 class EpsilonGreedyPolicy(Policy):
@@ -207,7 +221,7 @@ class PytorchBudgetedFittedPolicy(Policy):
         return a, False, info
 
     def load_network(self, network_path):
-        logging.info("loading bftq policy at {}".format(network_path))
+        logger.info("loading bftq policy at {}".format(network_path))
         self.network = torch.load(network_path, map_location=self.device)
 
     def set_network(self, network):

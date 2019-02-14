@@ -1,53 +1,47 @@
 # coding=utf-8
-from ncarrara.budgeted_rl.tools.features import feature_factory
-from ncarrara.utils.math_utils import set_seed
+import os
+from multiprocessing.pool import Pool
+
+import numpy as np
+
+from ncarrara.budgeted_rl.tools.utils_run import execute_policy_from_config, format_results
+from ncarrara.utils.math_utils import set_seed, near_split, zip_with_singletons
 from ncarrara.utils.os import makedirs
-from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
-from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy, PytorchFittedPolicy
-import ncarrara.budgeted_rl.tools.utils_run as urpy
-from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-def main(device, workspace, policy_path, generate_envs, ftq_net_params, ftq_params,
-         feature_str, gamma, gamma_c, N_trajs, seed, lambda_,path_results, **args):
-    envs, params = envs_factory.generate_envs(**generate_envs)
-    e = envs[0]
-    e.reset()
-    feature = feature_factory(feature_str)
-
-    net = NetFTQ(n_in=len(feature(e.reset(), e)),
-                 n_out=e.action_space.n,
-                 **ftq_net_params)
-
-    algo = PytorchFittedQ(
-        device=device,
-        test_policy=None,
-        workspace=workspace,
-        action_str=None if not hasattr(e, "action_str") else e.action_str,
-        policy_network=net,
-        gamma=gamma,
-        **ftq_params
-    )
-
-    import os
+def main(device, workspace, policy_path, generate_envs, feature_str, gamma, gamma_c,
+         N_trajs, seed, lambda_, path_results, general, **args):
     if not os.path.isabs(policy_path):
-        actual_policy_path = workspace + "/" + policy_path
-    else:
-        actual_policy_path = policy_path
+        policy_path = workspace + "/" + policy_path
 
-    pi = algo.load_policy(policy_path=actual_policy_path)
+    pi_config = {
+        "__class__": repr(PytorchFittedPolicy),
+        "feature_str": feature_str,
+        "network_path": policy_path,
+        "device": device
+    }
 
-    pi = PytorchFittedPolicy(pi, e, feature)
     makedirs(path_results)
-    set_seed(seed, e)
-    _, results = urpy.execute_policy(env=e,
-                                     pi=pi,
-                                     gamma_r=gamma,
-                                     gamma_c=gamma_c,
-                                     n_trajectories=N_trajs,
-                                     save_path="{}/lambda={}.results".format(path_results, lambda_))
+    set_seed(seed)
+    # Prepare workers
+    cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), N_trajs)
+    workers_n_trajectories = near_split(N_trajs, cpu_processes)
+    workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
+    workers_params = list(zip_with_singletons(
+        generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, None,
+        None, "{}/lambda={}.results".format(path_results, lambda_), general["dictConfig"]))
+    # Collect trajectories
+    logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
+    with Pool(cpu_processes) as pool:
+        results = pool.starmap(execute_policy_from_config, workers_params)
+        results = np.concatenate([result for _, result in results], axis=0)
 
-    print("FTQ({}) : {}".format(lambda_, urpy.format_results(results)))
+    print("FTQ({}) : {}".format(lambda_, format_results(results)))
 
 
 if __name__ == "__main__":
@@ -64,6 +58,6 @@ if __name__ == "__main__":
          device=C.device,
          seed=C.seed,
          workspace=C.path_learn_ftq_egreedy,
-         path_results = C.path_learn_ftq_egreedy,
+         path_results=C.path_learn_ftq_egreedy,
          **C.dict["test_ftq"],
          **C.dict)

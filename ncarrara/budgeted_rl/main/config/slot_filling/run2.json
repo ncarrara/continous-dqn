@@ -4,7 +4,7 @@
     "seed": 0,
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 1
+      "processes_when_linked_with_gpu": 4
     },
     "workspace": "tmp/run2",
     "dictConfig": {

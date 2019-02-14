@@ -3,7 +3,8 @@
     "id": "test_full",
     "seed": 0,
     "cpu": {
-      "processes": null
+      "processes": null,
+      "processes_when_linked_with_gpu": 4
     },
     "workspace": "tmp/test_full",
     "dictConfig": {

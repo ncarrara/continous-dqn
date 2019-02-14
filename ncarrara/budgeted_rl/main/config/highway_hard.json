@@ -103,6 +103,10 @@
     "betas_for_exploration": "np.linspace(0.,1.,11)"
   },
   "bftq_params": {
+    "use_data_loader": false,
+    "use_data_parallel": false,
+    "use_extra_gpu_memory_threshold": 100,
+    "maximum_number_of_gpu": 2,
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
     "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.0,

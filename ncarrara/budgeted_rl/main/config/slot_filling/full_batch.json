@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "run2",
+    "id": "full_batch",
     "seed": 0,
-    "workspace": "tmp/run2",
+    "workspace": "tmp/full_batch",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -97,42 +97,28 @@
   "test_bftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 500,
-    "betas_test": "np.linspace(0.,0.5,101))"
+    "betas_test": "np.linspace(0.,0.5,101)"
   },
-<<<<<<< HEAD
-
-=======
->>>>>>> multicpu_convexehulls
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1000,
+    "trajs_by_ftq_batch": 10000,
     "normalize_reward": true,
     "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.0005
     },
-<<<<<<< HEAD
-    "betas_for_exploration": "[]"
-  },
-  "bftq_params": {
-=======
     "betas_for_exploration": "np.array([])"
   },
   "bftq_params": {
     "use_compute_hull_parallel": {
-      "pool": 25
+      "pool": null
     },
->>>>>>> multicpu_convexehulls
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
     "betas_for_discretisation": "np.linspace(0.,1.,51)",
-<<<<<<< HEAD
-    "betas_for_duplication": "[]",
-=======
     "betas_for_duplication": "np.array([])",
->>>>>>> multicpu_convexehulls
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",

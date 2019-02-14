@@ -107,16 +107,18 @@
       "start": 1.0,
       "decay": 0.0005
     },
-    "betas_for_exploration": "[]"
+    "betas_for_exploration": "np.array([])"
   },
   "bftq_params": {
-    "use_compute_hull_parallel": false,
+    "use_compute_hull_parallel":  {
+      "pool": 2
+    },
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
     "betas_for_discretisation": "np.linspace(0.,1.,2)",
-    "betas_for_duplication": "[]",
+    "betas_for_duplication": "np.array([])",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 10,
     "optimizer": "ADAM",

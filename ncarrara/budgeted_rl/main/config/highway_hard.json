@@ -86,6 +86,10 @@
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.002
+    },
+    "save_memory": {
+      "path": "learn_ftq_egreedy.data",
+      "as_json": false
     }
   },
   "learn_bftq_egreedy": {

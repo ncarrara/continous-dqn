@@ -118,6 +118,10 @@
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.0005
+    },
+    "save_memory": {
+      "path": "learn_ftq_egreedy.data",
+      "as_json": true
     }
   },
   "learn_ftq_duplicate": {

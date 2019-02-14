@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
          device, epsilon_decay, N_trajs, trajs_by_ftq_batch, normalize_reward,
-         workspace, seed, lambda_=0, save_memory={"path": "learn_ftq_egreedy.data", "as_json": True},save_policy=True, **args):
+         workspace, seed, save_memory, lambda_=0, save_policy=True, **args):
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     set_seed(seed, e)

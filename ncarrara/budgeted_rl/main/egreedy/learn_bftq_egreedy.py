@@ -65,6 +65,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         workers_traj_indexes = [np.arange(*times) for times in zip(np.insert(workers_start[:-1], 0, 0), workers_start)]
         if betas_for_exploration.size:
             workers_betas = [betas_for_exploration.take(indexes, mode='wrap') for indexes in workers_traj_indexes]
+
         else:
             workers_betas = [np.random.random(indexes.size) for indexes in workers_traj_indexes]
         workers_seeds = list(range(seed, seed + n_workers))

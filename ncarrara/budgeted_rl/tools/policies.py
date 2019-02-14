@@ -152,6 +152,7 @@ class EpsilonGreedyPolicy(Policy):
 
     @classmethod
     def from_config(cls, config):
+        config = config.copy()
         config["pi_greedy"]["env"] = config.get("env", None)
         config["pi_greedy"] = policy_factory(config["pi_greedy"])
         if config["pi_random"]:

@@ -54,7 +54,7 @@ def cpuStats():
 
 
 def f(params):
-    Qsb_, action_mask, betas_for_discretisation, path = params
+    # Qsb_, action_mask, betas_for_discretisation, path = params
     # hull, _ = compute_interest_points_NN_Qsb(
     #     Qsb=Qsb_,
     #     action_mask=action_mask,

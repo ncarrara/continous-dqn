@@ -64,6 +64,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     # for i_traj in range(N_trajs):
     memory_by_batch = [get_current_memory()]
     while i_traj < N_trajs:
+        if i_traj % (N_trajs/10 +1)== 0:
+            logger.info("Runing trajectory {}".format(i_traj))
         if len(betas_for_exploration) == 0:
             init_betas = [np.random.sample()]
         else:

@@ -336,7 +336,7 @@ class PytorchBudgetedFittedQ:
             self.devices = [self.device]
         else:
 
-            print("Main device : ", self.device)
+            logger.info("Main device : ", self.device)
             # device_ids = [self.device.index]
             device_ids = [self.device.index]
             memory_map = get_gpu_memory_map()
@@ -573,31 +573,23 @@ class PytorchBudgetedFittedQ:
         self.track_memory("ftq_epoch")
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
-            self.getsizeof(self._policy_network, "self._policy_network")
             if self._id_ftq_epoch > 0:
                 hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network)
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
-                print(Color.BOLD + "---------------------------" + Color.END)
                 self.info("Q next")
                 self.track_memory("Q_next")
                 Q_next = self._policy_network(next_state_beta)
                 Q_next = Q_next.detach()
                 self.track_memory("Q_next (end)")
                 self.info("Q next end")
-                # del next_state_beta
                 self.empty_cache()
-                print(Color.BOLD + "---------------------------" + Color.END)
                 ns_r, ns_c = self.compute_next_values(ns_batch, h_batch, Q_next, piapib)
-                # del Q_next, piapib
             else:
                 ns_r = torch.zeros(self.size_batch, device=self.device)
                 ns_c = torch.zeros(self.size_batch, device=self.device)
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
-            self.getsizeof(label_r, "label_r")
-            self.getsizeof(label_c, "label_c")
-            # del ns_c, ns_r,
             self.empty_cache()
 
         losses = self._optimize_model(sb_batch, a_batch, label_r, label_c)
@@ -635,9 +627,7 @@ class PytorchBudgetedFittedQ:
                                                      path=self.workspace + "/histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
-                # del QQ, state_action_rewards, state_action_constraints, QQr, QQc
 
-        # del label_r, label_c
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
         self.track_memory("ftq_epoch (end)")

@@ -3,7 +3,7 @@ import numpy as np
 import ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq as pbf
 from ncarrara.budgeted_rl.tools.policies import policy_factory
 from ncarrara.utils.datastructure import merge_two_dicts
-from ncarrara.utils.math import set_seed
+from ncarrara.utils.math_utils import set_seed
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.transition import Transition

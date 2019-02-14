@@ -68,7 +68,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
 
         else:
             workers_betas = [np.random.random(indexes.size) for indexes in workers_traj_indexes]
-        workers_seeds = list(range(seed, seed + n_workers))
+        workers_seeds = [seed] #list(range(seed, seed + n_workers))
         workers_epsilons = [decays[i_traj + indexes] for indexes in workers_traj_indexes]
         workers_params = list(zip_with_singletons(generate_envs,
                                                   pi_epsilon_greedy_config,

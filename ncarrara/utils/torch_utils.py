@@ -23,8 +23,6 @@ def get_memory_for_pid(pid):
     m=re.findall("\| *[0-9] *"+str(pid)+" *C *.*python.*? +([0-9]+).*\|",result,re.MULTILINE)
     return [int(mem) for mem in m]
 
-print(get_memory_for_pid(28846))
-
 
 def get_the_device_with_most_available_memory():#use_cuda_visible_devices=False):
     if str(torch.__version__) == "0.4.1.":

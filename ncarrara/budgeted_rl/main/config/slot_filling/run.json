@@ -3,6 +3,9 @@
     "id": "run",
     "seed": 0,
     "workspace": "tmp/run",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

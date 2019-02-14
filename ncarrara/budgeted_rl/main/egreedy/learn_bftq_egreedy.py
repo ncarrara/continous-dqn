@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq_params, bftq_net_params, N_trajs,
-         workspace, seed, device, normalize_reward, trajs_by_ftq_batch, epsilon_decay, **args):
+         workspace, seed, device, normalize_reward, trajs_by_ftq_batch, epsilon_decay, general, **args):
     # Prepare BFTQ
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
@@ -44,10 +44,9 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         return bftq
 
     # Prepare learning
+    i_traj = 0
     decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
     betas_for_exploration = eval(betas_for_exploration)
-    n_workers = 2
-    i_traj = 0
     memory_by_batch = [get_current_memory()]
     batch_sizes = near_split(N_trajs, size_bins=trajs_by_ftq_batch)
     pi_epsilon_greedy_config = {
@@ -60,7 +59,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     # Main loop
     for batch, batch_size in enumerate(batch_sizes):
         # Prepare workers
-        workers_n_trajectories = near_split(batch_size, n_workers)
+        cpu_processes = min(general["cpu"]["processes"] or os.cpu_count(), batch_size)
+        workers_n_trajectories = near_split(batch_size, cpu_processes)
         workers_start = np.cumsum(workers_n_trajectories)
         workers_traj_indexes = [np.arange(*times) for times in zip(np.insert(workers_start[:-1], 0, 0), workers_start)]
         if betas_for_exploration.size:
@@ -68,7 +68,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
 
         else:
             workers_betas = [np.random.random(indexes.size) for indexes in workers_traj_indexes]
-        workers_seeds = list(range(seed, seed + n_workers))
+        workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
         workers_epsilons = [decays[i_traj + indexes] for indexes in workers_traj_indexes]
         workers_params = list(zip_with_singletons(generate_envs,
                                                   pi_epsilon_greedy_config,
@@ -79,10 +79,11 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                                                   workers_betas,
                                                   workers_epsilons,
                                                   None,
-                                                  args["general"]["dictConfig"]))
+                                                  general["dictConfig"]))
         # Collect trajectories
-        with Pool(n_workers) as p:
-            results = p.starmap(execute_policy_from_config, workers_params)
+        logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
+        with Pool(processes=cpu_processes) as pool:
+            results = pool.starmap(execute_policy_from_config, workers_params)
         i_traj += sum([len(trajectories) for trajectories, _ in results])
 
         # Fill memory
@@ -92,7 +93,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         # Fit model
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         logger.info("[BATCH={}][learning bftq pi greedy] #samples={} #traj={}"
-                    .format(batch, len(transitions_ftq), i_traj))
+                    .format(batch, len(transition_bftq), i_traj))
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         bftq = build_fresh_bftq()
         bftq.reset(True)

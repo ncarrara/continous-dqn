@@ -3,6 +3,9 @@
     "id": "bdqn",
     "seed": 0,
     "workspace": "tmp/bdqn",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

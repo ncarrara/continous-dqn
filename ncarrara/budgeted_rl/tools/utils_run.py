@@ -151,7 +151,7 @@ def execute_policy(env, pi,
     results = np.zeros((n_trajectories, 4))
     for d in range(n_trajectories):
         # Beta schedule
-        if np.size(beta) > 1:
+        if not np.isscalar(beta):
             traj_beta = beta[d]
         else:
             traj_beta = beta

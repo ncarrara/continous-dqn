@@ -128,9 +128,10 @@ def near_split(x, num_bins=None, size_bins=None):
     """
     if num_bins:
         quotient, remainder = divmod(x, num_bins)
+        return [quotient + 1] * remainder + [quotient] * (num_bins - remainder)
     elif size_bins:
         return near_split(x, num_bins=int(np.ceil(x / size_bins)))
-    return [quotient + 1] * remainder + [quotient] * (num_bins - remainder)
+
 
 
 def zip_with_singletons(*args):

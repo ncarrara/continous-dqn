@@ -3,6 +3,9 @@
     "id": "highway_hard",
     "seed": 0,
     "workspace": "tmp/highway_hard",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

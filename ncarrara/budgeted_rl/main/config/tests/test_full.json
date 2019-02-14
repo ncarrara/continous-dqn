@@ -3,6 +3,9 @@
     "id": "test_full",
     "seed": 0,
     "workspace": "tmp/test_full",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

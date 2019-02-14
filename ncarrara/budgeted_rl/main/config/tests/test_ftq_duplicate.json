@@ -3,6 +3,9 @@
     "id": "test_ftq_duplicate",
     "seed": 0,
     "workspace": "tmp/test_ftq_duplicate",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

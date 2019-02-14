@@ -5,6 +5,9 @@
     "id": "highway_test",
     "seed": 0,
     "workspace": "tmp/highway_test",
+    "cpu": {
+      "processes": null
+    },
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

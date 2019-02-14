@@ -104,7 +104,6 @@ def main(config):
 
 
 if __name__ == "__main__":
-    torch.multiprocessing.set_start_method("spawn")
     seeds = None
     override_device_str = None
     print(sys.argv)

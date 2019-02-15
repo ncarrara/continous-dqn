@@ -22,6 +22,7 @@ from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
 from ncarrara.utils.color import Color
 from ncarrara.utils.math_utils import update_lims, near_split
+from ncarrara.utils.miscelanous import pretty_format_list
 from ncarrara.utils.torch_utils import optimizer_factory, BaseModule, get_gpu_memory_map, get_memory_for_pid
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.visualization.toolsbox import create_Q_histograms, create_Q_histograms_for_actions, \
@@ -284,6 +285,7 @@ def optimal_pia_pib(beta, hull, statistic):
 class PytorchBudgetedFittedQ:
     ALL_BATCH = "ALL_BATCH"
     ADAPTATIVE = "ADAPTATIVE"
+    DONT_COMPUTE = -1
 
     def __init__(self,
                  policy_network,
@@ -304,8 +306,8 @@ class PytorchBudgetedFittedQ:
                  batch_size_experience_replay=50,
                  nn_loss_stop_condition=0.0,
                  weights_losses=[1., 1.],
-                 disp_states=[],
-                 disp_states_ids=[],
+                 # disp_states=[],
+                 # disp_next_states=[],
                  workspace="tmp",
                  print_q_function=False,
                  state_to_unique_str=lambda s: str(s),
@@ -329,9 +331,9 @@ class PytorchBudgetedFittedQ:
         self.stop_loss_value = nn_loss_stop_condition
         self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
         self.DELTA = delta_stop
-        self.disp_states = disp_states
-        self.disp_states_ids = disp_states_ids
-        self.do_dynamic_disp_state = not self.disp_states
+        self.disp_states = []
+        self.disp_next_states = []
+
         self.workspace = workspace
         self.N_actions = policy_network.predict.out_features // 2
         if actions_str is None:
@@ -449,37 +451,52 @@ class PytorchBudgetedFittedQ:
         memoire = self.get_current_memory()
 
         if self._id_ftq_epoch is not None:
-            logger.info("[e={:02}]{}{}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
+            logger.info("[e={:02}]{} {}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
-            logger.info("{}{}".format(self.format_memory(memoire), message))
+            logger.info("{} {} ".format(self.format_memory(memoire), message))
 
     def _construct_batch(self, transitions):
+        transitions = copy.deepcopy(transitions)
+        import random
+        random.shuffle(transitions)
+
         self.track_memory("_construct_batch")
         self.info("[_construct_batch] constructing batch ...")
         memory = Memory(class_transition=TransitionBFTQ)
-        if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
-            self.disp_states_ids = []
-            self.disp_next_states_ids = []
-            self.disp_next_states = []
-            self.disp_states = []
-            means = {}
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            self.do_dynamic_disp_state = not self.disp_states
+            self.do_dynamic_disp_nextstate = not self.disp_next_states
+            self.display_id_state = []
+            self.display_id_next_state = []
         it = 0
-        lastkeyid = 0
-        hull_keys = {}
-        for i_t, t in enumerate(transitions):
-            hull_key = self.state_to_unique_str(t.next_state)
-            if it % np.ceil(len(transitions) / 10) == 0:
-                self.info("[_construct_batch] {} transitions proceeded".format(it))
-            if hull_key in hull_keys:
-                hull_id = hull_keys[hull_key]
-            else:
-                hull_id = torch.tensor([[[lastkeyid]]], dtype=torch.long)
-                lastkeyid += 1
-                hull_keys[hull_key] = hull_id
+        last_hull_id = 0
+        hull_ids = {}
+        number_of_terminal_states = 0
+        similar_next_state = []
+        hull_id_idx_in_batch = []
+
+        for idx_transition, t in enumerate(transitions):
+
+            if it % np.ceil(len(transitions) / 10) == 0: self.info(
+                "[_construct_batch] {} transitions proceeded".format(it))
+
             if t.next_state is not None:
                 next_state = torch.tensor([[t.next_state]], dtype=torch.float)
+                hull_key = self.state_to_unique_str(t.next_state)
+                if hull_key in hull_ids:
+                    hull_id = hull_ids[hull_key]
+                    similar_next_state.append([hull_id, idx_transition])
+                else:
+                    hull_id = last_hull_id
+                    hull_id_idx_in_batch.append([hull_id, idx_transition])
+                    hull_ids[hull_key] = hull_id
+                    last_hull_id += 1
             else:
                 next_state = torch.tensor([[[np.nan] * self.size_state]], dtype=torch.float)
+                hull_id = PytorchBudgetedFittedQ.DONT_COMPUTE
+                number_of_terminal_states += 1
+
+            hull_id = torch.tensor([[[hull_id]]], dtype=torch.long)
             action = torch.tensor([[t.action]], dtype=torch.long)
             reward = torch.tensor([t.reward], dtype=torch.float)
             constraint = torch.tensor([t.constraint], dtype=torch.float)
@@ -492,22 +509,25 @@ class PytorchBudgetedFittedQ:
                 beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
-            if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
-                self.disp_states_ids.append(len(self.disp_states))
-                self.disp_states.append(t.next_state)
-                self.disp_next_states_ids.append(len(self.disp_next_states))
-                self.disp_next_states.append(t.next_state)
-                key = self.state_to_unique_str(t.state) + self.action_to_unique_str(t.action)
-                if key in means:
-                    means[key] = means[key] + np.array([t.reward, 1, t.constraint, 1])
-                else:
-                    means[key] = np.array([t.reward, 1, t.constraint, 1])
+            if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % (len(transitions) // 10) == 0:
+                if self.do_dynamic_disp_state:
+                    self.disp_states.append(t.state)
+                    self.display_id_state.append(idx_transition)
+                if self.do_dynamic_disp_nextstate:
+                    self.disp_next_states.append(t.next_state)
+                    self.display_id_next_state.append(idx_transition)
 
             it += 1
 
-        self.nb_unique_hull_to_compute = lastkeyid
 
-        batch = memory.sample(len(memory))
+
+        hull_id_idx_in_batch = np.array(hull_id_idx_in_batch)
+
+        if logger.getEffectiveLevel() <= logging.DEBUG:
+            self.info("Display on these states {}".format(pretty_format_list(self.display_id_state)))
+            self.info("Display on these next states {}".format(pretty_format_list(self.display_id_next_state)))
+
+        batch = memory.memory
         self.size_batch = len(batch)
         zipped = TransitionBFTQ(*zip(*batch))
         action_batch = torch.cat(zipped.action).to(self.device)
@@ -525,52 +545,54 @@ class PytorchBudgetedFittedQ:
             self._policy_network.module.set_normalization_params(mean, std)
         else:
             self._policy_network.set_normalization_params(mean, std)
-        self.info("[_construct_batch] nbhull to compute : {}".format(lastkeyid))
-        self.info("[_construct_batch] Nombre de samples : {}".format(len(memory)))
-        if logger.getEffectiveLevel() <= logging.DEBUG and self.do_dynamic_disp_state:
-            self.info("nombre de couple (s,a) uniques : {}".format(len(means)))
-        self.info("[_construct_batch] sum of constraint : {}".format(constraint_batch.sum()))
-        self.info("[_construct_batch] nb reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))
-        self.info("[_construct_batch] constructing batch ... end {}")
-        self.track_memory("_construct_batch (end)")
 
-        unique_hull_to_compute = []
-        hull_ids = []
-        for idx_in_batch, hull_id in enumerate(hull_id_batch):
-            hull_id = hull_id.item()
-            if hull_id not in hull_ids and not self._is_terminal_state(next_state_batch[idx_in_batch]):
-                unique_hull_to_compute.append([hull_id, idx_in_batch])
-                hull_ids.append(hull_id)
-        unique_hull_to_compute = np.array(unique_hull_to_compute)
+        if len(transitions) != (len(hull_id_idx_in_batch) + number_of_terminal_states + len(similar_next_state)):
+            raise Exception("Something went wrong")
+
+        self.info("-----------------------------------------------------")
+        self.info("--------------- BATCH INFORMATIONS ------------------")
+        self.info("-----------------------------------------------------")
+        self.info("#transitions : {}".format(len(memory)))
+        self.info("#hull (=#unique_next_states) : {}".format(len(hull_id_idx_in_batch)))
+        self.info("#terminal next_states : {}".format(number_of_terminal_states))
+        self.info("#similar next_states (excluding terminal states) : {}".format(len(similar_next_state)))
+        self.info("sum of constraint : {}".format(constraint_batch.sum()))
+        self.info("#reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))
+        self.info("-----------------------------------------------------")
+        self.info("-----------------------------------------------------")
+        self.track_memory("_construct_batch (end)")
+        self.info("[_construct_batch] constructing batch ... end {}")
+
+        # for x,y in hull_id_idx_in_batch:
+        #     print("hullid",x,"index",y,"next state",next_state_batch[y])
 
         return state_beta_batch, state_batch, action_batch, reward_batch, \
-               constraint_batch, next_state_batch, hull_id_batch, beta_batch, unique_hull_to_compute
+               constraint_batch, next_state_batch, hull_id_batch, beta_batch, hull_id_idx_in_batch
 
     def getsizeof(self, a, name):
         self.info("size {} : [{}{}{}]".format(name, Color.BOLD, getsizeof(a), Color.END))
 
     def fit(self, transitions):
+
         self.track_memory("fit")
+
         self._id_ftq_epoch = 0
         self.info("[fit] reseting network ...")
         self.reset_network()
 
-        sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute = self._construct_batch(
+        sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, hull_id_idx_in_batch = self._construct_batch(
             transitions)
-        if logger.getEffectiveLevel() <= logging.DEBUG:
-            dispstateidsrand = np.random.random_integers(0, len(self.disp_states) - 1, 10)
+
         self.delta = np.inf
         while self._id_ftq_epoch < self._MAX_FTQ_EPOCH and self.delta > self.DELTA:
             self.track_memory("e={}".format(self._id_ftq_epoch))
             # cpuStats()
             # memReport()
             self.info("-------------------------")
-            _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute)
+            _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, hull_id_idx_in_batch)
             self.info("delta={}".format(self.delta))
             if logger.getEffectiveLevel() <= logging.DEBUG:
-                for i_s in dispstateidsrand:
-                    state = self.disp_next_states[i_s]
-                    id = self.state_to_unique_str(self.disp_next_states_ids[i_s])
+                for i_s,state in enumerate(self.disp_next_states):
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
@@ -578,14 +600,11 @@ class PytorchBudgetedFittedQ:
                         _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                         Q=self._policy_network,
                                         action_mask=np.zeros(self.N_actions),
-                                        id="next_state_" + id, disp=True,
+                                        id="next_state_" + str(i_s), disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace)
-                for i_s in dispstateidsrand:
-                    # i_s = 52
-                    state = self.disp_states[i_s]
-                    id = str(self.disp_states_ids[i_s])
+                for i_s,state in self.disp_states:
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
@@ -593,7 +612,7 @@ class PytorchBudgetedFittedQ:
                         _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                         Q=self._policy_network,
                                         action_mask=np.zeros(self.N_actions),
-                                        id="next_state_" + id, disp=True,
+                                        id="next_state_" + str(i_s), disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace)
@@ -607,12 +626,12 @@ class PytorchBudgetedFittedQ:
         memoire_after = get_memory_for_pid(os.getpid())
         self.info("empty cache {} -> {}".format(self.format_memory(memoire_before), self.format_memory(memoire_after)))
 
-    def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, unique_hull_to_compute):
+    def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, hull_id_idx_in_batch):
         self.track_memory("ftq_epoch")
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
             if self._id_ftq_epoch > 0:
-                hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network, unique_hull_to_compute)
+                hulls = self.compute_hulls(ns_batch, h_batch, self._policy_network, hull_id_idx_in_batch)
                 piapib, next_state_beta = self.compute_opts(ns_batch, b_batch, h_batch, hulls)
                 self.info("Q next")
                 self.track_memory("Q_next")
@@ -690,8 +709,6 @@ class PytorchBudgetedFittedQ:
             next_state_beta = torch.zeros((self.size_batch * 2, 1, self.size_state + 1),
                                           device=self.device)
             self.info("after zeros (for next_state_betas)")
-            # opts = [None] * self.size_batch
-
             self.info("computing optimal_pia_pib in parralle ...")
             args = []
             i = 0
@@ -705,14 +722,10 @@ class PytorchBudgetedFittedQ:
 
             with Pool(self.cpu_processes) as p:
                 opts_and_status = p.map(optimal_pia_pib_parralle, args)
-            # print(opts_and_status)
             zipped = list(zip(*opts_and_status))
-            # print(zipped)
             opts = zipped[0]
             stats = zipped[1]
             self.info("computing optimal_pia_pib in parralle ... done")
-            # print(stats)
-
             i = 0
             i_non_terminal = 0
             status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
@@ -735,10 +748,7 @@ class PytorchBudgetedFittedQ:
                         (next_state, torch.tensor([[opts[i].budget_sup]], device=self.device, dtype=torch.float32)),
                         dim=1)
                 i += 1
-            self.info(
-                "[compute_opts] status : {} for {} transitions. There are {} hulls (for non terminal states)".format(
-                    status, i_non_terminal,
-                    len_hull - i_non_terminal))
+            self.info("[compute_opts] status : {} on #hulls={}".format(status, i_non_terminal))
             self.info("computing opts ... end")
             self.track_memory("compute_opt (end)")
             return opts, next_state_beta
@@ -902,15 +912,30 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-    def compute_hulls(self, ns_batch, h_batch, Q, unique_hull_to_compute):
+    def compute_hulls(self, ns_batch, h_batch, Q, hull_id_idx_in_batch):
         with torch.no_grad():
             self.track_memory("compute hulls")
             self.info("computing hulls ...")
-            self.info("forward pass of all nextstate/beta_duplication")
 
             # gather all s,beta to compute in one foward pass (may increase the pic of memory used temporary)
             # but essential for multiprocessing hull computing bellow
-            ns_batch_unique = ns_batch[unique_hull_to_compute[:, 1]]
+            idx_of_uniques_next_state_for_hull_computing = hull_id_idx_in_batch[:, 1]
+
+            ns_batch_unique = ns_batch[idx_of_uniques_next_state_for_hull_computing]
+
+            # if logger.getEffectiveLevel() is logging.DEBUG:
+            #     print(idx_of_uniques_next_state_for_hull_computing)
+            #     for s in ns_batch_unique:
+            #         print(s)
+
+            self.info("There are {} hulls to compute !".format(len(ns_batch_unique)))
+
+            # sb = "duplicating each next states with each beta"
+            # if we have 2 states s0 and s1 and 2 betas 0 and 1. What do we want for sb is :
+            # (s0,0)
+            # (s0,1)
+            # (s1,0)
+            # (s1,1)
             ss = ns_batch_unique \
                 .squeeze() \
                 .repeat((1, len(self.betas_for_discretisation))) \
@@ -921,6 +946,10 @@ class PytorchBudgetedFittedQ:
             sb = torch.cat((ss, bb), dim=1)
             sb = sb.unsqueeze(1)
             self.track_memory("Qsb (compute_hull) ")
+            self.info("""Forward pass of couple (s',beta). Size of the batch : {}. 
+                It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"""
+                      .format(len(sb), len(ns_batch_unique), len(self.betas_for_discretisation),
+                              len(self.betas_for_discretisation) * len(ns_batch_unique)))
             num_bins = 5
             batch_sizes = near_split(x=len(sb), num_bins=num_bins)
             y = []
@@ -936,12 +965,14 @@ class PytorchBudgetedFittedQ:
                 y.append(Q(mini_batch))
                 torch.cuda.empty_cache()
             Qsb = torch.cat(y)
+
             # Qsb = Q(sb)
             self.track_memory("Qsb (compute_hull) (end)")
             Qsb = Qsb.detach().cpu().numpy()
+            # for value in Qsb:
+            #     print(value)
 
-            # TODO parralelise this part
-            self.info("actually computing hulls")
+            self.info("actually computing hulls using multiprocessing")
             # if self.use_compute_hull_parallel is not None:
             args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
                      np.zeros(self.N_actions),
@@ -950,35 +981,23 @@ class PytorchBudgetedFittedQ:
                     ]
             with Pool(self.cpu_processes) as p:
                 computed_hulls = p.map(f, args)
-            # else:
-            #     computed_hulls = np.array([None] * len(ns_batch_unique))
-            #     for i_ns_unique in range(len(ns_batch_unique)):
-            #         if i_ns_unique % np.ceil(self.nb_unique_hull_to_compute / 5) == 0:
-            #             self.info("hull computed : {}".format(i_ns_unique))
-            #         hull, _ = compute_interest_points_NN_Qsb(
-            #             Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-            #             action_mask=np.zeros(self.N_actions),
-            #             betas=self.betas_for_discretisation,
-            #             disp=False,
-            #             path=self.workspace)
-            #         computed_hulls[i_ns_unique] = hull
 
             hulls = np.array([None] * len(ns_batch))
-            hull_ids = unique_hull_to_compute[:, 0]
+            hull_ids = hull_id_idx_in_batch[:, 0]
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
-                i_ns_unique = np.where(hull_ids == hull_id)
-                i_ns_unique = i_ns_unique[0]
-
-                if len(i_ns_unique) <= 0:
-                    pass  # ca veut dire que c'est un etat None terminal
-                elif len(i_ns_unique) > 1:
-                    raise Exception("Number of unique hulls hull_ids should not be > 1")
-                else:
+                if hull_id is not PytorchBudgetedFittedQ.DONT_COMPUTE:
+                    i_ns_unique = np.where(hull_ids == hull_id)
                     i_ns_unique = i_ns_unique[0]
-                    hull = computed_hulls[i_ns_unique]
+                    if len(i_ns_unique) <= 0:
+                        raise Exception("IMPOSIBBRUUU")
+                    elif len(i_ns_unique) > 1:
+                        raise Exception("Number of unique hulls hull_ids should not be > 1")
+                    else:
+                        i_ns_unique = i_ns_unique[0]
+                        hull = computed_hulls[i_ns_unique]
+                        hulls[i_ns] = hull
 
-                    hulls[i_ns] = hull
             self.track_memory("compute_hull (end boucle)")
             self.info("hulls actually computed : {}".format(len(computed_hulls)))
             self.info("total hulls (=next_states) : {}".format(len(ns_batch)))

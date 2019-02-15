@@ -1,3 +1,5 @@
+from collections import Iterable
+
 import numpy as np
 
 import ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq as pbf
@@ -151,7 +153,7 @@ def execute_policy(env, pi,
     results = np.zeros((n_trajectories, 4))
     for d in range(n_trajectories):
         # Beta schedule
-        if not np.isscalar(beta):
+        if isinstance(beta, Iterable):
             traj_beta = beta[d]
         else:
             traj_beta = beta

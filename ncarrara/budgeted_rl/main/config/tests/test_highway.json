@@ -6,7 +6,8 @@
     "seed": 0,
     "workspace": "tmp/highway_test",
     "cpu": {
-      "processes": null
+      "processes": null,
+      "processes_when_linked_with_gpu": 4
     },
     "dictConfig": {
       "version": 1,

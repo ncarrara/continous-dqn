@@ -4,7 +4,8 @@
     "seed": 0,
     "workspace": "tmp/test_ftq_duplicate",
     "cpu": {
-      "processes": null
+      "processes": null,
+      "processes_when_linked_with_gpu": 4
     },
     "dictConfig": {
       "version": 1,
@@ -105,7 +106,6 @@
   "learn_ftq_duplicate": {
      "lambdas": "np.linspace(0,100,2)",
     "generate_data": {
-      "save_policy": false,
       "lambda_": 0.0,
       "trajs_by_ftq_batch": 10,
       "normalize_reward": true,

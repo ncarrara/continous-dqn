@@ -183,30 +183,12 @@ class PytorchFittedQ:
             self.logger.info("[epoch_ftq={}] delta={}".format(self._id_ftq_epoch, self.delta))
             self._id_ftq_epoch += 1
 
-        final_network = copy.deepcopy(self._policy_network)
-
         if self.logger.getEffectiveLevel() is logging.INFO:
             for state in self.disp_states:
                 self.logger.info("Q({})={}".format(state, self._policy_network(
                     torch.tensor([[state]], device=self.device, dtype=torch.float)).cpu().detach().numpy()))
 
-        pi = self.build_policy(final_network)
-
-        return pi
-
-    def build_policy(self, network):
-        def pi(state, action_mask):
-            with torch.no_grad():
-                if not type(action_mask) == type(np.zeros(1)):
-                    action_mask = np.asarray(action_mask)
-                action_mask[action_mask == 1.] = np.infty
-                action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
-                s = torch.tensor([[state]], device=self.device, dtype=torch.float)
-                a = network(s).sub(action_mask).max(1)[1].view(1, 1).item()
-
-                return a
-
-        return pi
+        return self._policy_network
 
     def _ftq_epoch(self):
         next_state_values = torch.zeros(self.batch_size, device=self.device)
@@ -316,12 +298,4 @@ class PytorchFittedQ:
             policy_path = self.workspace+"/policy.pt"
         self.logger.info("saving ftq policy at {}".format(policy_path))
         torch.save(self._policy_network, policy_path)
-
-    def load_policy(self, policy_path=None):
-
-        if policy_path is None:
-            policy_path = self.workspace+"/policy.pt"
-        self.logger.info("loading ftq policy at {}".format(policy_path))
-        network = torch.load(policy_path, map_location=self.device)
-        pi = self.build_policy(network)
-        return pi
+        return policy_path

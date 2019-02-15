@@ -43,7 +43,7 @@ def main(load_memory, generate_envs, feature_str, gamma, ftq_params, ftq_net_par
     ftq.reset(True)
     ftq.workspace = workspace
     makedirs(ftq.workspace)
-    pi = ftq.fit(transitions_ftq)
+    ftq.fit(transitions_ftq)
     ftq.save_policy()
 
 

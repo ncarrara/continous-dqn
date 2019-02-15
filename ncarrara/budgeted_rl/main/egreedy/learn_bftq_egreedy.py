@@ -66,26 +66,17 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         workers_traj_indexes = [np.arange(*times) for times in zip(np.insert(workers_start[:-1], 0, 0), workers_start)]
         if betas_for_exploration.size:
             workers_betas = [betas_for_exploration.take(indexes, mode='wrap') for indexes in workers_traj_indexes]
-
         else:
             workers_betas = [np.random.random(indexes.size) for indexes in workers_traj_indexes]
         workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
         workers_epsilons = [decays[i_traj + indexes] for indexes in workers_traj_indexes]
-        workers_params = list(zip_with_singletons(generate_envs,
-                                                  pi_epsilon_greedy_config,
-                                                  workers_seeds,
-                                                  gamma,
-                                                  gamma_c,
-                                                  workers_n_trajectories,
-                                                  workers_betas,
-                                                  workers_epsilons,
-                                                  None,
-                                                  general["dictConfig"]))
+        workers_params = list(zip_with_singletons(
+            generate_envs, pi_epsilon_greedy_config, workers_seeds, gamma, gamma_c, workers_n_trajectories,
+            workers_betas, workers_epsilons, None, general["dictConfig"]))
+
         # Collect trajectories
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
-        if cpu_processes ==1:
-            # print(workers_params[0])
-            # exit()
+        if cpu_processes == 1:
             results = [execute_policy_from_config(*workers_params[0])]
         else:
             with Pool(processes=cpu_processes) as pool:

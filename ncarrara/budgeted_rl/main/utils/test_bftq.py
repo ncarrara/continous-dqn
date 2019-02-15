@@ -27,23 +27,15 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
     }
 
     makedirs(path_results)
-
     set_seed(seed)
     for beta in eval(betas_test):
         # Prepare workers
         cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), N_trajs)
         workers_n_trajectories = near_split(N_trajs, cpu_processes)
         workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
-        workers_params = list(zip_with_singletons(generate_envs,
-                                                  pi_config,
-                                                  workers_seeds,
-                                                  gamma,
-                                                  gamma_c,
-                                                  workers_n_trajectories,
-                                                  beta,
-                                                  None,
-                                                  "{}/beta={}.results".format(path_results, beta),
-                                                  general["dictConfig"]))
+        workers_params = list(zip_with_singletons(
+            generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
+            None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
         # Collect trajectories
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
         with Pool(cpu_processes) as pool:

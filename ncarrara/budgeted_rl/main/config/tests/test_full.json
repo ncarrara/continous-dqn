@@ -2,12 +2,10 @@
   "general": {
     "id": "test_full",
     "seed": 0,
-     "cpu": {
-      "processes": null
-    },
     "workspace": "tmp/test_full",
     "cpu": {
-      "processes": null
+      "processes": null,
+      "processes_when_linked_with_gpu": 4
     },
     "dictConfig": {
       "version": 1,

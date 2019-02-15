@@ -1,13 +1,15 @@
 # coding=utf-8
+from multiprocessing.pool import Pool
+
 from ncarrara.budgeted_rl.tools.features import feature_factory
+from ncarrara.budgeted_rl.tools.utils_run import execute_policy_from_config, datas_to_transitions
 from ncarrara.utils import math_utils
-from ncarrara.utils.math_utils import set_seed
+from ncarrara.utils.math_utils import set_seed, near_split, zip_with_singletons
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments import envs_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy, RandomPolicy
-import ncarrara.budgeted_rl.tools.utils_run as urpy
 from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
 import numpy as np
 import logging
@@ -19,11 +21,11 @@ logger = logging.getLogger(__name__)
 
 def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
          device, epsilon_decay, N_trajs, trajs_by_ftq_batch, normalize_reward,
-         workspace, seed, save_memory, lambda_=0, save_policy=True, **args):
+         workspace, seed, save_memory, general, lambda_=0, **args):
     envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     set_seed(seed, e)
-
+    rm = Memory()
     feature = feature_factory(feature_str)
 
     def build_fresh_ftq():
@@ -37,39 +39,65 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         )
         return ftq
 
+    # Prepare learning
+    i_traj = 0
     decays = math_utils.epsilon_decay(**epsilon_decay, N=N_trajs, savepath=workspace)
-    pi_greedy = RandomPolicy()
-    pi_epsilon_greedy = EpsilonGreedyPolicy(pi_greedy=pi_greedy, epsilon=decays[0], pi_random=RandomPolicy())
-    rez = np.zeros((N_trajs, 4))
-    rm = Memory()
-    batch = 0
+    batch_sizes = near_split(N_trajs, size_bins=trajs_by_ftq_batch)
+    pi_epsilon_greedy_config = {
+        "__class__": repr(EpsilonGreedyPolicy),
+        "pi_greedy": {"__class__": repr(RandomPolicy)},
+        "pi_random": {"__class__": repr(RandomPolicy)},
+        "epsilon": decays[0]
+    }
 
-    for i_traj in range(N_trajs):
-        if i_traj % 50 == 0: logger.info(i_traj)
-        pi_epsilon_greedy.epsilon = decays[i_traj]
-        pi_epsilon_greedy.pi_greedy = pi_greedy
-        trajectory, rew_r, rew_c, ret_r, ret_c = urpy.execute_policy_one_trajectory(
-            e, pi_epsilon_greedy, gamma_r=gamma, gamma_c=gamma_c)
-        rez[i_traj] = np.array([rew_r, rew_c, ret_r, ret_c])
-        for sample in trajectory:
-            rm.push(*sample)
-        if i_traj > 0 and (i_traj + 1) % trajs_by_ftq_batch == 0:
-            transitions_ftq, _ = urpy.datas_to_transitions(
-                rm.memory, e, feature, lambda_, normalize_reward)
-            logger.info("[BATCH={}]---------------------------------------".format(batch))
-            logger.info("[BATCH={}][learning ftq pi greedy] #samples={} #traj={}"
-                        .format(batch, len(transitions_ftq), i_traj + 1))
-            logger.info("[BATCH={}]---------------------------------------".format(batch))
-            ftq = build_fresh_ftq()
-            ftq.reset(True)
-            ftq.workspace = workspace + "/batch={}".format(batch)
-            makedirs(ftq.workspace)
-            pi = ftq.fit(transitions_ftq)
-            if save_policy:
-                ftq.save_policy()
-                os.system("cp {}/policy.pt {}/final_policy.pt".format(ftq.workspace, workspace))
-            pi_greedy = PytorchFittedPolicy(pi, e, feature)
-            batch += 1
+    # Main loop
+    for batch, batch_size in enumerate(batch_sizes):
+        # Prepare workers
+        cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), batch_size)
+        workers_n_trajectories = near_split(batch_size, cpu_processes)
+        workers_start = np.cumsum(workers_n_trajectories)
+        workers_traj_indexes = [np.arange(*times) for times in zip(np.insert(workers_start[:-1], 0, 0), workers_start)]
+        workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
+        workers_epsilons = [decays[i_traj + indexes] for indexes in workers_traj_indexes]
+        workers_params = list(zip_with_singletons(
+            generate_envs, pi_epsilon_greedy_config, workers_seeds, gamma, gamma_c, workers_n_trajectories,
+            None, workers_epsilons, None, general["dictConfig"]))
+
+        # Collect trajectories
+        logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
+        if cpu_processes == 1:
+            results = [execute_policy_from_config(*workers_params[0])]
+        else:
+            with Pool(processes=cpu_processes) as pool:
+                results = pool.starmap(execute_policy_from_config, workers_params)
+        i_traj += sum([len(trajectories) for trajectories, _ in results])
+
+        # Fill memory
+        [rm.push(*sample) for trajectories, _ in results for trajectory in trajectories for sample in trajectory]
+        transitions_ftq, _ = datas_to_transitions(rm.memory, e, feature, lambda_, normalize_reward)
+
+        # Fit model
+        logger.info("[BATCH={}]---------------------------------------".format(batch))
+        logger.info("[BATCH={}][learning ftq pi greedy] #samples={} #traj={}"
+                    .format(batch, len(transitions_ftq), i_traj))
+        logger.info("[BATCH={}]---------------------------------------".format(batch))
+        ftq = build_fresh_ftq()
+        ftq.reset(True)
+        ftq.workspace = workspace + "/batch={}".format(batch)
+        makedirs(ftq.workspace)
+        ftq.fit(transitions_ftq)
+
+        # Save policy
+        network_path = ftq.save_policy()
+        os.system("cp {}/policy.pt {}/final_policy.pt".format(ftq.workspace, workspace))
+
+        # Update greedy policy
+        pi_epsilon_greedy_config["pi_greedy"] = {
+            "__class__": repr(PytorchFittedPolicy),
+            "feature_str": feature_str,
+            "network_path": network_path,
+            "device": ftq.device
+        }
     if save_memory is not None:
         rm.save_memory(workspace + "/" + save_memory["path"], save_memory["as_json"])
 

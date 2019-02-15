@@ -130,6 +130,7 @@ def save_memory(bftq, memory_by_batch, by_batch=False):
             plt.scatter(i, memory, s=25)
             plt.text(i, memory, id, props, rotation=90)
         plt.savefig(bftq.workspace + "/memory_tracking.png")
+        plt.rcParams["figure.figsize"] = (5, 5)
         plt.close()
         memory_by_batch.append(get_current_memory())
     else:

@@ -132,6 +132,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             k += 1
         points = np.array(points)
         if disp:
+            plt.rcParams["figure.figsize"] = (5, 5)
             plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
             plt.grid()
@@ -989,6 +990,7 @@ class PytorchBudgetedFittedQ:
 
     def draw_Qr_and_Qc(self, s, Q, id):
         with torch.no_grad():
+            plt.rcParams["figure.figsize"] = (5, 5)
             plt.clf()
             actions = range(self.N_actions)  # [2
             if not os.path.exists(self.workspace + "/behavior/"):

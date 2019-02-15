@@ -1,5 +1,6 @@
 import torch
 
+from ncarrara.budgeted_rl.main.utils.plot_data import parse_data, plot_all
 from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
 from ncarrara.budgeted_rl.main.egreedy import learn_ftq_egreedy, learn_bftq_egreedy, learn_ftq_full_batch
@@ -102,6 +103,18 @@ def main(config):
                 path_results=config.path_ftq_egreedy_results,
                 **config.dict["test_ftq"], **config.dict
             )
+    workspace = config.workspace
+    import itertools
+    import seaborn as sns
+    palette = itertools.cycle(sns.color_palette())
+    algos = {
+        "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
+        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
+        "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
+    }
+    data = parse_data(workspace, algos)
+    # print(data)
+    plot_all(data, workspace, algos)
 
 
 
@@ -127,3 +140,5 @@ if __name__ == "__main__":
         override_param_grid['general.seed'] = seeds
 
     abstract_main.main(config_file, override_param_grid, override_device_str, main)
+
+

@@ -509,7 +509,7 @@ class PytorchBudgetedFittedQ:
                 beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
-            if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % (len(transitions) // 10) == 0:
+            if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % (len(transitions) // 20) == 0:
                 if self.do_dynamic_disp_state:
                     self.disp_states.append(t.state)
                     self.display_id_state.append(idx_transition)
@@ -595,7 +595,7 @@ class PytorchBudgetedFittedQ:
                 for i_s,state in enumerate(self.disp_next_states):
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
-                                            "next_state={}_epoch={:03}".format(id, self._id_ftq_epoch))
+                                            "next_state={}_epoch={:03}".format(i_s, self._id_ftq_epoch))
 
                         _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                         Q=self._policy_network,
@@ -604,15 +604,15 @@ class PytorchBudgetedFittedQ:
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace)
-                for i_s,state in self.disp_states:
+                for i_s,state in enumerate(self.disp_states):
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
-                                            "state={}_epoch={:03}".format(id, self._id_ftq_epoch))
+                                            "state={}_epoch={:03}".format(i_s, self._id_ftq_epoch))
 
                         _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                         Q=self._policy_network,
                                         action_mask=np.zeros(self.N_actions),
-                                        id="next_state_" + str(i_s), disp=True,
+                                        id="state_" + str(i_s), disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace)

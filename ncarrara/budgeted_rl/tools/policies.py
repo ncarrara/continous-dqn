@@ -237,7 +237,7 @@ class PytorchBudgetedFittedPolicy(Policy):
                                id="run_" + str(state), disp=False,
                                betas=self.betas_for_discretisation,
                                device=self.device)
-            opt,_ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
+            opt,_ = optimal_pia_pib(beta=beta, hull=hull)
             rand = np.random.random()
             a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup
             b = opt.budget_inf if rand < opt.proba_inf else opt.budget_sup

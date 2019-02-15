@@ -52,13 +52,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
     else:
-        config_file = "../config/test_egreedy.json"
+        config_file = "../config/debug_bftq.json"
     if len(sys.argv) > 2:
         id = sys.argv[2]
     else:
         id = None
 
-    from ncarrara.budgeted_rl.tools.configuration import C
+    from ncarrara.budgeted_rl.tools.configuration_bftq import C
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
     if id:
@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
     main(device=C.device,
          seed=C.seed,
-         workspace=C.path_learn_bftq_egreedy,
+         workspace=C.path_bftq_egreedy,
          path_results=C.path_bftq_results,
          **C.dict["test_bftq"],
          **C.dict)

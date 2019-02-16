@@ -119,7 +119,7 @@
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
     "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,11)",
+    "betas_for_duplication": "np.array([])",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",

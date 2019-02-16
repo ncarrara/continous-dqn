@@ -37,11 +37,18 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
             generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
             None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
         # Collect trajectories
+        # for params in workers_params:
+        #     print("------------------")
+        #     for param in params:
+        #         print(param)
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
         with Pool(cpu_processes) as pool:
             results = pool.starmap(execute_policy_from_config, workers_params)
+            # for result in results:
+            #     print(result[1])
             results = np.concatenate([result for _, result in results], axis=0)
-
+            # print("====================")
+            # print(results)
         print("BFTQ({}) : {}".format(beta, format_results(results)))
 
 

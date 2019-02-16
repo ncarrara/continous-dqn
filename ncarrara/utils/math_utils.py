@@ -74,7 +74,7 @@ def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
     decays = np.exp(-np.arange(N) / (1. / decay)) * start
     str_decay = pretty_format_list(decays)
     logger.info("Epsilons (decayed) : [{}]".format(str_decay))
-    if logger.getEffectiveLevel() is logging.INFO:
+    if logger.getEffectiveLevel() <= logging.DEBUG:
         plt.plot(range(len(decays)),decays)
         plt.title("epsilon decays")
         plt.show()

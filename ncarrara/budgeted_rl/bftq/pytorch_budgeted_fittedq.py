@@ -431,6 +431,7 @@ class PytorchBudgetedFittedQ:
         similar_next_state = []
         hull_id_idx_in_batch = []
 
+        idx_in_batch = 0
         for idx_transition, t in enumerate(transitions):
 
             if it % np.ceil(len(transitions) / 10) == 0: self.info(
@@ -441,10 +442,10 @@ class PytorchBudgetedFittedQ:
                 hull_key = self.state_to_unique_str(t.next_state)
                 if hull_key in hull_ids:
                     hull_id = hull_ids[hull_key]
-                    similar_next_state.append([hull_id, idx_transition])
+                    similar_next_state.append([hull_id, idx_in_batch])
                 else:
                     hull_id = last_hull_id
-                    hull_id_idx_in_batch.append(idx_transition)
+                    hull_id_idx_in_batch.append(idx_in_batch)
                     hull_ids[hull_key] = hull_id
                     last_hull_id += 1
             else:
@@ -461,9 +462,11 @@ class PytorchBudgetedFittedQ:
                 for beta in self.betas_for_duplication:
                     beta = torch.tensor([[[beta]]], dtype=torch.float)
                     memory.push(state, action, reward, next_state, constraint, beta, hull_id)
+                    idx_in_batch += 1
             else:
                 beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
+                idx_in_batch += 1
 
             if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % max(1, (len(transitions) // 50)) == 0:
                 if self.do_dynamic_disp_state:
@@ -472,9 +475,10 @@ class PytorchBudgetedFittedQ:
                 if self.do_dynamic_disp_nextstate:
                     self.disp_next_states.append(t.next_state)
                     self.display_id_next_state.append(idx_transition)
-
             it += 1
-
+        print("hull_ids")
+        for x, y in hull_ids.items():
+            print(x, y)
         hull_id_idx_in_batch = np.array(hull_id_idx_in_batch)
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -776,8 +780,7 @@ class PytorchBudgetedFittedQ:
             self.track_memory("compute_opts")
             self.info("computing ops ... ")
             self.info("before zeros (for next_state_betas)")
-            next_state_beta = torch.zeros((self.size_batch * 2, 1, self.size_state + 1),
-                                          device=self.device)
+            next_state_beta = torch.zeros((self.size_batch * 2, 1, self.size_state + 1), device=self.device)
             self.info("after zeros (for next_state_betas)")
             self.info("computing optimal_pia_pib in parralle ...")
             args = []

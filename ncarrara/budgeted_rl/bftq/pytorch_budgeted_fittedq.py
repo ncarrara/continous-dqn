@@ -659,6 +659,7 @@ class PytorchBudgetedFittedQ:
             policy_path = self.workspace + "/policy.pt"
         self.info("saving bftq policy at {}".format(policy_path))
         torch.save(self._policy_network, policy_path)
+        return policy_path
 
     def load_policy(self, policy_path=None):
 

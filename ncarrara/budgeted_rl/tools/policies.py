@@ -209,6 +209,7 @@ class PytorchBudgetedFittedPolicy(Policy):
         self.betas_for_discretisation = betas_for_discretisation
         self.device = device
         self.network = None
+        print("network_path : ",network_path)
         if network_path:
             self.load_network(network_path)
 
@@ -231,6 +232,8 @@ class PytorchBudgetedFittedPolicy(Policy):
         with torch.no_grad():
             if not type(action_mask) == type(np.zeros(1)):
                 action_mask = np.asarray(action_mask)
+
+
             hull = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                Q=self.network,
                                action_mask=action_mask,

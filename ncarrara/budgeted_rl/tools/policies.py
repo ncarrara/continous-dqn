@@ -209,7 +209,6 @@ class PytorchBudgetedFittedPolicy(Policy):
         self.betas_for_discretisation = betas_for_discretisation
         self.device = device
         self.network = None
-        print("network_path : ",network_path)
         if network_path:
             self.load_network(network_path)
 

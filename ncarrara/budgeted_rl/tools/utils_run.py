@@ -205,7 +205,6 @@ def execute_policy_from_config(generate_envs,
     set_seed(seed, env)
 
     policy_config["env"] = env
-    print(policy_config)
     pi = policy_factory(policy_config)
     return execute_policy(env, pi, gamma_r, gamma_c, n_trajectories, beta, epsilon_schedule, save_path)
 

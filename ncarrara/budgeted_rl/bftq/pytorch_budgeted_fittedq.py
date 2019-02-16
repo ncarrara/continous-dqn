@@ -509,7 +509,7 @@ class PytorchBudgetedFittedQ:
                 beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
 
-            if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % (len(transitions) // 20) == 0:
+            if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % max(1, (len(transitions) // 20)) == 0:
                 if self.do_dynamic_disp_state:
                     self.disp_states.append(t.state)
                     self.display_id_state.append(idx_transition)
@@ -921,7 +921,6 @@ class PytorchBudgetedFittedQ:
 
             ns_batch_unique = ns_batch[idx_of_uniques_next_state_for_hull_computing]
 
-
             self.info("There are {} hulls to compute !".format(len(ns_batch_unique)))
 
             """ 
@@ -970,33 +969,50 @@ class PytorchBudgetedFittedQ:
             # Qsb = Q(sb)
             self.track_memory("Qsb (compute_hull) (end)")
             Qsb = Qsb.detach().cpu().numpy()
-            # TODO : comparer ces inférences, avec les multiples petites inférence du commit qui fonctionnait
 
-            # for value in Qsb:
-            #     print(value)
+            if True:
+                # TODO : comparer ces inférences, avec les multiples petites inférence du commit qui fonctionnai
+                xxx = []
+                for sss in ns_batch_unique:
+                    ssss = sss.repeat((len(self.betas_for_discretisation), 1, 1))
+                    bbbb = torch.from_numpy(self.betas_for_discretisation).float().unsqueeze(1).unsqueeze(1).to(
+                        device=self.device)
+                    ssbbb = torch.cat((ssss, bbbb), dim=2)
+                    Qsssbbb = Q(ssbbb)
+                    xxx.append(Qsssbbb)
+                    # compute_interest_points_NN(sss, Q, np.zeros(self.N_actions), self.betas_for_discretisation, self.device, disp=False, path=None, id="default")
+                xaxa = torch.cat(xxx)
+                for i in range(len(Qsb)):
+                    print("-----------------------------")
+                    print("sb", "".join(["{:.2f} ".format(xx) for xx in sb[i].squeeze().detach().cpu().numpy()]))
+                    print("".join(["{:.3f} ".format(xx) for xx in Qsb[i]]))
+                    print("".join(["{:.3f} ".format(xx) for xx in xaxa[i].detach().cpu().numpy()]))
 
             self.info("actually computing hulls using multiprocessing")
             # TODO : est on sure que c'est bien sur la premiere dimension qu'il faut slice ?
-            args_for_ns_batch_unique = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                     np.zeros(self.N_actions),
-                     self.betas_for_discretisation,
-                     self.workspace)
-                    for i_ns_unique in range(len(ns_batch_unique))]
+            args_for_ns_batch_unique = [
+                (Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                 np.zeros(self.N_actions),
+                 self.betas_for_discretisation,
+                 self.workspace)
+                for i_ns_unique in range(len(ns_batch_unique))]
 
             with Pool(self.cpu_processes) as p:
                 computed_hulls_for_ns_batch_unique = p.map(f, args_for_ns_batch_unique)
 
             hulls = np.array([None] * len(ns_batch))
             hull_ids = hull_id_idx_in_ns_batch[:, 0]
+            nb_terminal_state = 0
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
-                #TODO voir la difference avec !=
-                if hull_id is not PytorchBudgetedFittedQ.DONT_COMPUTE:
+                # TODO voir la difference avec !=
+                if hull_id != PytorchBudgetedFittedQ.DONT_COMPUTE:
                     # TODO C'est surement la le problème !!!
                     # TODO C'est argwhere qu'il faut mettre, faut where
                     idx_in_ns_batch_unique = np.where(hull_ids == hull_id)
                     print(idx_in_ns_batch_unique)
-                    idx_in_ns_batch_unique = idx_in_ns_batch_unique[0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
+                    idx_in_ns_batch_unique = idx_in_ns_batch_unique[
+                        0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
 
                     if len(idx_in_ns_batch_unique) != 1:
                         raise Exception("IMPOSIBBRUUU")
@@ -1006,15 +1022,19 @@ class PytorchBudgetedFittedQ:
                         hull = computed_hulls_for_ns_batch_unique[idx_in_ns_batch_unique]
                         hulls[i_ns] = hull
                 else:
-                    #TODO verifier le nombre de terminl state
-            exit()
+                    nb_terminal_state += 1
+                    # TODO verifier le nombre de terminl state
 
             self.track_memory("compute_hull (end boucle)")
+            self.info("we skipped {} terminal states".format(nb_terminal_state))
             self.info("hulls actually computed : {}".format(len(computed_hulls_for_ns_batch_unique)))
             self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
+            self.info("That means there are {} similar next state : {}"
+                      .format(len(ns_batch) - (len(computed_hulls_for_ns_batch_unique) + nb_terminal_state)))
             self.info("computing hulls [DONE] ")
             self.empty_cache()
             self.track_memory("compute hulls (end)")
+            exit()
             return hulls
             # DONE parralelisation
 

@@ -424,7 +424,6 @@ class PytorchBudgetedFittedQ:
         it = 0
         last_hull_id = 0
         hull_ids = {}
-        number_of_terminal_states = 0
         similar_next_state = []
         mask_unique_hull_ns = []
         mask_not_terminal_ns = []
@@ -449,7 +448,6 @@ class PytorchBudgetedFittedQ:
             else:
                 next_state = torch.tensor([[[np.nan] * self.size_state]], dtype=torch.float)
                 hull_id = PytorchBudgetedFittedQ.DONT_COMPUTE
-                number_of_terminal_states += 1
 
             hull_id = torch.tensor([[[hull_id]]], dtype=torch.long)
             action = torch.tensor([[t.action]], dtype=torch.long)
@@ -508,7 +506,7 @@ class PytorchBudgetedFittedQ:
         else:
             self._policy_network.set_normalization_params(mean, std)
 
-        if len(transitions) != (len(mask_unique_hull_ns) + number_of_terminal_states + len(similar_next_state)):
+        if len(transitions) != (len(mask_unique_hull_ns) + len(mask_not_terminal_ns) + len(similar_next_state)):
             raise Exception("Something went wrong")
 
         self.info("-----------------------------------------------------")
@@ -516,7 +514,7 @@ class PytorchBudgetedFittedQ:
         self.info("-----------------------------------------------------")
         self.info("#transitions : {}".format(len(memory)))
         self.info("#hull (=#unique_next_states) : {}".format(len(mask_unique_hull_ns)))
-        self.info("#terminal next_states : {}".format(number_of_terminal_states))
+        self.info("#terminal next_states : {}".format(len(mask_not_terminal_ns)))
         self.info("#similar next_states (excluding terminal states) : {}".format(len(similar_next_state)))
         self.info("sum of constraint : {}".format(constraint_batch.sum()))
         self.info("#reward >= 1 : {}".format(reward_batch[reward_batch >= 1.].sum()))

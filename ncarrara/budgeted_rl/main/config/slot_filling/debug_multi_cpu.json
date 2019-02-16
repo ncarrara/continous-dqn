@@ -4,7 +4,7 @@
     "seed": 0,
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 10
+      "processes_when_linked_with_gpu": 15
     },
     "workspace": "tmp/debug_multi_cpu",
     "dictConfig": {
@@ -104,9 +104,9 @@
     "betas_test": "np.linspace(0.,1.,11)"
   },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1000,
+    "trajs_by_ftq_batch": 2500,
     "normalize_reward": true,
-    "N_trajs": 1000,
+    "N_trajs": 2500,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.001
@@ -118,7 +118,7 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,11)",
+    "betas_for_discretisation": "np.linspace(0.,1.,21)",
     "betas_for_duplication": "np.array([])",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
@@ -138,7 +138,7 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 100,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [

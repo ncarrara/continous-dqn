@@ -921,19 +921,17 @@ class PytorchBudgetedFittedQ:
 
             ns_batch_unique = ns_batch[idx_of_uniques_next_state_for_hull_computing]
 
-            # if logger.getEffectiveLevel() is logging.DEBUG:
-            #     print(idx_of_uniques_next_state_for_hull_computing)
-            #     for s in ns_batch_unique:
-            #         print(s)
 
             self.info("There are {} hulls to compute !".format(len(ns_batch_unique)))
 
-            # sb = "duplicating each next states with each beta"
-            # if we have 2 states s0 and s1 and 2 betas 0 and 1. What do we want for sb is :
-            # (s0,0)
-            # (s0,1)
-            # (s1,0)
-            # (s1,1)
+            """ 
+            sb = "duplicating each next states with each beta"
+            if we have 2 states s0 and s1 and 2 betas 0 and 1. What do we want for sb is :
+            (s0,0)
+            (s0,1)
+            (s1,0)
+            (s1,1)
+            """
             ss = ns_batch_unique \
                 .squeeze() \
                 .repeat((1, len(self.betas_for_discretisation))) \
@@ -943,6 +941,9 @@ class PytorchBudgetedFittedQ:
             bb = bb.repeat((len(ns_batch_unique), 1))
             sb = torch.cat((ss, bb), dim=1)
             sb = sb.unsqueeze(1)
+            for sss in sb:
+                print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
+
             self.track_memory("Qsb (compute_hull) ")
             self.info("""Forward pass of couple (s',beta). Size of the batch : {}. 
                 It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"""
@@ -958,6 +959,8 @@ class PytorchBudgetedFittedQ:
                 self.info("mini batch {}".format(i))
                 self.track_memory("mini_batch={}".format(i))
                 mini_batch = sb[offset:offset + batch_sizes[i]]
+                for sss in mini_batch:
+                    print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
                 # print(mini_batch.shape)
                 offset += batch_sizes[i]
                 y.append(Q(mini_batch))
@@ -974,37 +977,40 @@ class PytorchBudgetedFittedQ:
 
             self.info("actually computing hulls using multiprocessing")
             # TODO : est on sure que c'est bien sur la premiere dimension qu'il faut slice ?
-            args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+            args_for_ns_batch_unique = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
                      np.zeros(self.N_actions),
                      self.betas_for_discretisation,
                      self.workspace)
                     for i_ns_unique in range(len(ns_batch_unique))]
 
             with Pool(self.cpu_processes) as p:
-                computed_hulls = p.map(f, args)
+                computed_hulls_for_ns_batch_unique = p.map(f, args_for_ns_batch_unique)
 
             hulls = np.array([None] * len(ns_batch))
             hull_ids = hull_id_idx_in_ns_batch[:, 0]
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
+                #TODO voir la difference avec !=
                 if hull_id is not PytorchBudgetedFittedQ.DONT_COMPUTE:
                     # TODO C'est surement la le problème !!!
                     # TODO C'est argwhere qu'il faut mettre, faut where
-                    i_ns_unique = np.where(hull_ids == hull_id)
-                    i_ns_unique = i_ns_unique[0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
+                    idx_in_ns_batch_unique = np.where(hull_ids == hull_id)
+                    print(idx_in_ns_batch_unique)
+                    idx_in_ns_batch_unique = idx_in_ns_batch_unique[0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
 
-                    if len(i_ns_unique) <= 0:
+                    if len(idx_in_ns_batch_unique) != 1:
                         raise Exception("IMPOSIBBRUUU")
-                    elif len(i_ns_unique) > 1:
-                        raise Exception("Number of unique hulls hull_ids should not be > 1")
                     else:
-                        i_ns_unique = i_ns_unique[0]
-                        _, idx_in_ns_batch = hull_id_idx_in_ns_batch[i_ns_unique]
-                        hull = computed_hulls[i_ns_unique]
+                        idx_in_ns_batch_unique = idx_in_ns_batch_unique[0]
+                        # _, idx_in_ns_batch = hull_id_idx_in_ns_batch[i_ns_unique] # TODO c'est peut etre un truc dans le genre
+                        hull = computed_hulls_for_ns_batch_unique[idx_in_ns_batch_unique]
                         hulls[i_ns] = hull
+                else:
+                    #TODO verifier le nombre de terminl state
+            exit()
 
             self.track_memory("compute_hull (end boucle)")
-            self.info("hulls actually computed : {}".format(len(computed_hulls)))
+            self.info("hulls actually computed : {}".format(len(computed_hulls_for_ns_batch_unique)))
             self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
             self.info("computing hulls [DONE] ")
             self.empty_cache()

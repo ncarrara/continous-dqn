@@ -557,33 +557,33 @@ class PytorchBudgetedFittedQ:
             _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, mask_unique_hull_ns,
                                 mask_not_terminal_ns)
             self.info("delta={}".format(self.delta))
-            # if logger.getEffectiveLevel() <= logging.DEBUG:
-            #     self.info("Printing some debug graphics ...")
-            #     for i_s, state in enumerate(self.disp_next_states):
-            #         if state is not None:
-            #             str_state = "epoch={:03}_next_state={}".format(self._id_ftq_epoch, i_s)
-            #             self.draw_Qr_and_Qc(state, self._policy_network, str_state)
-            #
-            #             _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-            #                             Q=self._policy_network,
-            #                             action_mask=np.zeros(self.N_actions),
-            #                             id=str_state, disp=True,
-            #                             betas=self.betas_for_discretisation,
-            #                             device=self.device,
-            #                             path=self.workspace)
-            #     for i_s, state in enumerate(self.disp_states):
-            #         if state is not None:
-            #             str_state = "epoch={:03}_state={}".format(self._id_ftq_epoch, i_s)
-            #             self.draw_Qr_and_Qc(state, self._policy_network, str_state)
-            #
-            #             _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-            #                             Q=self._policy_network,
-            #                             action_mask=np.zeros(self.N_actions),
-            #                             id=str_state, disp=True,
-            #                             betas=self.betas_for_discretisation,
-            #                             device=self.device,
-            #                             path=self.workspace)
-            #     self.info("Printing some debug graphics ... (end)")
+            if logger.getEffectiveLevel() <= logging.DEBUG:
+                self.info("Printing some debug graphics ...")
+                for i_s, state in enumerate(self.disp_next_states):
+                    if state is not None:
+                        str_state = "epoch={:03}_next_state={}".format(self._id_ftq_epoch, i_s)
+                        self.draw_Qr_and_Qc(state, self._policy_network, str_state)
+
+                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                        Q=self._policy_network,
+                                        action_mask=np.zeros(self.N_actions),
+                                        id=str_state, disp=True,
+                                        betas=self.betas_for_discretisation,
+                                        device=self.device,
+                                        path=self.workspace)
+                for i_s, state in enumerate(self.disp_states):
+                    if state is not None:
+                        str_state = "epoch={:03}_state={}".format(self._id_ftq_epoch, i_s)
+                        self.draw_Qr_and_Qc(state, self._policy_network, str_state)
+
+                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                        Q=self._policy_network,
+                                        action_mask=np.zeros(self.N_actions),
+                                        id=str_state, disp=True,
+                                        betas=self.betas_for_discretisation,
+                                        device=self.device,
+                                        path=self.workspace)
+                self.info("Printing some debug graphics ... (end)")
             self._id_ftq_epoch += 1
 
         return self._policy_network

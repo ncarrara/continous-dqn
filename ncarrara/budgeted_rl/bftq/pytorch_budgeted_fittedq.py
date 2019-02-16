@@ -699,7 +699,7 @@ class PytorchBudgetedFittedQ:
         isnan = torch.sum(torch.isnan(state)) == self.size_state
         return isnan
 
-    def compute_opts(self, ns_batch, b_batch, h_batch, hulls):
+    def compute_opts(self, ns_batch, b_batch, hulls):
         with torch.no_grad():
             self.track_memory("compute_opts")
             self.info("computing ops ... ")
@@ -710,7 +710,7 @@ class PytorchBudgetedFittedQ:
             self.info("computing optimal_pia_pib in parralle ...")
             args = []
             i = 0
-            for next_state, beta, hull_id in zip(ns_batch, b_batch, h_batch):
+            for next_state, beta in zip(ns_batch, b_batch):
                 if self._is_terminal_state(next_state):
                     args.append(None)
                 else:
@@ -736,7 +736,7 @@ class PytorchBudgetedFittedQ:
             i_non_terminal = 0
             status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
             len_hull = 0
-            for next_state, beta, hull_id in zip(ns_batch, b_batch, h_batch):
+            for next_state, beta in zip(ns_batch, b_batch):
                 if i % np.ceil((self.size_batch / 5)) == 0:
                     self.info("[_ftq_epoch] processing optimal pia pib {}".format(i))
                 if self._is_terminal_state(next_state):

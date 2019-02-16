@@ -470,7 +470,8 @@ class PytorchBudgetedFittedQ:
             else:
                 beta = torch.tensor([[[t.beta]]], dtype=torch.float)
                 memory.push(state, action, reward, next_state, constraint, beta, hull_id)
-                mask_not_terminal_ns.append(idx_in_batch)
+                if t.next_state is not None:
+                    mask_not_terminal_ns.append(idx_in_batch)
                 idx_in_batch += 1
 
             if logger.getEffectiveLevel() <= logging.DEBUG and idx_transition % max(1, (len(transitions) // 25)) == 0:
@@ -481,10 +482,11 @@ class PytorchBudgetedFittedQ:
                     self.disp_next_states.append(t.next_state)
                     self.display_id_next_state.append(idx_transition)
             it += 1
-        print("hull_ids")
-        for x, y in hull_ids.items():
-            print(x, y)
+        # print("hull_ids")
+        # for x, y in hull_ids.items():
+        #     print(x, y)
         mask_unique_hull_ns = np.array(mask_unique_hull_ns)
+        mask_not_terminal_ns = np.array(mask_not_terminal_ns)
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             self.info("Display on these states {}".format(pretty_format_list(self.display_id_state)))
@@ -555,31 +557,33 @@ class PytorchBudgetedFittedQ:
             _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, mask_unique_hull_ns,
                                 mask_not_terminal_ns)
             self.info("delta={}".format(self.delta))
-            if logger.getEffectiveLevel() <= logging.DEBUG:
-                for i_s, state in enumerate(self.disp_next_states):
-                    if state is not None:
-                        str_state = "epoch={:03}_next_state={}".format(self._id_ftq_epoch, i_s)
-                        self.draw_Qr_and_Qc(state, self._policy_network, str_state)
-
-                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                        Q=self._policy_network,
-                                        action_mask=np.zeros(self.N_actions),
-                                        id=str_state, disp=True,
-                                        betas=self.betas_for_discretisation,
-                                        device=self.device,
-                                        path=self.workspace)
-                for i_s, state in enumerate(self.disp_states):
-                    if state is not None:
-                        str_state = "epoch={:03}_state={}".format(self._id_ftq_epoch, i_s)
-                        self.draw_Qr_and_Qc(state, self._policy_network, str_state)
-
-                        _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
-                                        Q=self._policy_network,
-                                        action_mask=np.zeros(self.N_actions),
-                                        id=str_state, disp=True,
-                                        betas=self.betas_for_discretisation,
-                                        device=self.device,
-                                        path=self.workspace)
+            # if logger.getEffectiveLevel() <= logging.DEBUG:
+            #     self.info("Printing some debug graphics ...")
+            #     for i_s, state in enumerate(self.disp_next_states):
+            #         if state is not None:
+            #             str_state = "epoch={:03}_next_state={}".format(self._id_ftq_epoch, i_s)
+            #             self.draw_Qr_and_Qc(state, self._policy_network, str_state)
+            #
+            #             _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+            #                             Q=self._policy_network,
+            #                             action_mask=np.zeros(self.N_actions),
+            #                             id=str_state, disp=True,
+            #                             betas=self.betas_for_discretisation,
+            #                             device=self.device,
+            #                             path=self.workspace)
+            #     for i_s, state in enumerate(self.disp_states):
+            #         if state is not None:
+            #             str_state = "epoch={:03}_state={}".format(self._id_ftq_epoch, i_s)
+            #             self.draw_Qr_and_Qc(state, self._policy_network, str_state)
+            #
+            #             _ = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+            #                             Q=self._policy_network,
+            #                             action_mask=np.zeros(self.N_actions),
+            #                             id=str_state, disp=True,
+            #                             betas=self.betas_for_discretisation,
+            #                             device=self.device,
+            #                             path=self.workspace)
+            #     self.info("Printing some debug graphics ... (end)")
             self._id_ftq_epoch += 1
 
         return self._policy_network
@@ -785,7 +789,12 @@ class PytorchBudgetedFittedQ:
             next_state_beta_not_terminal = torch.zeros((len(where_not_terminal_ns) * 2, 1, self.size_state + 1),
                                                        device=self.device)
             ns_batch_not_terminal = ns_batch[where_not_terminal_ns]
+            # for s in ns_batch_not_terminal:
+            #     print(s)
+
             h_batch_not_terminal = h_batch[where_not_terminal_ns]
+            # for s in h_batch_not_terminal:
+            #     print(s)
             status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
             opts_not_terminal = []
 
@@ -804,7 +813,7 @@ class PytorchBudgetedFittedQ:
 
             self.info("Q next")
             self.track_memory("Q_next")
-            print(next_state_beta_not_terminal.shape)
+            # print(next_state_beta_not_terminal.shape)
             Q_next_state_not_terminal = self._policy_network(next_state_beta_not_terminal)
             Q_next_state_not_terminal = Q_next_state_not_terminal.detach()
             self.track_memory("Q_next (end)")
@@ -841,14 +850,14 @@ class PytorchBudgetedFittedQ:
                 next_state_rewards_not_terminal[i] = opt.proba_inf * qr_ + opt.proba_sup * qr
                 next_state_constraints_not_terminal[i] = opt.proba_inf * qc_ + opt.proba_sup * qc
 
-                if next_state_constraints[i] < 0:
+                if next_state_constraints_not_terminal[i] < 0:
                     next_state_c_neg += 1.
                 found = found or False
 
             next_state_rewards = torch.zeros(self.size_batch, device=self.device)
             next_state_constraints = torch.zeros(self.size_batch, device=self.device)
             next_state_rewards[where_not_terminal_ns] = next_state_rewards_not_terminal
-            next_state_rewards[where_not_terminal_ns] = next_state_constraints_not_terminal
+            next_state_constraints[where_not_terminal_ns] = next_state_constraints_not_terminal
 
             if logger.getEffectiveLevel() <= logging.DEBUG:
                 self.info("\n[compute_next_values] Q(s') sur le batch")
@@ -863,7 +872,7 @@ class PytorchBudgetedFittedQ:
 
             self.info("qc < 0 percentage {:.2f}%".format(warning_qc_negatif / len(where_not_terminal_ns) * 100.))
             self.info("qc_ < 0 percentage {:.2f}%".format(warning_qc__negatif / len(where_not_terminal_ns) * 100.))
-            self.info("next_state_constraints < 0 percentage {:.2f}%".format(next_state_c_neg / i_non_terminal * 100.))
+            self.info("next_state_constraints < 0 percentage {:.2f}%".format(next_state_c_neg / len(where_not_terminal_ns) * 100.))
             self.info("compute next values ... end")
             self.track_memory("compute_next_values (end)")
             return next_state_rewards, next_state_constraints

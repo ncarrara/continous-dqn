@@ -66,7 +66,6 @@ def f(params):
     # print(params)
     return hull
 
-xaxaa
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
     with torch.no_grad():
@@ -520,8 +519,6 @@ class PytorchBudgetedFittedQ:
 
             it += 1
 
-
-
         hull_id_idx_in_batch = np.array(hull_id_idx_in_batch)
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
@@ -593,7 +590,7 @@ class PytorchBudgetedFittedQ:
             _ = self._ftq_epoch(sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, hull_id_idx_in_batch)
             self.info("delta={}".format(self.delta))
             if logger.getEffectiveLevel() <= logging.DEBUG:
-                for i_s,state in enumerate(self.disp_next_states):
+                for i_s, state in enumerate(self.disp_next_states):
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "next_state={}_epoch={:03}".format(i_s, self._id_ftq_epoch))
@@ -605,7 +602,7 @@ class PytorchBudgetedFittedQ:
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace)
-                for i_s,state in enumerate(self.disp_states):
+                for i_s, state in enumerate(self.disp_states):
                     if state is not None:
                         self.draw_Qr_and_Qc(state, self._policy_network,
                                             "state={}_epoch={:03}".format(i_s, self._id_ftq_epoch))
@@ -913,14 +910,14 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-    def compute_hulls(self, ns_batch, h_batch, Q, hull_id_idx_in_batch):
+    def compute_hulls(self, ns_batch, h_batch, Q, hull_id_idx_in_ns_batch):
         with torch.no_grad():
             self.track_memory("compute hulls")
             self.info("computing hulls ...")
 
             # gather all s,beta to compute in one foward pass (may increase the pic of memory used temporary)
             # but essential for multiprocessing hull computing bellow
-            idx_of_uniques_next_state_for_hull_computing = hull_id_idx_in_batch[:, 1]
+            idx_of_uniques_next_state_for_hull_computing = hull_id_idx_in_ns_batch[:, 1]
 
             ns_batch_unique = ns_batch[idx_of_uniques_next_state_for_hull_computing]
 
@@ -970,32 +967,39 @@ class PytorchBudgetedFittedQ:
             # Qsb = Q(sb)
             self.track_memory("Qsb (compute_hull) (end)")
             Qsb = Qsb.detach().cpu().numpy()
+            # TODO : comparer ces inférences, avec les multiples petites inférence du commit qui fonctionnait
+
             # for value in Qsb:
             #     print(value)
 
             self.info("actually computing hulls using multiprocessing")
-            # if self.use_compute_hull_parallel is not None:
+            # TODO : est on sure que c'est bien sur la premiere dimension qu'il faut slice ?
             args = [(Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
                      np.zeros(self.N_actions),
                      self.betas_for_discretisation,
-                     self.workspace) for i_ns_unique in range(len(ns_batch_unique))
-                    ]
+                     self.workspace)
+                    for i_ns_unique in range(len(ns_batch_unique))]
+
             with Pool(self.cpu_processes) as p:
                 computed_hulls = p.map(f, args)
 
             hulls = np.array([None] * len(ns_batch))
-            hull_ids = hull_id_idx_in_batch[:, 0]
+            hull_ids = hull_id_idx_in_ns_batch[:, 0]
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
                 if hull_id is not PytorchBudgetedFittedQ.DONT_COMPUTE:
+                    # TODO C'est surement la le problème !!!
+                    # TODO C'est argwhere qu'il faut mettre, faut where
                     i_ns_unique = np.where(hull_ids == hull_id)
-                    i_ns_unique = i_ns_unique[0]
+                    i_ns_unique = i_ns_unique[0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
+
                     if len(i_ns_unique) <= 0:
                         raise Exception("IMPOSIBBRUUU")
                     elif len(i_ns_unique) > 1:
                         raise Exception("Number of unique hulls hull_ids should not be > 1")
                     else:
                         i_ns_unique = i_ns_unique[0]
+                        _, idx_in_ns_batch = hull_id_idx_in_ns_batch[i_ns_unique]
                         hull = computed_hulls[i_ns_unique]
                         hulls[i_ns] = hull
 

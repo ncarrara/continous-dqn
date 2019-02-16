@@ -77,7 +77,9 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         # Collect trajectories
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
         if cpu_processes == 1:
-            results = [execute_policy_from_config(*workers_params[0])]
+            results = []
+            for params in workers_params:
+                results.append(execute_policy_from_config(*params))
         else:
             with Pool(processes=cpu_processes) as pool:
                 results = pool.starmap(execute_policy_from_config, workers_params)

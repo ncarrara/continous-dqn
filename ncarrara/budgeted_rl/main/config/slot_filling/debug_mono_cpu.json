@@ -1,12 +1,12 @@
 {
   "general": {
-    "id": "debug",
+    "id": "debug_mono_cpu",
     "seed": 0,
     "cpu": {
-      "processes": null,
-      "processes_when_linked_with_gpu": 10
+      "processes": 1,
+      "processes_when_linked_with_gpu": 1
     },
-    "workspace": "tmp/debug",
+    "workspace": "tmp/debug_mono_cpu",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

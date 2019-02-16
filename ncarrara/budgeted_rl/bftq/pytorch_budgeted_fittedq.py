@@ -488,7 +488,7 @@ class PytorchBudgetedFittedQ:
                     similar_next_state.append([hull_id, idx_transition])
                 else:
                     hull_id = last_hull_id
-                    hull_id_idx_in_batch.append([hull_id, idx_transition])
+                    hull_id_idx_in_batch.append(idx_transition)
                     hull_ids[hull_key] = hull_id
                     last_hull_id += 1
             else:
@@ -718,8 +718,16 @@ class PytorchBudgetedFittedQ:
                     args.append((beta, hulls[i], {}))
                 i += 1
 
-            with Pool(self.cpu_processes) as p:
-                opts_and_status = p.map(optimal_pia_pib_parralle, args)
+
+            if self.cpu_processes==1:
+                opts_and_status = []
+                for i_arg,arg in enumerate(args):
+                    if i_arg%(max (1,len(args)//10))==0:
+                        self.info("{} opts proccessed (sequentially)".format(i_arg))
+                    opts_and_status.append(optimal_pia_pib_parralle(arg))
+            else:
+                with Pool(self.cpu_processes) as p:
+                    opts_and_status = p.map(optimal_pia_pib_parralle, args)
             zipped = list(zip(*opts_and_status))
             opts = zipped[0]
             stats = zipped[1]
@@ -910,16 +918,15 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-    def compute_hulls(self, ns_batch, h_batch, Q, hull_id_idx_in_ns_batch):
+    def compute_hulls(self, ns_batch, h_batch, Q, idx_in_ns_batch_for_hull_ids):
         with torch.no_grad():
             self.track_memory("compute hulls")
             self.info("computing hulls ...")
 
             # gather all s,beta to compute in one foward pass (may increase the pic of memory used temporary)
             # but essential for multiprocessing hull computing bellow
-            idx_of_uniques_next_state_for_hull_computing = hull_id_idx_in_ns_batch[:, 1]
 
-            ns_batch_unique = ns_batch[idx_of_uniques_next_state_for_hull_computing]
+            ns_batch_unique = ns_batch[idx_in_ns_batch_for_hull_ids]
 
             self.info("There are {} hulls to compute !".format(len(ns_batch_unique)))
 
@@ -940,12 +947,14 @@ class PytorchBudgetedFittedQ:
             bb = bb.repeat((len(ns_batch_unique), 1))
             sb = torch.cat((ss, bb), dim=1)
             sb = sb.unsqueeze(1)
-            for sss in sb:
-                print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
+
+            if False:
+                for sss in sb:
+                    print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
 
             self.track_memory("Qsb (compute_hull) ")
-            self.info("""Forward pass of couple (s',beta). Size of the batch : {}. 
-                It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"""
+            self.info("Forward pass of couple (s',beta). Size of the batch : {}." +
+                      "It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"
                       .format(len(sb), len(ns_batch_unique), len(self.betas_for_discretisation),
                               len(self.betas_for_discretisation) * len(ns_batch_unique)))
             num_bins = 5
@@ -958,19 +967,17 @@ class PytorchBudgetedFittedQ:
                 self.info("mini batch {}".format(i))
                 self.track_memory("mini_batch={}".format(i))
                 mini_batch = sb[offset:offset + batch_sizes[i]]
-                for sss in mini_batch:
-                    print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
-                # print(mini_batch.shape)
+                if False:
+                    for sss in mini_batch:
+                        print("".join(["{:.2f} ".format(xx) for xx in sss.squeeze().detach().cpu().numpy()]))
                 offset += batch_sizes[i]
                 y.append(Q(mini_batch))
                 torch.cuda.empty_cache()
             Qsb = torch.cat(y)
-
-            # Qsb = Q(sb)
-            self.track_memory("Qsb (compute_hull) (end)")
             Qsb = Qsb.detach().cpu().numpy()
+            self.track_memory("Qsb (compute_hull) (end)")
 
-            if True:
+            if False:
                 # TODO : comparer ces inférences, avec les multiples petites inférence du commit qui fonctionnai
                 xxx = []
                 for sss in ns_batch_unique:
@@ -988,53 +995,59 @@ class PytorchBudgetedFittedQ:
                     print("".join(["{:.3f} ".format(xx) for xx in Qsb[i]]))
                     print("".join(["{:.3f} ".format(xx) for xx in xaxa[i].detach().cpu().numpy()]))
 
-            self.info("actually computing hulls using multiprocessing")
-            # TODO : est on sure que c'est bien sur la premiere dimension qu'il faut slice ?
             args_for_ns_batch_unique = [
-                (Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
-                 np.zeros(self.N_actions),
-                 self.betas_for_discretisation,
-                 self.workspace)
-                for i_ns_unique in range(len(ns_batch_unique))]
+                (
+                    Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                    np.zeros(self.N_actions),
+                    self.betas_for_discretisation,
+                    self.workspace
+                )
+                for i_ns_unique in range(len(ns_batch_unique))
+            ]
 
-            with Pool(self.cpu_processes) as p:
-                computed_hulls_for_ns_batch_unique = p.map(f, args_for_ns_batch_unique)
+            if self.cpu_processes == 1:
+                hulls_for_ns_batch_unique = []
+                for i_params, params in enumerate(args_for_ns_batch_unique):
+                    if i_params % max(1, len(args_for_ns_batch_unique) // 10)==0:
+                        self.info("{} hulls processed (sequentially)".format(i_params))
+                    hulls_for_ns_batch_unique.append(f(params))
+            else:
+                self.info("Using multiprocessing")
+                with Pool(self.cpu_processes) as p:
+                    # p.map return ordered fashion, so we're cool
+                    hulls_for_ns_batch_unique = p.map(f, args_for_ns_batch_unique)
+
+            if False:
+                for x in idx_in_ns_batch_for_hull_ids:
+                    print("hull_id_idx_in_ns_batch", x)
 
             hulls = np.array([None] * len(ns_batch))
-            hull_ids = hull_id_idx_in_ns_batch[:, 0]
             nb_terminal_state = 0
             for i_ns, state in enumerate(ns_batch):
                 hull_id = h_batch[i_ns].item()
-                # TODO voir la difference avec !=
                 if hull_id != PytorchBudgetedFittedQ.DONT_COMPUTE:
-                    # TODO C'est surement la le problème !!!
-                    # TODO C'est argwhere qu'il faut mettre, faut where
-                    idx_in_ns_batch_unique = np.where(hull_ids == hull_id)
-                    print(idx_in_ns_batch_unique)
-                    idx_in_ns_batch_unique = idx_in_ns_batch_unique[
-                        0]  # TODO est on sure que c'est bien [0] ? ca se trouve c'est [1]
-
-                    if len(idx_in_ns_batch_unique) != 1:
-                        raise Exception("IMPOSIBBRUUU")
-                    else:
-                        idx_in_ns_batch_unique = idx_in_ns_batch_unique[0]
-                        # _, idx_in_ns_batch = hull_id_idx_in_ns_batch[i_ns_unique] # TODO c'est peut etre un truc dans le genre
-                        hull = computed_hulls_for_ns_batch_unique[idx_in_ns_batch_unique]
-                        hulls[i_ns] = hull
+                    hull = hulls_for_ns_batch_unique[hull_id]
+                    hulls[i_ns] = hull
                 else:
                     nb_terminal_state += 1
-                    # TODO verifier le nombre de terminl state
 
+            self.info("-----------------------------------------------------")
+            self.info("--------------- HULLS INFORMATIONS ------------------")
+            self.info("-----------------------------------------------------")
+            self.info("len(ns_batch_unique) = {} should be the same as len(idx_in_ns_batch_for_hull_ids)={}"
+                      .format(len(ns_batch_unique), len(idx_in_ns_batch_for_hull_ids)))
             self.track_memory("compute_hull (end boucle)")
             self.info("we skipped {} terminal states".format(nb_terminal_state))
-            self.info("hulls actually computed : {}".format(len(computed_hulls_for_ns_batch_unique)))
+            self.info("hulls actually computed : {}".format(len(hulls_for_ns_batch_unique)))
             self.info("total hulls (=next_states) : {}".format(len(ns_batch)))
-            self.info("That means there are {} similar next state : {}"
-                      .format(len(ns_batch) - (len(computed_hulls_for_ns_batch_unique) + nb_terminal_state)))
+            self.info("That means there are {} similar next state"
+                      .format(len(ns_batch) - (len(hulls_for_ns_batch_unique) + nb_terminal_state)))
+            self.info("-----------------------------------------------------")
+            self.info("-----------------------------------------------------")
+            self.info("-----------------------------------------------------")
             self.info("computing hulls [DONE] ")
             self.empty_cache()
             self.track_memory("compute hulls (end)")
-            exit()
             return hulls
             # DONE parralelisation
 

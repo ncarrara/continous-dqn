@@ -65,13 +65,13 @@
   "gamma_c": 1.0,
   "test_bftq": {
     "policy_path": "final_policy.pt",
-    "N_trajs": 100,
-    "betas_test": "np.linspace(0.,1.,21)"
+    "N_trajs": 1000,
+    "betas_test": "np.linspace(0.,1.,11)"
   },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 2000,
+    "trajs_by_ftq_batch": 5000,
     "normalize_reward": true,
-    "N_trajs": 2000,
+    "N_trajs": 5000,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.001
@@ -83,7 +83,7 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,21)",
+    "betas_for_discretisation": "np.linspace(0.,1.,101)",
     "betas_for_duplication": "np.array([])",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,

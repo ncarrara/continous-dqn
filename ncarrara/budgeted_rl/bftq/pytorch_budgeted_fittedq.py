@@ -921,6 +921,7 @@ class PytorchBudgetedFittedQ:
                 next_state_constraints[where_not_terminal_ns] = next_state_constraints_not_terminal
 
                 if logger.getEffectiveLevel() <= logging.DEBUG:
+                    self.info("printing some graphs in next_values ...")
                     self.info("\n[compute_next_values] Q(s') sur le batch")
                     create_Q_histograms("Qr(s')_e={}".format(self._id_ftq_epoch),
                                         values=next_state_rewards.cpu().numpy().flatten(),
@@ -930,6 +931,7 @@ class PytorchBudgetedFittedQ:
                                         values=next_state_constraints.cpu().numpy().flatten(),
                                         path=self.workspace + "/histogram",
                                         labels=["next value"])
+                    self.info("printing some graphs in next_values ... done")
 
                 mean_qc_neg = 0 if warning_qc_negatif == 0 else offset_qc_negatif / warning_qc_negatif
                 mean_qc__neg = 0 if warning_qc__negatif == 0 else offset_qc__negatif / warning_qc__negatif

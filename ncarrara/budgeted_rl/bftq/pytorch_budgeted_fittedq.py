@@ -752,10 +752,10 @@ class PytorchBudgetedFittedQ:
                 sb = sb.unsqueeze(1)
 
                 self.track_memory("Qsb (compute_hull) ")
-                self.info("Forward pass of couple (s',beta). Size of the batch : {}." +
-                          "It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"
-                          .format(len(sb), len(ns_batch_unique), len(self.betas_for_discretisation),
-                                  len(self.betas_for_discretisation) * len(ns_batch_unique)))
+                # self.info("Forward pass of couple (s',beta). Size of the batch : {}." +
+                #           "It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"
+                #           .format(len(sb), len(ns_batch_unique), len(self.betas_for_discretisation),
+                #                   len(self.betas_for_discretisation) * len(ns_batch_unique)))
                 num_bins = 5
                 batch_sizes = near_split(x=len(sb), num_bins=num_bins)
                 y = []

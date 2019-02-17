@@ -1,7 +1,9 @@
 from sklearn.model_selection import ParameterGrid
 import gym
 import logging
-from ncarrara.continuous_dqn.tools.configuration import C
+
+from ncarrara.utils_rl.environments.gridworld.world import World
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,6 +45,20 @@ def generate_envs(envs_str, envs_params):
             __import__("highway_env")
             env = gym.make(envs_str)
             env.configure(dict(**param))
+        elif envs_str == "test_death_trap":
+            from ncarrara.utils_rl.environments.gridworld.model_generator import generate_test_death_trap
+            env,_ = generate_test_death_trap()
+        elif envs_str == "3xWidth":
+            from ncarrara.utils_rl.environments.gridworld.model_generator import generate_3xWidth
+            env,_ = generate_3xWidth(**param)
+            w = World(env)
+            w.draw_frame()
+            w.draw_lattice()
+            w.draw_cases()
+            # beurk
+            from ncarrara.budgeted_rl.tools.configuration_bftq import C
+            if hasattr(C,"workspace"):
+                w.save(C.workspace+"/"+"env")
         else:
             env = gym.make(envs_str)
             for k, v in param.items():

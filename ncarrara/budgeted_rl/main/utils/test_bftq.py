@@ -9,6 +9,10 @@ from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
 import numpy as np
 
 import logging
+
+from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,8 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         "betas_for_discretisation": eval(bftq_params["betas_for_discretisation"]),
         "device": device
     }
+    mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
+    makedirs(workspace+"/"+"trajs")
 
     makedirs(path_results)
     set_seed(seed)
@@ -37,12 +43,34 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
             generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
             None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
         # Collect trajectories
+        # for params in workers_params:
+        #     print("------------------")
+        #     for param in params:
+        #         print(param)
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
         with Pool(cpu_processes) as pool:
             results = pool.starmap(execute_policy_from_config, workers_params)
-            results = np.concatenate([result for _, result in results], axis=0)
+            # for result in results:
+            #     print(result[1])
+            rez = np.concatenate([result for _, result in results], axis=0)
+            trajs = np.concatenate([traj for traj, _ in results], axis=0)
+            # print("====================")
+            # print(results)
 
-        print("BFTQ({}) : {}".format(beta, format_results(results)))
+        print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
+
+
+        if isinstance(mock_env,EnvGridWorld):
+
+            from ncarrara.utils_rl.environments.gridworld.world import World
+            w = World(mock_env)
+            w.draw_frame()
+            w.draw_lattice()
+            w.draw_cases()
+            w.draw_test_trajectories(trajs)
+            w.save(workspace+"/trajs/trajs_beta={:.2f}".format(beta))
+    if isinstance(mock_env, EnvGridWorld):
+        os.system("convert -delay 10 -loop 0 "+workspace+"/trajs/"+"*.png "+workspace+"/out.gif")
 
 
 if __name__ == "__main__":
@@ -52,13 +80,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
     else:
-        config_file = "../config/test_egreedy.json"
+        config_file = "../config/debug_bftq.json"
     if len(sys.argv) > 2:
         id = sys.argv[2]
     else:
         id = None
 
-    from ncarrara.budgeted_rl.tools.configuration import C
+    from ncarrara.budgeted_rl.tools.configuration_bftq import C
 
     C.load(config_file).load_pytorch().load_matplotlib('agg')
     if id:
@@ -67,7 +95,7 @@ if __name__ == "__main__":
 
     main(device=C.device,
          seed=C.seed,
-         workspace=C.path_learn_bftq_egreedy,
+         workspace=C.path_bftq_egreedy,
          path_results=C.path_bftq_results,
          **C.dict["test_bftq"],
          **C.dict)

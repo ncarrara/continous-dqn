@@ -103,18 +103,18 @@ def main(config):
                 path_results=config.path_ftq_egreedy_results,
                 **config.dict["test_ftq"], **config.dict
             )
-    workspace = config.workspace
-    import itertools
-    import seaborn as sns
-    palette = itertools.cycle(sns.color_palette())
-    algos = {
-        "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
-        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
-        "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
-    }
-    data = parse_data(workspace, algos)
-    # print(data)
-    plot_all(data, workspace, algos)
+    # workspace = config.workspace
+    # import itertools
+    # import seaborn as sns
+    # palette = itertools.cycle(sns.color_palette())
+    # algos = {
+    #     "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
+    #     "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
+    #     "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
+    # }
+    # data = parse_data(workspace, algos)
+    # # print(data)
+    # plot_all(data, workspace, algos)
 
 
 

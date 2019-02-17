@@ -5,6 +5,7 @@ import logging
 import random
 import matplotlib.pyplot as plt
 
+from ncarrara.utils.miscelanous import pretty_format_list
 from ncarrara.utils.os import makedirs
 
 logger = logging.getLogger(__name__)
@@ -66,15 +67,14 @@ def set_seed(seed, env=None):
             env.reset()
 
 
+
+
 def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
     makedirs(savepath)
     decays = np.exp(-np.arange(N) / (1. / decay)) * start
-    if len(decays) < 10:
-        str_decay = ''.join(["{:.2f} ".format(eps) for eps in decays])
-    else:
-        str_decay = "{} {} ... {} {}".format(decays[0],decays[1],decays[-2],decays[-1])
+    str_decay = pretty_format_list(decays)
     logger.info("Epsilons (decayed) : [{}]".format(str_decay))
-    if logger.getEffectiveLevel() is logging.INFO:
+    if logger.getEffectiveLevel() <= logging.DEBUG:
         plt.plot(range(len(decays)),decays)
         plt.title("epsilon decays")
         plt.show()

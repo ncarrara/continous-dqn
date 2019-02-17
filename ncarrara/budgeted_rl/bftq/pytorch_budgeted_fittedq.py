@@ -549,7 +549,7 @@ class PytorchBudgetedFittedQ:
                 self.display_id_state = self.display_id_state[:10]
             if len(self.disp_next_states) > 10:
                 self.disp_next_states = self.disp_next_states[:10]
-                self.disp_next_states = self.disp_next_states[:10]
+                self.display_id_next_state = self.display_id_next_state[:10]
             self.info("Display on these states {}".format(pretty_format_list(self.display_id_state)))
             self.info("Display on these next states {}".format(pretty_format_list(self.display_id_next_state)))
 

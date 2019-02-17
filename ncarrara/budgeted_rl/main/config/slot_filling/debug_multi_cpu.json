@@ -43,6 +43,19 @@
           ],
           "level": "WARN",
           "propagate": false
+        },"ncarrara.budgeted_rl.tools.policies": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+         "ncarrara.budgeted_rl.main.utils.test_bftq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
         },
         "ncarrara.utils.os": {
           "handlers": [
@@ -118,7 +131,7 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,51)",
+    "betas_for_discretisation": "np.linspace(0.,1.,11)",
     "betas_for_duplication": "np.array([])",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
@@ -128,7 +141,7 @@
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0005,
+    "weight_decay": 0.0,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [

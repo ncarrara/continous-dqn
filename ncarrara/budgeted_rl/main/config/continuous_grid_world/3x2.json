@@ -89,7 +89,7 @@
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 2,
+    "max_ftq_epoch": 3,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,

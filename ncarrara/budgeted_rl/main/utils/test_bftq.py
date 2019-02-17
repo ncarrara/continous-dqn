@@ -9,6 +9,10 @@ from ncarrara.budgeted_rl.tools.policies import PytorchBudgetedFittedPolicy
 import numpy as np
 
 import logging
+
+from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -25,6 +29,8 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         "betas_for_discretisation": eval(bftq_params["betas_for_discretisation"]),
         "device": device
     }
+    mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
+    makedirs(workspace+"/"+"trajs")
 
     makedirs(path_results)
     set_seed(seed)
@@ -46,10 +52,25 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
             results = pool.starmap(execute_policy_from_config, workers_params)
             # for result in results:
             #     print(result[1])
-            results = np.concatenate([result for _, result in results], axis=0)
+            rez = np.concatenate([result for _, result in results], axis=0)
+            trajs = np.concatenate([traj for traj, _ in results], axis=0)
             # print("====================")
             # print(results)
-        print("BFTQ({}) : {}".format(beta, format_results(results)))
+
+        print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
+
+
+        if isinstance(mock_env,EnvGridWorld):
+
+            from ncarrara.utils_rl.environments.gridworld.world import World
+            w = World(mock_env)
+            w.draw_frame()
+            w.draw_lattice()
+            w.draw_cases()
+            w.draw_test_trajectories(trajs)
+            w.save(workspace+"/trajs/trajs_beta={:.2f}".format(beta))
+    if isinstance(mock_env, EnvGridWorld):
+        os.system("convert -delay 10 -loop 0 "+workspace+"/trajs/"+"*.png "+workspace+"/out.gif")
 
 
 if __name__ == "__main__":

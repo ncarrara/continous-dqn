@@ -101,8 +101,7 @@ class World():
         self.ctx.set_source_rgba(r, g, b, a)
         self.ctx.set_line_width(line_width)
         for sample in trajectory:
-            # print sample
-            s, a, r, sp, c = sample
+            s, _, _, sp, _, _ = sample
             sx, sy = s
             spx, spy = sp
             if sx != spx or sy != spy:
@@ -125,7 +124,7 @@ class World():
             self.ctx.move_to(0, i * self.dh)
             self.ctx.line_to(self.w_model * self.dw, i * self.dh)
 
-    def draw_policy_bftq(self, pi, A, A_str, qr, qc, bs):
+    def draw_policy_bftq(self, pi, qr, qc, bs):
         self.ctx.set_source_rgb(1, 1, 1)
         self.ctx.set_font_size(self.h_txt_line * 0.9)
         for i in np.arange(0.5, self.w_model, 1.):
@@ -145,7 +144,7 @@ class World():
                         y = y_case
                         # print "youhou", x, y
                         col += 1
-                    self.draw_block_bftq(pi, A, A_str, qr, qc, bs, k, x, y, s)
+                    self.draw_block_bftq(pi, qr, qc, bs, k, x, y, s)
                     y = (y + self.h_block)
         self.ctx.stroke()
 
@@ -167,7 +166,7 @@ class World():
                 y = (y + self.h_block)
         self.ctx.stroke()
 
-    def draw_block_bftq(self, pi, A, A_str, qr, qc, bs, k, x, y, s):
+    def draw_block_bftq(self, pi, qr, qc, bs, k, x, y, s):
         self.ctx.move_to(x, y)
         b = bs[k]
         # distrib, distrib_bn = pi(s, b)
@@ -176,9 +175,9 @@ class World():
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
         current_line += 1
         # www2 = np.array([qr(s, A[a], distrib_bn[a]) for a in range(0, len(A))])
-        www2 = np.array([qr(s, A[opt.id_action_inf], opt.budget_inf), qr(s, A[opt.id_action_sup], opt.budget_sup)])
+        www2 = np.array([qr(s, opt.id_action_inf, opt.budget_inf), qr(s, opt.id_action_sup, opt.budget_sup)])
         # www3 = np.array([qc(s, A[a], distrib_bn[a]) for a in range(0, len(A))])
-        www3 = np.array([qc(s, A[opt.id_action_inf], opt.budget_inf), qc(s, A[opt.id_action_sup], opt.budget_sup)])
+        www3 = np.array([qc(s, opt.id_action_inf, opt.budget_inf), qc(s, opt.id_action_sup, opt.budget_sup)])
         self.ctx.set_source_rgb(1, 1, 0)
         # self.ctx.show_text("[b=" + "{0:.2f}".format(b) + "][p.b=" + "{0:.2f}".format(
         #     np.dot(distrib, distrib_bn)) + "]")
@@ -196,7 +195,8 @@ class World():
         # self.ctx.show_text("[p.Qc = " + "{0: .2f}".format(np.dot(distrib, www3)) + "]")
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
         current_line += 1
-        self.ctx.show_text("A: " + A_str[opt.id_action_inf]+" "+A_str[opt.id_action_sup])
+        self.ctx.show_text(
+            "A: " + self.model.actions_str[opt.id_action_inf] + " " + self.model.actions_str[opt.id_action_sup])
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
         current_line += 1
         self.ctx.show_text("p: " + self.format_p([opt.proba_inf, opt.proba_sup]))
@@ -205,10 +205,12 @@ class World():
         self.ctx.show_text("b: " + self.format_p([opt.budget_inf, opt.budget_sup]))
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
         current_line += 1
-        self.ctx.show_text("Qr: " + str(["{:.2f} ".format(ww) for ww in www2]))  # self.format_q(qr, s, A, [opt.proba_inf,opt.proba_sup]))
+        self.ctx.show_text("Qr: " + str(
+            ["{:.2f} ".format(ww) for ww in www2]))  # self.format_q(qr, s, A, [opt.proba_inf,opt.proba_sup]))
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
         current_line += 1
-        self.ctx.show_text("Qc: " + str(["{:.2f} ".format(ww) for ww in www3]))  # self.format_q(qc, s, A, [opt.proba_inf,opt.proba_sup]))
+        self.ctx.show_text("Qc: " + str(
+            ["{:.2f} ".format(ww) for ww in www3]))  # self.format_q(qc, s, A, [opt.proba_inf,opt.proba_sup]))
         self.ctx.move_to(x, y + current_line * self.h_txt_line)
 
     def draw_block_ftq(self, A, qr, x, y, s):
@@ -262,7 +264,7 @@ class World():
             self.draw_source_trajectories(source_trajectories)
         if test_trajectories is not None:
             self.draw_test_trajectories(test_trajectories)
-        self.draw_policy_bftq(pi, A, A_str, qr, qc, bs)
+        self.draw_policy_bftq(pi, qr, qc, bs)
         self.draw_lattice()
 
     def draw_test_trajectory(self, trajectory, alpha):

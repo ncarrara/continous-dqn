@@ -74,7 +74,7 @@ class EnvGridWorld(object):
         self.s = self.init_s
         self.t = 0
         self.ended = False;
-        return self.s
+        return np.array(self.s)
 
     def step(self, i_a):
         a = self.actions[i_a]
@@ -159,7 +159,7 @@ class EnvGridWorld(object):
         self.ended = self.ended or self.t >= self.trajectoryMaxSize
 
         rp = rp - self.penalty_on_move
-        observation,reward, done, info =  np.array(sp),rp, self.ended, info
+        observation, reward, done, info = np.array(sp), rp, self.ended, info
 
         return observation, reward, done, info
         # return t

@@ -313,9 +313,11 @@ class PytorchBudgetedFittedQ:
                  use_data_parallel=False,
                  use_extra_gpu_memory_threshold=0,
                  maximum_number_of_gpu=1,
-                 cpu_processes=None
+                 cpu_processes=None,
+                 env =None
 
                  ):
+        self.env= env
         self.cpu_processes = cpu_processes
 
         self.memory_tracking = []
@@ -536,7 +538,7 @@ class PytorchBudgetedFittedQ:
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             if self.do_dynamic_disp_state:
-                print(list(debug_keys.values()))
+                # print(list(debug_keys.values()))
                 self.disp_states = state_batch[list(debug_keys.values())]
                 self.display_id_state = list(debug_keys.values())
             if self.do_dynamic_disp_nextstate:
@@ -560,7 +562,7 @@ class PytorchBudgetedFittedQ:
     def getsizeof(self, a, name):
         self.info("size {} : [{}{}{}]".format(name, Color.BOLD, getsizeof(a), Color.END))
 
-    def fit(self, transitions):
+    def     fit(self, transitions):
 
         self.track_memory("fit")
 
@@ -584,7 +586,7 @@ class PytorchBudgetedFittedQ:
                 self.info("Printing some debug graphics ...")
                 for i_s, state in enumerate(self.disp_next_states):
                     if state is not None:
-                        str_state = "epoch={:03}_next_state={}".format(self._id_ftq_epoch, i_s)
+                        str_state = "next_state={}_epoch={:03}".format(i_s,self._id_ftq_epoch)
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -596,7 +598,7 @@ class PytorchBudgetedFittedQ:
                                         path=self.workspace)
                 for i_s, state in enumerate(self.disp_states):
                     if state is not None:
-                        str_state = "epoch={:03}_state={}".format(self._id_ftq_epoch, i_s)
+                        str_state = "state={}_epoch={:03}_".format(i_s,self._id_ftq_epoch )
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -626,6 +628,11 @@ class PytorchBudgetedFittedQ:
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
+            print("Qr",torch.mean(label_r))
+            print("Qc",torch.mean(label_c))
+            print("Qr",torch.sum(label_r),"(sum)")
+            print("Qc",torch.sum(label_c),"(sum)")
+
             self.empty_cache()
 
         losses = self._optimize_model(sb_batch, a_batch, label_r, label_c)
@@ -663,6 +670,44 @@ class PytorchBudgetedFittedQ:
                                                      path=self.workspace + "/histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
+
+                from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
+                if isinstance(self.env, EnvGridWorld):
+                    def pi(state, beta):
+                        import torch
+                        from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import convex_hull, \
+                            optimal_pia_pib
+                        with torch.no_grad():
+                            hull = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
+                                               Q=self._policy_network,
+                                               action_mask=np.zeros(self.env.action_space.n),
+                                               id="run_" + str(state), disp=False,
+                                               betas=self.betas_for_discretisation,
+                                               device=self.device)
+                            opt, _ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
+                        return opt
+
+                    def qr(state, a, beta):
+                        import torch
+                        s = torch.tensor([[state]], device=self.device)
+                        b = torch.tensor([[[beta]]], device=self.device)
+                        sb = torch.cat((s, b), dim=2)
+                        return self._policy_network(sb).squeeze()[a]
+
+                    def qc(state, a, beta):
+                        import torch
+                        s = torch.tensor([[state]], device=self.device)
+                        b = torch.tensor([[[beta]]], device=self.device)
+                        sb = torch.cat((s, b), dim=2)
+                        return self._policy_network(sb).squeeze()[self.env.action_space.n + a]
+
+                    from ncarrara.utils_rl.environments.gridworld.world import World
+                    w = World(self.env, self.betas_for_discretisation)
+                    w.draw_frame()
+                    w.draw_lattice()
+                    w.draw_cases()
+                    w.draw_policy_bftq(pi, qr, qc, self.betas_for_discretisation)
+                    w.save(self.workspace + "/bftq_on_2dworld_e_={}".format(self._id_ftq_epoch))
 
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
@@ -841,8 +886,11 @@ class PytorchBudgetedFittedQ:
                 self.track_memory("compute_next_values")
 
                 warning_qc_negatif = 0.
+                offset_qc_negatif = 0.
                 warning_qc__negatif = 0.
+                offset_qc__negatif = 0.
                 next_state_c_neg = 0.
+                offset_next_state_c_neg = 0.
 
                 next_state_rewards_not_terminal = torch.zeros(len(where_not_terminal_ns), device=self.device)
                 next_state_constraints_not_terminal = torch.zeros(len(where_not_terminal_ns), device=self.device)
@@ -854,16 +902,20 @@ class PytorchBudgetedFittedQ:
                     qc_ = Q_next_state_not_terminal[i_ns_nt * 2][self.N_actions + opt.id_action_inf]
                     qc = Q_next_state_not_terminal[i_ns_nt * 2 + 1][self.N_actions + opt.id_action_sup]
 
-                    if qc < 0:
+                    if qc < 0.:
                         warning_qc_negatif += 1.
-                    if qc_ < 0:
+                        offset_qc_negatif = qc
+
+                    if qc_ < 0.:
                         warning_qc__negatif += 1.
+                        offset_qc__negatif = qc_
 
                     next_state_rewards_not_terminal[i_ns_nt] = opt.proba_inf * qr_ + opt.proba_sup * qr
                     next_state_constraints_not_terminal[i_ns_nt] = opt.proba_inf * qc_ + opt.proba_sup * qc
 
                     if next_state_constraints_not_terminal[i_ns_nt] < 0:
                         next_state_c_neg += 1.
+                        offset_next_state_c_neg = next_state_constraints_not_terminal[i_ns_nt]
 
                 next_state_rewards[where_not_terminal_ns] = next_state_rewards_not_terminal
                 next_state_constraints[where_not_terminal_ns] = next_state_constraints_not_terminal
@@ -879,10 +931,13 @@ class PytorchBudgetedFittedQ:
                                         path=self.workspace + "/histogram",
                                         labels=["next value"])
 
-                self.info("qc < 0 percentage {:.2f}%".format(warning_qc_negatif / len(where_not_terminal_ns) * 100.))
-                self.info("qc_ < 0 percentage {:.2f}%".format(warning_qc__negatif / len(where_not_terminal_ns) * 100.))
-                self.info("next_state_constraints < 0 percentage {:.2f}%".format(
-                    next_state_c_neg / len(where_not_terminal_ns) * 100.))
+                mean_qc_neg = 0 if warning_qc_negatif == 0 else offset_qc_negatif / warning_qc_negatif
+                mean_qc__neg = 0 if warning_qc__negatif == 0 else offset_qc__negatif / warning_qc__negatif
+                mean_ns_neg = 0 if next_state_c_neg == 0 else offset_next_state_c_neg/next_state_c_neg
+                self.info("qc < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc_negatif / len(where_not_terminal_ns) * 100.,mean_qc_neg ))
+                self.info("qc_ < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc__negatif / len(where_not_terminal_ns) * 100., mean_qc__neg))
+                self.info("next_state_constraints < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
+                    next_state_c_neg / len(where_not_terminal_ns) * 100.,mean_ns_neg))
                 self.info("compute next values ... end")
                 self.empty_cache()
                 self.track_memory("compute_next_values (end)")
@@ -968,9 +1023,9 @@ class PytorchBudgetedFittedQ:
     def _compute_loss(self, sb_batch, a_batch, label_r, label_c, with_weight=True):
         output = self._policy_network(sb_batch)
         state_action_rewards = output.gather(1, a_batch)
-        action_batch_qc = a_batch + self.N_actions
-        state_action_constraints = output.gather(1, action_batch_qc)
-
+        state_action_constraints = output.gather(1, a_batch + self.N_actions)
+        # for value in state_action_constraints:
+        #     print(value)
         loss_Qc = self.loss_function_c(state_action_constraints, label_c.unsqueeze(1))
         loss_Qr = self.loss_function(state_action_rewards, label_r.unsqueeze(1))
         w_r, w_c = self.weights_losses

@@ -1,12 +1,12 @@
 {
   "general": {
-    "id": "3x3",
+    "id": "continuous-3x3-multi-cpu",
     "seed": 0,
     "cpu": {
-      "processes": 1,
-      "processes_when_linked_with_gpu": 1
+      "processes": null,
+      "processes_when_linked_with_gpu": 10
     },
-    "workspace": "tmp/3x3",
+    "workspace": "tmp/continuous-3x3-multi-cpu",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -72,11 +72,12 @@
           "level": "ERROR",
           "propagate": false
         }
+
       }
     }
   },
   "generate_envs": {
-    "envs_str": "3xWidth",
+    "envs_str": "continuous-3xWidth",
     "envs_params": {
       "width": [3]
     }
@@ -87,7 +88,7 @@
   "test_bftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 1000,
-    "betas_test": "np.linspace(0.,1.,11)"
+    "betas_test": "np.linspace(0.,0.3,21)"
   },
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 10000,

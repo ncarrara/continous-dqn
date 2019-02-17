@@ -50,12 +50,11 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
         with Pool(cpu_processes) as pool:
             results = pool.starmap(execute_policy_from_config, workers_params)
-            # for result in results:
-            #     print(result[1])
             rez = np.concatenate([result for _, result in results], axis=0)
-            trajs = np.concatenate([traj for traj, _ in results], axis=0)
-            # print("====================")
-            # print(results)
+
+            trajs = []
+            for t,_ in results:
+                trajs+=t
 
         print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
 

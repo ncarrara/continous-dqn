@@ -1,4 +1,6 @@
 # coding=utf-8
+import os
+
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math_utils import set_seed
@@ -44,3 +46,4 @@ def main(load_memory, generate_envs, feature_str, gamma, gamma_c, bftq_params, b
     _ = bftq.fit(transitions_bftq)
 
     bftq.save_policy()
+    os.system("cp {}/policy.pt {}/final_policy.pt".format(bftq.workspace, workspace))

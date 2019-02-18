@@ -114,16 +114,20 @@ def plot_lines(data, x=None, y=None, filename=None, points=None, **kwargs):
     plt.close()
 
 
-if __name__ == "__main__":
-    if len(sys.argv) <= 1:
-        raise ValueError("Usage: plot_data.py <path>")
-    workspace = sys.argv[1]
+def main(workspace):
     palette = itertools.cycle(sns.color_palette())
     algos = {
         "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
-        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
+        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda$)"],
         "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
+        "bftq_duplicate": [next(palette), r"bftq duplicate($\beta$)"],
     }
     data = parse_data(workspace, algos)
     print(data)
     plot_all(data, workspace, algos)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) <= 1:
+        raise ValueError("Usage: plot_data.py <path>")
+    main(sys.argv[1])

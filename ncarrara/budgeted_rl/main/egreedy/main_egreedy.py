@@ -1,7 +1,9 @@
+import os
+
 import torch
 
 from ncarrara.budgeted_rl.main.not_egreedy import learn_bftq
-from ncarrara.budgeted_rl.main.utils.plot_data import parse_data, plot_all
+from ncarrara.budgeted_rl.main.utils import plot_data
 from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
 from ncarrara.budgeted_rl.main.egreedy import learn_ftq_egreedy, learn_bftq_egreedy, learn_ftq_full_batch
@@ -44,7 +46,7 @@ def main(config):
             **config.dict)
     torch.cuda.empty_cache()
 
-    if "test_bftq" in config and "learn_bftq_duplicate" in config:
+    if "test_bftq" in config and "learn_bftq_full_batch" in config:
         print("-------- test_bftq_duplicate --------")
         test_bftq.main(
             device=config.device, seed=config.seed,
@@ -132,18 +134,7 @@ def main(config):
                 **config.dict["test_ftq"], **config.dict
             )
 
-    workspace = config.workspace + '/../'
-    import itertools
-    import seaborn as sns
-    palette = itertools.cycle(sns.color_palette())
-    algos = {
-        "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
-        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
-        "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
-    }
-    data = parse_data(workspace, algos)
-    plot_all(data, workspace, algos)
-
+    plot_data.main(os.path.join(config.workspace, os.pardir))
 
 
 if __name__ == "__main__":

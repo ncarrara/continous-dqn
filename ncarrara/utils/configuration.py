@@ -22,6 +22,9 @@ class Configuration(object):
     def has_key(self,key):
         return key in self.dict
 
+    def __contains__(self, key):
+        return key in self.dict
+
     def __str__(self):
         import pprint
         return pprint.pformat(self.dict)

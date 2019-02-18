@@ -1,9 +1,9 @@
 # coding=utf-8
 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import NetBFTQ, PytorchBudgetedFittedQ
-from ncarrara.budgeted_rl.tools.configuration import C
 from ncarrara.budgeted_rl.tools.features import feature_factory
 from ncarrara.utils.math_utils import set_seed
-from ncarrara.utils_rl.environments.envs_factory import generate_envs
+from ncarrara.utils.os import makedirs
+from ncarrara.utils_rl.environments import envs_factory
 import ncarrara.budgeted_rl.tools.utils_run as urpy
 
 import logging
@@ -11,58 +11,36 @@ import logging
 from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
-def main():
+def main(load_memory, generate_envs, feature_str, gamma, gamma_c, bftq_params, bftq_net_params,
+         workspace, seed, device, normalize_reward, general, **args):
     logger = logging.getLogger(__name__)
 
-    envs, params = generate_envs(**C["generate_envs"])
+    envs, params = envs_factory.generate_envs(**generate_envs)
     e = envs[0]
     e.reset()
-
-    set_seed(C.seed, e)
-
-    feature = feature_factory(C["feature_str"])
-
-
-    policy_network_bftq = NetBFTQ(size_state=len(feature(e.reset(), e)),
-                                  intra_layers=C["bftq_net_params"]["intra_layers"] + [2 * e.action_space.n],
-                                  **C["bftq_net_params"])
-
-    import numpy as np
-    betas = eval(C["betas"])
-    if "betas_for_discretisation" in C.dict:
-        betas_for_discretisation = eval(C["betas_for_discretisation"])
-    else:
-        betas_for_discretisation = betas
+    set_seed(seed, e)
+    feature = feature_factory(feature_str)
 
     bftq = PytorchBudgetedFittedQ(
-        device=C.device,
-        workspace=C.path_bftq,
-        betas_for_duplication=betas,
-        betas_for_discretisation=betas_for_discretisation,
-        actions_str=None if not hasattr("action_str", e) else e.action_str,
-        policy_network=policy_network_bftq,
-        gamma=C["gamma"],
-        gamma_c=C["gamma_c"],
-        **C["bftq_params"],
+        device=device,
+        workspace=workspace + "/batch=0",
+        actions_str=None if not hasattr(e, "action_str") else e.action_str,
+        policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
+                               **bftq_net_params),
+        gamma=gamma,
+        gamma_c=gamma_c,
+        cpu_processes=general["cpu"]["processes"],
+        env=e,
+        **bftq_params)
 
-    )
-
+    makedirs(workspace)
     rm = Memory()
-    if C["main"]["path_data"] is None:
-        path_data = C.workspace + "/" + C["main"]["filename_data"]
-    else:
-        path_data = C["main"]["path_data"] + "/" + C["main"]["filename_data"]
-    rm.load_memory(path_data, C["create_data"]["as_json"])
+    rm.load_memory(**load_memory)
 
-    transitions_ftq, transition_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0,
-                                                                 C["main"]["normalize_reward"])
+    _, transitions_bftq = urpy.datas_to_transitions(rm.memory, e, feature, 0, normalize_reward)
+    logger.info("[learning bftq with full batch] #samples={} ".format(len(transitions_bftq)))
 
     bftq.reset(True)
-    _ = bftq.fit(transition_bftq)
+    _ = bftq.fit(transitions_bftq)
 
     bftq.save_policy()
-
-
-if __name__ == "__main__":
-    C.load("config/test_slot_filling.json").load_pytorch()
-    main(betas=[0, 0.5, 1.0])

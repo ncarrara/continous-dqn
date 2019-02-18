@@ -1,5 +1,6 @@
 import torch
 
+from ncarrara.budgeted_rl.main.not_egreedy import learn_bftq
 from ncarrara.budgeted_rl.main.utils.plot_data import parse_data, plot_all
 from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
@@ -9,8 +10,8 @@ import sys
 
 def main(config):
 
-    if config.has_key("learn_bftq_egreedy"):
-        print("learn_bftq_greedy")
+    if "learn_bftq_egreedy" in config:
+        print("-------- learn_bftq_greedy --------")
         learn_bftq_egreedy.main(
             device=config.device, seed=config.seed,
             workspace=config.path_bftq_egreedy,
@@ -18,8 +19,9 @@ def main(config):
             **config.dict
         )
     torch.cuda.empty_cache()
-    if config.has_key("test_bftq"):
-        print("test_bftq_greedy")
+
+    if "test_bftq" in config:
+        print("-------- test_bftq_greedy --------")
         test_bftq.main(
             device=config.device, seed=config.seed,
             workspace=config.path_bftq_egreedy,
@@ -27,8 +29,32 @@ def main(config):
             **config.dict["test_bftq"], **config.dict
         )
     torch.cuda.empty_cache()
-    if config.has_key("learn_ftq_duplicate"):
-        print("learn_ftq_duplicate")
+
+    if "learn_bftq_full_batch" in config:
+        print("-------- learn_bftq_duplicate --------")
+        workspace = config.path_bftq_duplicate
+        config.dict["learn_bftq_full_batch"]["load_memory"]["path"] \
+            = workspace + "/" + config.dict["learn_bftq_full_batch"]["load_memory"]["path"]
+        torch.cuda.empty_cache()
+        learn_bftq.main(
+            seed=config.seed,
+            device=config.device,
+            workspace=workspace,
+            **config.dict["learn_bftq_full_batch"],
+            **config.dict)
+    torch.cuda.empty_cache()
+
+    if "test_bftq" in config and "learn_bftq_duplicate" in config:
+        print("-------- test_bftq_duplicate --------")
+        test_bftq.main(
+            device=config.device, seed=config.seed,
+            workspace=config.path_bftq_duplicate,
+            path_results=config.path_bftq_duplicate_results,
+            **config.dict["test_bftq"], **config.dict
+        )
+
+    if "learn_ftq_duplicate" in config:
+        print("-------- learn_ftq_duplicate --------")
         workspace = config.path_ftq_duplicate
         learn_ftq_egreedy.main(
             seed=config.seed, device=config.device,
@@ -37,8 +63,6 @@ def main(config):
         )
         lambdas = config.dict["learn_ftq_duplicate"]["lambdas"]
         if type(lambdas) is str:
-
-            import numpy as np
             lambdas = eval(lambdas)
         config.dict["learn_ftq_duplicate"]["learn_ftq_full_batch"]["load_memory"]["path"] \
             = workspace + "/" + config.dict["learn_ftq_duplicate"]["learn_ftq_full_batch"]["load_memory"]["path"]
@@ -54,12 +78,14 @@ def main(config):
                 **config.dict)
     torch.cuda.empty_cache()
 
-    if config.has_key("test_ftq_duplicate"):
-        print("test_ftq_duplicate")
-        lambdas = config.dict["learn_ftq_duplicate"]["lambdas"]
-        if type(lambdas) is str:
-            import numpy as np
-            lambdas = eval(lambdas)
+    if "test_ftq_duplicate" in config:
+        print("-------- test_ftq_duplicate --------")
+        try:
+            lambdas = config.dict["learn_ftq_duplicate"]["lambdas"]
+            if type(lambdas) is str:
+                lambdas = eval(lambdas)
+        except KeyError:
+            lambdas = []
         for lambda_ in lambdas:
             print("test_ftq_duplicate, lambda={}".format(lambda_))
             torch.cuda.empty_cache()
@@ -71,8 +97,9 @@ def main(config):
                 **config.dict["test_ftq_duplicate"], **config.dict
             )
     torch.cuda.empty_cache()
-    if config.has_key("learn_ftq_egreedy"):
-        print("learn_ftq_egreedy")
+
+    if "learn_ftq_egreedy" in config:
+        print("-------- learn_ftq_egreedy --------")
         lambdas = config.dict["learn_ftq_egreedy"]["lambdas"]
         if type(lambdas) is str:
             import numpy as np
@@ -87,8 +114,9 @@ def main(config):
                 **config.dict["learn_ftq_egreedy"], **config.dict
             )
     torch.cuda.empty_cache()
-    if config.has_key("test_ftq"):
-        print("test_ftq_greedy")
+
+    if "test_ftq" in config:
+        print("-------- test_ftq_greedy --------")
         lambdas = eval(config.dict["learn_ftq_egreedy"]["lambdas"])
         if type(lambdas) is str:
             import numpy as np
@@ -103,18 +131,18 @@ def main(config):
                 path_results=config.path_ftq_egreedy_results,
                 **config.dict["test_ftq"], **config.dict
             )
-    # workspace = config.workspace
-    # import itertools
-    # import seaborn as sns
-    # palette = itertools.cycle(sns.color_palette())
-    # algos = {
-    #     "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
-    #     "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
-    #     "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
-    # }
-    # data = parse_data(workspace, algos)
-    # # print(data)
-    # plot_all(data, workspace, algos)
+
+    workspace = config.workspace + '/../'
+    import itertools
+    import seaborn as sns
+    palette = itertools.cycle(sns.color_palette())
+    algos = {
+        "ftq_duplicate": [next(palette), r"ftq duplicate($\lambda$)"],
+        "ftq_egreedy": [next(palette), r"ftq egreedy($\lambda)"],
+        "bftq_egreedy": [next(palette), r"bftq egreedy($\beta$)"],
+    }
+    data = parse_data(workspace, algos)
+    plot_all(data, workspace, algos)
 
 
 

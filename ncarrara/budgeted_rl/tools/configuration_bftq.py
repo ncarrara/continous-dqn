@@ -15,19 +15,20 @@ class ConfigurationBFTQ(Configuration):
         return self
 
     def update_paths(self):
-        self.id_bftq_egreedy= "bftq_egreedy"
+        self.id_bftq_egreedy = "bftq_egreedy"
+        self.id_bftq_duplicate = "bftq_duplicate"
         self.id_ftq_egreedy= "ftq_egreedy"
         self.id_ftq_duplicate= "ftq_duplicate"
         self.result_folder = "results"
 
         self.path_bftq_egreedy = os.path.join(self.workspace, self.id_bftq_egreedy)
         self.path_bftq_egreedy_results = os.path.join(self.workspace, self.id_bftq_egreedy, self.result_folder)
+        self.path_bftq_duplicate = os.path.join(self.workspace, self.id_bftq_duplicate)
+        self.path_bftq_duplicate_results = os.path.join(self.workspace, self.id_bftq_duplicate, self.result_folder)
         self.path_ftq_egreedy = os.path.join(self.workspace, self.id_ftq_egreedy)
         self.path_ftq_egreedy_results = os.path.join(self.workspace, self.id_ftq_egreedy, self.result_folder)
         self.path_ftq_duplicate = os.path.join(self.workspace, self.id_ftq_duplicate)
         self.path_ftq_duplicate_results = os.path.join(self.workspace, self.id_ftq_duplicate, self.result_folder)
-
-
 
         self.path_hdc_results = self.workspace + "/hdc/results"
         self.path_hdc = self.workspace + "/hdc"

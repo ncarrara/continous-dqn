@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "highway",
+    "id": "highway_working",
     "seed": 0,
-    "workspace": "tmp/highway",
+    "workspace": "tmp/highway_working",
     "matplotlib_backend": "agg",
     "dictConfig": {
       "version": 1,
@@ -21,7 +21,7 @@
         "file": {
           "level": "INFO",
           "formatter": "standard",
-          "filename": "highway.log",
+          "filename": "highway_working.log",
           "class": "logging.FileHandler"
         }
       },
@@ -113,7 +113,7 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data": null,
+    "path_data": "samples.data",
     "normalize_reward": true,
     "N_trajs": 150
   },

@@ -113,7 +113,7 @@
   },
   "main": {
     "filename_data": "samples.data",
-    "path_data": "samples.data",
+    "path_data": "tmp/highway_working/",
     "normalize_reward": true,
     "N_trajs": 150
   },

@@ -93,8 +93,8 @@ for i_config,params in enumerate(grid):
     C.load(dict).create_fresh_workspace(force=True).load_pytorch()
 
     print("\n-------- i_config={} ----------\n".format(i_config))
-    print("Learning DQN")
-    run_dqn.main()
+    # print("Learning DQN")
+    # run_dqn.main()
 
     # print("Learning and testing FTQ")
     # lambdas = eval(C["lambdas"])

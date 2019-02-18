@@ -34,42 +34,43 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
 
     makedirs(path_results)
     set_seed(seed)
-    for beta in eval(betas_test):
-        # Prepare workers
-        cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), N_trajs)
-        workers_n_trajectories = near_split(N_trajs, cpu_processes)
-        workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
-        workers_params = list(zip_with_singletons(
-            generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
-            None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
-        # Collect trajectories
-        # for params in workers_params:
-        #     print("------------------")
-        #     for param in params:
-        #         print(param)
-        logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
-        with Pool(cpu_processes) as pool:
-            results = pool.starmap(execute_policy_from_config, workers_params)
-            rez = np.concatenate([result for _, result in results], axis=0)
+    try:
+        for beta in eval(betas_test):
+            # Prepare workers
+            cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), N_trajs)
+            workers_n_trajectories = near_split(N_trajs, cpu_processes)
+            workers_seeds = np.random.randint(0, 10000, cpu_processes).tolist()
+            workers_params = list(zip_with_singletons(
+                generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
+                None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
+            # Collect trajectories
+            # for params in workers_params:
+            #     print("------------------")
+            #     for param in params:
+            #         print(param)
+            logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
+            with Pool(cpu_processes) as pool:
+                results = pool.starmap(execute_policy_from_config, workers_params)
+                rez = np.concatenate([result for _, result in results], axis=0)
 
-            trajs = []
-            for t,_ in results:
-                trajs+=t
+                trajs = []
+                for t, _ in results:
+                    trajs += t
+            print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
 
-        print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
+            if isinstance(mock_env,EnvGridWorld):
+                from ncarrara.utils_rl.environments.gridworld.world import World
+                w = World(mock_env)
+                w.draw_frame()
+                w.draw_lattice()
+                w.draw_cases()
+                w.draw_test_trajectories(trajs)
+                w.save(workspace+"/trajs/trajs_beta={:.2f}".format(beta))
+        if isinstance(mock_env, EnvGridWorld):
+            os.system("convert -delay 10 -loop 0 "+workspace+"/trajs/"+"*.png "+workspace+"/out.gif")
 
-
-        if isinstance(mock_env,EnvGridWorld):
-
-            from ncarrara.utils_rl.environments.gridworld.world import World
-            w = World(mock_env)
-            w.draw_frame()
-            w.draw_lattice()
-            w.draw_cases()
-            w.draw_test_trajectories(trajs)
-            w.save(workspace+"/trajs/trajs_beta={:.2f}".format(beta))
-    if isinstance(mock_env, EnvGridWorld):
-        os.system("convert -delay 10 -loop 0 "+workspace+"/trajs/"+"*.png "+workspace+"/out.gif")
+    except FileNotFoundError as e:
+        logger.warning("Could not load policy: {}".format(e))
 
 
 if __name__ == "__main__":

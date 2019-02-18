@@ -516,10 +516,12 @@ class PytorchBudgetedFittedQ:
         else:
             self._policy_network.set_normalization_params(mean, std)
 
-        if len(transitions) != (len(mask_unique_hull_ns) + nb_terminal_ns + len(similar_next_state)):
+        if len(transitions) != (len(mask_unique_hull_ns) +
+                                nb_terminal_ns / max(1, len(self.betas_for_duplication)) +
+                                len(similar_next_state)):
             raise Exception("""Something went wrong
             len(transitions={}) != (len(mask_unique_hull_ns={}) + nb_terminal_ns={} + len(similar_next_state={}))
-            
+
             {} != {}
             """.format(len(transitions), len(mask_unique_hull_ns), nb_terminal_ns, len(similar_next_state),
                        len(transitions), len(mask_unique_hull_ns) + nb_terminal_ns + len(similar_next_state)))

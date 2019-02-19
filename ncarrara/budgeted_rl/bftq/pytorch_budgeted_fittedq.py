@@ -822,33 +822,6 @@ class PytorchBudgetedFittedQ:
                 self.track_memory("compute_opts")
                 self.info("computing ops ... ")
 
-                b_batch_unique = b_batch[where_unique_hull_ns]
-
-                args = []
-                len_hull = 0
-                for hull, beta in zip(hulls_for_ns_batch_unique, b_batch_unique):
-                    args.append((beta.detach().item(), hull, {}))
-                    len_hull += len(hull)
-
-                if self.cpu_processes == 1:
-                    opts_and_status = []
-                    for i_arg, arg in enumerate(args):
-                        if i_arg % (max(1, len(args) // 10)) == 0:
-                            self.info("{} opts proccessed (sequentially)".format(i_arg))
-                        opts_and_status.append(optimal_pia_pib_parralle(arg))
-                else:
-                    self.info("computing optimal_pia_pib in parralle ...")
-                    with Pool(self.cpu_processes) as p:
-                        opts_and_status = p.map(optimal_pia_pib_parralle, args)
-                    self.info("computing optimal_pia_pib in parralle ... done")
-
-                zipped = list(zip(*opts_and_status))
-                opts_unique = zipped[0]
-                stats_unique = zipped[1]
-
-                self.info("computing opts ... end")
-                self.track_memory("compute_opts (end)")
-
                 ##############################################################
                 # we build couples (s',beta\top) and (s',beta\bot)
                 # in order to compute Q(s')
@@ -856,18 +829,32 @@ class PytorchBudgetedFittedQ:
                 next_state_beta_not_terminal = torch.zeros((len(where_not_terminal_ns) * 2, 1, self.size_state + 1),
                                                            device=self.device)
                 ns_batch_not_terminal = ns_batch[where_not_terminal_ns]
-                # for s in ns_batch_not_terminal:
-                #     print(s)
-
                 h_batch_not_terminal = h_batch[where_not_terminal_ns]
-                # for s in h_batch_not_terminal:
-                #     print(s)
+                b_bath_not_terminal = b_batch[where_not_terminal_ns]
+
+                args = [(beta.detach().item(), hulls_for_ns_batch_unique[hull_id], {})
+                        for hull_id, beta in zip(h_batch_not_terminal, b_bath_not_terminal)]
+
+                if self.cpu_processes == 1:
+                    opts_and_statuses = []
+                    for i_arg, arg in enumerate(args):
+                        if i_arg % (max(1, len(args) // 10)) == 0:
+                            self.info("{} opts proccessed (sequentially)".format(i_arg))
+                        opts_and_statuses.append(optimal_pia_pib_parralle(arg))
+                else:
+                    self.info("computing optimal_pia_pib in parralle ...")
+                    with Pool(self.cpu_processes) as p:
+                        opts_and_statuses = p.map(optimal_pia_pib_parralle, args)
+                    self.info("computing optimal_pia_pib in parralle ... done")
+
+                self.info("computing opts ... end")
+                self.track_memory("compute_opts (end)")
                 status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
 
-                for i_ns_nt, (ns_not_terminal, hull_id_not_terminal) in enumerate(
-                        zip(ns_batch_not_terminal, h_batch_not_terminal)):
-                    opt = opts_unique[hull_id_not_terminal]
-                    status[stats_unique[hull_id_not_terminal]] += 1
+                for i_ns_nt, (ns_not_terminal, opt_and_status) in enumerate(
+                        zip(ns_batch_not_terminal, opts_and_statuses)):
+                    opt, stat = opt_and_status
+                    status[stat] += 1
                     ns_beta_moins = torch.cat((ns_not_terminal, torch.tensor([[opt.budget_inf]], device=self.device)),
                                               dim=1)
                     ns_beta_plus = torch.cat((ns_not_terminal, torch.tensor([[opt.budget_sup]], device=self.device)),
@@ -906,7 +893,7 @@ class PytorchBudgetedFittedQ:
                 next_state_constraints_not_terminal = torch.zeros(len(where_not_terminal_ns), device=self.device)
 
                 for i_ns_nt in range(len(where_not_terminal_ns)):
-                    opt = opts_unique[h_batch_not_terminal[i_ns_nt]]
+                    opt = opts_and_statuses[i_ns_nt][0]
                     qr_ = Q_next_state_not_terminal[i_ns_nt * 2][opt.id_action_inf]
                     qr = Q_next_state_not_terminal[i_ns_nt * 2 + 1][opt.id_action_sup]
                     qc_ = Q_next_state_not_terminal[i_ns_nt * 2][self.N_actions + opt.id_action_inf]

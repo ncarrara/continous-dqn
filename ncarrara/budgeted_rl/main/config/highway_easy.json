@@ -93,7 +93,7 @@
     },
     "betas_for_exploration": "np.linspace(0.,1.,21)"
   },
-  "learn_bftq_full_batch": {
+  "-learn_bftq_full_batch": {
     "load_memory": {
         "path": "../../samples.data",
         "as_json": false

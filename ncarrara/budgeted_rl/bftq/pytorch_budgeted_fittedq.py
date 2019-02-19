@@ -63,7 +63,6 @@ def f(params):
         disp=False,
         path=path)
 
-    # print(params)
     return hull
 
 
@@ -489,9 +488,7 @@ class PytorchBudgetedFittedQ:
 
             it += 1
 
-        # print("hull_ids")
-        # for x, y in hull_ids.items():
-        #     print(x, y)
+
         mask_unique_hull_ns = np.array(mask_unique_hull_ns)
         mask_not_terminal_ns = np.array(mask_not_terminal_ns)
 
@@ -542,7 +539,6 @@ class PytorchBudgetedFittedQ:
 
         if logger.getEffectiveLevel() <= logging.DEBUG:
             if self.do_dynamic_disp_state:
-                # print(list(debug_keys.values()))
                 self.disp_states = state_batch[list(debug_keys.values())]
                 self.display_id_state = list(debug_keys.values())
             if self.do_dynamic_disp_nextstate:
@@ -556,9 +552,6 @@ class PytorchBudgetedFittedQ:
                 self.display_id_next_state = self.display_id_next_state[:10]
             self.info("Display on these states {}".format(pretty_format_list(self.display_id_state)))
             self.info("Display on these next states {}".format(pretty_format_list(self.display_id_next_state)))
-
-        # for x,y in hull_id_idx_in_batch:
-        #     print("hullid",x,"index",y,"next state",next_state_batch[y])
 
         return state_beta_batch, state_batch, action_batch, reward_batch, \
                constraint_batch, next_state_batch, hull_id_batch, beta_batch, mask_unique_hull_ns, mask_not_terminal_ns
@@ -636,11 +629,6 @@ class PytorchBudgetedFittedQ:
             if self.beta_range:
                 self.info("Clamp target constraints")
                 label_c = torch.clamp(label_c, min=self.beta_range[0], max=self.beta_range[1])
-
-            print("Qr",torch.mean(label_r))
-            print("Qc",torch.mean(label_c))
-            print("Qr",torch.sum(label_r),"(sum)")
-            print("Qc",torch.sum(label_c),"(sum)")
 
             self.empty_cache()
 
@@ -868,7 +856,6 @@ class PytorchBudgetedFittedQ:
 
                 self.info("Q next")
                 self.track_memory("Q_next")
-                # print(next_state_beta_not_terminal.shape)
                 Q_next_state_not_terminal = self._policy_network(next_state_beta_not_terminal)
                 Q_next_state_not_terminal = Q_next_state_not_terminal.detach()
                 self.track_memory("Q_next (end)")
@@ -1023,8 +1010,6 @@ class PytorchBudgetedFittedQ:
         output = self._policy_network(sb_batch)
         state_action_rewards = output.gather(1, a_batch)
         state_action_constraints = output.gather(1, a_batch + self.N_actions)
-        # for value in state_action_constraints:
-        #     print(value)
         loss_Qc = self.loss_function_c(state_action_constraints, label_c.unsqueeze(1))
         loss_Qr = self.loss_function(state_action_rewards, label_r.unsqueeze(1))
         w_r, w_c = self.weights_losses
@@ -1134,7 +1119,6 @@ class PytorchBudgetedFittedQ:
         if self.use_data_parallel:
             self._policy_network.module.reset()
         else:
-            print("resteting policy network")
             self._policy_network.reset()
 
     def reset(self, reset_weight=True):

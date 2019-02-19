@@ -1175,11 +1175,6 @@ class PytorchBudgetedFittedQ:
         else:
             logger.info("{} {} ".format(self.format_memory(memoire), message))
 
-    def __len__(self):
-        return self.sb_batch.shape[0]
-
-    def __add__(self, other):
-        return ConcatDataset([self, other])
 
 
 class NetBFTQ(BaseModule):

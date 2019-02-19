@@ -784,7 +784,8 @@ class PytorchBudgetedFittedQ:
 
                 args_for_ns_batch_unique = [
                     (
-                        Qsb[i_ns_unique:i_ns_unique + len(self.betas_for_discretisation)],
+                        Qsb[(i_ns_unique * len(self.betas_for_discretisation)):
+                            (i_ns_unique + 1)*len(self.betas_for_discretisation)],
                         np.zeros(self.N_actions),
                         self.betas_for_discretisation,
                         self.workspace

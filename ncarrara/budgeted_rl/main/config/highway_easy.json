@@ -84,12 +84,12 @@
   "gamma_c": 1.0,
 
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 1500,
+    "trajs_by_ftq_batch": 1000,
     "normalize_reward": false,
-    "N_trajs": 15000,
+    "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0002
+      "decay": 0.0003
     },
     "betas_for_exploration": "np.linspace(0.,1.,21)"
   },
@@ -143,12 +143,12 @@
 
   "learn_ftq_egreedy": {
     "lambdas": "[0, 1, 2, 3, 4, 6, 8, 10, 15, 20]",
-    "trajs_by_ftq_batch": 15,
+    "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
-    "N_trajs": 150,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.02
+      "decay": 0.003
     },
     "save_memory": {
       "path": "learn_ftq_egreedy.data",
@@ -159,12 +159,12 @@
     "lambdas": "[0, 1, 2, 3, 4, 6, 8, 10, 15, 20]",
     "generate_data": {
       "lambda_": 0.0,
-      "trajs_by_ftq_batch": 150,
+      "trajs_by_ftq_batch": 1000,
       "normalize_reward": true,
-      "N_trajs": 1500,
+      "N_trajs": 10000,
       "epsilon_decay": {
         "start": 1.0,
-        "decay": 0.002
+        "decay": 0.0003
       },
       "save_memory": {
         "path": "samples_for_duplicate.data",

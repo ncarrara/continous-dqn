@@ -91,7 +91,7 @@
       "start": 1.0,
       "decay": 0.0002
     },
-    "betas_for_exploration": "np.linspace(0.,1.,11)"
+    "betas_for_exploration": "np.linspace(0.,1.,21)"
   },
   "learn_bftq_full_batch": {
     "load_memory": {
@@ -105,8 +105,8 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 2,
-    "betas_for_discretisation": "np.linspace(0.,1.,11)",
-    "betas_for_duplication": "np.linspace(0.,1.,11)",
+    "betas_for_discretisation": "np.linspace(0.,1.,21)",
+    "betas_for_duplication": "np.linspace(0.,1.,21)",
     "beta_range": [0, 1],
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 400,

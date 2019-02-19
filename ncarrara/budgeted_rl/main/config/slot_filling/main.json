@@ -1,11 +1,11 @@
 {
   "general": {
-    "id": "test0",
+    "id": "main",
     "seed": 0,
-    "workspace": "tmp/test0",
+    "workspace": "tmp/main",
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 5
+      "processes_when_linked_with_gpu": 4
     },
     "dictConfig": {
       "version": 1,
@@ -17,7 +17,7 @@
       },
       "handlers": {
         "default": {
-          "level": "INFO",
+          "level": "DEBUG",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -101,15 +101,61 @@
     "N_trajs": 500,
     "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
   },
+  "test_ftq": {
+    "policy_path": "final_policy.pt",
+    "N_trajs": 500
+  },
+  "test_ftq_duplicate": {
+    "N_trajs": 500,
+    "policy_path": "policy.pt"
+  },
   "gamma": 1.0,
   "gamma_c": 1.0,
+  "learn_ftq_egreedy": {
+    "lambdas": "[0.,10.,20.,30,40.,50.,60.,70.,80.,90.]",
+    "trajs_by_ftq_batch": 100,
+    "normalize_reward": true,
+    "N_trajs": 1000,
+    "epsilon_decay": {
+      "start": 1.0,
+      "decay": 0.005
+    },
+    "save_memory": {
+      "path": "learn_ftq_egreedy.data",
+      "as_json": true
+    }
+  },
+  "learn_ftq_duplicate": {
+    "lambdas": "np.concatenate((np.linspace(0,50,11),np.linspace(60,100,5)))",
+    "generate_data": {
+      "lambda_": 0.0,
+      "trajs_by_ftq_batch": 1000,
+      "normalize_reward": true,
+      "N_trajs": 10000,
+      "epsilon_decay": {
+        "start": 1.0,
+        "decay": 0.0005
+      },
+      "save_memory": {
+        "path": "samples_for_duplicate.data",
+        "as_json": true
+      }
+    },
+    "learn_ftq_full_batch": {
+      "load_memory": {
+        "path": "samples_for_duplicate.data",
+        "as_json": true
+      },
+      "normalize_reward": true
+    }
+  },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 10000,
+    "trajs_by_ftq_batch": 1000,
     "normalize_reward": true,
     "N_trajs": 10000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0
+      "decay": 0.0005
     },
     "betas_for_exploration": "[]"
   },
@@ -118,13 +164,13 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,21)",
+    "betas_for_discretisation": "np.linspace(0.,1.,11)",
     "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 12,
+    "max_ftq_epoch": 11,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -146,8 +192,28 @@
       128,
       64
     ]
+  },
+  "ftq_params": {
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 5000,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 11,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.0005,
+    "batch_size_experience_replay": "ALL_BATCH"
+  },
+  "ftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      128,
+      64,
+      32
+    ]
   }
-
 }
 
 

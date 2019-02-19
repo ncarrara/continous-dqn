@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "test0",
+    "id": "test1",
     "seed": 0,
-    "workspace": "tmp/test0",
+    "workspace": "tmp/test1",
     "cpu": {
       "processes": null,
       "processes_when_linked_with_gpu": 5
@@ -128,7 +128,7 @@
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0005,
+    "weight_decay": 0.0001,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
     "weights_losses": [

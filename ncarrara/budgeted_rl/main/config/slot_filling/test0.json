@@ -1,11 +1,11 @@
 {
   "general": {
-    "id": "run",
+    "id": "slot_filling_test_0",
     "seed": 0,
-    "workspace": "tmp/run",
+    "workspace": "tmp/slot_filling_test_0",
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 4
+      "processes_when_linked_with_gpu": 5
     },
     "dictConfig": {
       "version": 1,

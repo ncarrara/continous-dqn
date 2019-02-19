@@ -71,7 +71,12 @@ def set_seed(seed, env=None):
 
 def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
     makedirs(savepath)
-    decays = np.exp(-np.arange(N) / (1. / decay)) * start
+    if decay ==0:
+        decays = np.full(N,start)
+    elif decay >0 :
+        decays = np.exp(-np.arange(N) / (1. / decay)) * start
+    else:
+        raise Exception("Decay must be positive")
     str_decay = pretty_format_list(decays)
     logger.info("Epsilons (decayed) : [{}]".format(str_decay))
     if logger.getEffectiveLevel() <= logging.DEBUG:

@@ -55,18 +55,23 @@ def cpuStats():
 
 
 def f(params):
-    Qsb_, action_mask, betas_for_discretisation, path = params
-    hull, _ = compute_interest_points_NN_Qsb(
+    Qsb_, action_mask, betas_for_discretisation, path, hull_options = params
+    hull, colinearity,true_colinearity,expection = compute_interest_points_NN_Qsb(
         Qsb=Qsb_,
         action_mask=action_mask,
         betas=betas_for_discretisation,
         disp=False,
-        path=path)
+        path=path,
+        hull_options=hull_options)
 
-    return hull
+    # force to do tolist, so object is pickable, because multiprocessing may freeze when it's not pickable
+    # see  https://stackoverflow.com/questions/24537379/python-multiprocessing-script-freezes-seemingly-without-error
+    # https://stackoverflow.com/questions/11854519/python-multiprocessing-some-functions-do-not-return-when-they-are-complete-que/11855207#11855207
+    return hull.tolist(), colinearity,true_colinearity,expection
 
 
-def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
+def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default",
+                                   hull_options=None):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
@@ -130,16 +135,41 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 Qs.append(all_Qs[k])
                 betas.append(all_betas[k])
             k += 1
-        points = np.array(points)
+        if hull_options is not None and hull_options["decimals"] is not None:
+            points = np.round(np.array(points), decimals=hull_options["decimals"])
+        else:
+            points = np.array(points)
+
+        betas = np.array(betas)
+        Qs = np.array(Qs)
+
+        # on remove les duplications
+        if hull_options is not None and hull_options["remove_duplicated_points"]:
+            points, indices = np.unique(points, axis=0, return_index=True)
+            betas = betas[indices]
+            Qs = Qs[indices]
+
         if disp:
             plt.rcParams["figure.figsize"] = (5, 5)
             plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
             plt.grid()
-        try:
-            hull = ConvexHull(points)
-        except QhullError:
+
+        true_colinearity = False
+        expection = False
+
+        if len(points) < 3:
             colinearity = True
+            true_colinearity = True
+        else:
+            try:
+                if hull_options is not None and hull_options["qhull_options"] is not None:
+                    hull = ConvexHull(points, qhull_options=hull_options["qhull_options"])
+                else:
+                    hull = ConvexHull(points)
+            except QhullError:
+                colinearity = True
+                expection = True
 
         if colinearity:
             idxs_interest_points = range(0, len(points))  # tous les points d'intéret sont bon a prendre
@@ -205,21 +235,22 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             rez = np.sort(rez, order="Qc")
         else:
             rez = np.flip(rez, 0)  # normalement si ya pas colinearité c'est deja trié dans l'ordre decroissant
-        return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
+        return rez, colinearity,true_colinearity,expection  # betas, points, idxs_interest_points, Qs, colinearity
 
 
-def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
+def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, disp=False, path=None, id="default"):
     ss = s.repeat((len(betas), 1, 1))
     bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
     sb = torch.cat((ss, bb), dim=2)
     Qsb = Q(sb)
-    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id)
+    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id,
+                                          hull_options=hull_options)
 
 
-def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default"):
+def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
-    hull, colinearity = compute_interest_points_NN(
+    hull, colinearity,true_colinearity,expection = compute_interest_points_NN(
         s=s,
         Q=Q,
         action_mask=action_mask,
@@ -227,7 +258,8 @@ def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default")
         device=device,
         disp=disp,
         path=path,
-        id=id)
+        id=id,
+        hull_options=hull_options)
     return hull
 
 
@@ -314,10 +346,12 @@ class PytorchBudgetedFittedQ:
                  use_extra_gpu_memory_threshold=0,
                  maximum_number_of_gpu=1,
                  cpu_processes=None,
-                 env =None
+                 env=None,
+                 hull_options=None
 
                  ):
-        self.env= env
+        self.hull_options = None
+        self.env = env
         self.cpu_processes = cpu_processes
 
         self.memory_tracking = []
@@ -488,11 +522,8 @@ class PytorchBudgetedFittedQ:
 
             it += 1
 
-
         mask_unique_hull_ns = np.array(mask_unique_hull_ns)
         mask_not_terminal_ns = np.array(mask_not_terminal_ns)
-
-
 
         batch = memory.memory
         self.size_batch = len(batch)
@@ -583,7 +614,7 @@ class PytorchBudgetedFittedQ:
                 self.info("Printing some debug graphics ...")
                 for i_s, state in enumerate(self.disp_next_states):
                     if state is not None:
-                        str_state = "next_state={}_epoch={:03}".format(i_s,self._id_ftq_epoch)
+                        str_state = "next_state={}_epoch={:03}".format(i_s, self._id_ftq_epoch)
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -592,10 +623,11 @@ class PytorchBudgetedFittedQ:
                                         id=str_state, disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
-                                        path=self.workspace)
+                                        path=self.workspace,
+                                        hull_options=self.hull_options)
                 for i_s, state in enumerate(self.disp_states):
                     if state is not None:
-                        str_state = "state={}_epoch={:03}_".format(i_s,self._id_ftq_epoch )
+                        str_state = "state={}_epoch={:03}_".format(i_s, self._id_ftq_epoch)
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -604,7 +636,8 @@ class PytorchBudgetedFittedQ:
                                         id=str_state, disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
-                                        path=self.workspace)
+                                        path=self.workspace,
+                                        hull_options=self.hull_options)
                 self.info("Printing some debug graphics ... (end)")
             self._id_ftq_epoch += 1
 
@@ -773,26 +806,35 @@ class PytorchBudgetedFittedQ:
                 args_for_ns_batch_unique = [
                     (
                         Qsb[(i_ns_unique * len(self.betas_for_discretisation)):
-                            (i_ns_unique + 1)*len(self.betas_for_discretisation)],
+                            (i_ns_unique + 1) * len(self.betas_for_discretisation)],
                         np.zeros(self.N_actions),
                         self.betas_for_discretisation,
-                        self.workspace
+                        self.workspace,
+                        self.hull_options
                     )
                     for i_ns_unique in range(len(ns_batch_unique))
                 ]
 
                 if self.cpu_processes == 1:
                     hulls_for_ns_batch_unique = []
+                    colinearities=[]
+                    true_colinearities=[]
+                    exceptions=[]
                     for i_params, params in enumerate(args_for_ns_batch_unique):
                         if i_params % max(1, len(args_for_ns_batch_unique) // 10) == 0:
                             self.info("{} hulls processed (sequentially)".format(i_params))
-                        hulls_for_ns_batch_unique.append(f(params))
+                        hull,colinearity,true_colinearity,expection = f(params)
+                        hulls_for_ns_batch_unique.append(hull)
                 else:
                     self.info("Using multiprocessing")
                     with Pool(self.cpu_processes) as p:
                         # p.map return ordered fashion, so we're cool
-                        hulls_for_ns_batch_unique = p.map(f, args_for_ns_batch_unique)
+                        rez = p.map(f, args_for_ns_batch_unique)
+                        hulls_for_ns_batch_unique,colinearities,true_colinearities,exceptions= zip(*rez)
 
+                self.info("exceptions : {:.4f} %".format(np.sum(np.array(exceptions))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("true_colinearities : {:.4f} %".format(np.sum(np.array(true_colinearities))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("colinearities : {:.4f} %".format(np.sum(np.array(colinearities))/len(hulls_for_ns_batch_unique) *100.))
                 self.info("#next_states : {}".format(len(ns_batch)))
                 self.info("#non terminal next_states : {}".format(len(where_not_terminal_ns)))
                 self.info("#hulls actually computed : {}".format(len(hulls_for_ns_batch_unique)))
@@ -919,11 +961,13 @@ class PytorchBudgetedFittedQ:
 
                 mean_qc_neg = 0 if warning_qc_negatif == 0 else offset_qc_negatif / warning_qc_negatif
                 mean_qc__neg = 0 if warning_qc__negatif == 0 else offset_qc__negatif / warning_qc__negatif
-                mean_ns_neg = 0 if next_state_c_neg == 0 else offset_next_state_c_neg/next_state_c_neg
-                self.info("qc < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc_negatif / len(where_not_terminal_ns) * 100.,mean_qc_neg ))
-                self.info("qc_ < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc__negatif / len(where_not_terminal_ns) * 100., mean_qc__neg))
+                mean_ns_neg = 0 if next_state_c_neg == 0 else offset_next_state_c_neg / next_state_c_neg
+                self.info("qc < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
+                    warning_qc_negatif / len(where_not_terminal_ns) * 100., mean_qc_neg))
+                self.info("qc_ < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
+                    warning_qc__negatif / len(where_not_terminal_ns) * 100., mean_qc__neg))
                 self.info("next_state_constraints < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
-                    next_state_c_neg / len(where_not_terminal_ns) * 100.,mean_ns_neg))
+                    next_state_c_neg / len(where_not_terminal_ns) * 100., mean_ns_neg))
                 self.info("compute next values ... end")
                 self.empty_cache()
                 self.track_memory("compute_next_values (end)")
@@ -1158,7 +1202,6 @@ class PytorchBudgetedFittedQ:
             logger.info("[e={:02}]{} {}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
             logger.info("{} {} ".format(self.format_memory(memoire), message))
-
 
 
 class NetBFTQ(BaseModule):

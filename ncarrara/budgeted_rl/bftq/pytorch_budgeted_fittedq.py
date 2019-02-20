@@ -131,15 +131,28 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 betas.append(all_betas[k])
             k += 1
         points = np.array(points)
+        betas = np.array(betas)
+        Qs =np.array(Qs)
+
+        # on remove les duplications
+        points, indices = np.unique(points, return_index=True)
+        betas = betas[indices]
+        Qs = Qs[indices]
+
         if disp:
             plt.rcParams["figure.figsize"] = (5, 5)
             plt.plot(all_points[:, 0], all_points[:, 1], 'o', markersize=7, color="blue", alpha=0.1)
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
             plt.grid()
-        try:
-            hull = ConvexHull(points)
-        except QhullError:
+
+        if len(points) < 3 :
             colinearity = True
+        else:
+            try:
+                hull = ConvexHull(points)
+            except QhullError:
+
+                colinearity = True
 
         if colinearity:
             idxs_interest_points = range(0, len(points))  # tous les points d'intéret sont bon a prendre

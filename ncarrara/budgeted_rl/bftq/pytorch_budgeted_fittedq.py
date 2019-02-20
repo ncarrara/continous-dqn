@@ -414,8 +414,8 @@ class PytorchBudgetedFittedQ:
 
     def _construct_batch(self, transitions):
         transitions = copy.deepcopy(transitions)
-        import random
-        random.shuffle(transitions)
+        # import random
+        # random.shuffle(transitions)
 
         self.track_memory("_construct_batch")
         self.info("[_construct_batch] constructing batch ...")

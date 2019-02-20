@@ -501,7 +501,10 @@ class PytorchBudgetedFittedQ:
             state = torch.tensor([[t.state]], dtype=torch.float)
             if len(self.betas_for_duplication) > 0:
                 for beta in self.betas_for_duplication:
-                    beta = torch.tensor([[[beta]]], dtype=torch.float)
+                    if t.beta:  # If the transition already has a beta, augment data by altering it.
+                        beta = torch.tensor([[[beta * t.beta]]], dtype=torch.float)
+                    else:  # Otherwise, simply set new betas
+                        beta = torch.tensor([[[beta]]], dtype=torch.float)
                     memory.push(state, action, reward, next_state, constraint, beta, hull_id)
                     if t.next_state is not None:
                         mask_not_terminal_ns.append(idx_in_batch)

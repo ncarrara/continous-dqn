@@ -819,7 +819,7 @@ class PytorchBudgetedFittedQ:
                     hulls_for_ns_batch_unique = []
                     colinearities=[]
                     true_colinearities=[]
-                    expections=[]
+                    exceptions=[]
                     for i_params, params in enumerate(args_for_ns_batch_unique):
                         if i_params % max(1, len(args_for_ns_batch_unique) // 10) == 0:
                             self.info("{} hulls processed (sequentially)".format(i_params))
@@ -830,11 +830,11 @@ class PytorchBudgetedFittedQ:
                     with Pool(self.cpu_processes) as p:
                         # p.map return ordered fashion, so we're cool
                         rez = p.map(f, args_for_ns_batch_unique)
-                        hulls_for_ns_batch_unique,colinearities,true_colinearities,expections= zip(*rez)
+                        hulls_for_ns_batch_unique,colinearities,true_colinearities,exceptions= zip(*rez)
 
-                self.info("expections : {}%".format(np.sum(np.array(expections))/len(hulls_for_ns_batch_unique) *100.))
-                self.info("true_colinearities : {}%".format(np.sum(np.array(true_colinearities))/len(hulls_for_ns_batch_unique) *100.))
-                self.info("colinearities : {}%".format(np.sum(np.array(colinearities))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("exceptions : {:.4f} %".format(np.sum(np.array(exceptions))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("true_colinearities : {:.4f} %".format(np.sum(np.array(true_colinearities))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("colinearities : {:.4f} %".format(np.sum(np.array(colinearities))/len(hulls_for_ns_batch_unique) *100.))
                 self.info("#next_states : {}".format(len(ns_batch)))
                 self.info("#non terminal next_states : {}".format(len(where_not_terminal_ns)))
                 self.info("#hulls actually computed : {}".format(len(hulls_for_ns_batch_unique)))

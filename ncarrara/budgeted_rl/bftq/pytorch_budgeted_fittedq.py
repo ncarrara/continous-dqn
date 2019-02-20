@@ -20,6 +20,7 @@ from sys import getsizeof
 
 from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
+from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.utils.color import Color
 from ncarrara.utils.math_utils import update_lims, near_split
 from ncarrara.utils.miscelanous import pretty_format_list
@@ -66,7 +67,8 @@ def f(params):
     return hull
 
 
-def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default"):
+def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default",
+                                   hull_options=C.hull_options):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
@@ -130,9 +132,13 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 Qs.append(all_Qs[k])
                 betas.append(all_betas[k])
             k += 1
-        points = np.array(points)
+        if hull_options["decimals"] is not None:
+            points = np.round(np.array(points),decimals= hull_options["decimals"])
+        else:
+            points = np.array(points)
+
         betas = np.array(betas)
-        Qs =np.array(Qs)
+        Qs = np.array(Qs)
 
         # on remove les duplications
         points, indices = np.unique(points, return_index=True)
@@ -145,13 +151,15 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             plt.plot(points[:, 0], points[:, 1], 'o', markersize=3, color="red")
             plt.grid()
 
-        if len(points) < 3 :
+        if len(points) < 3:
             colinearity = True
         else:
             try:
-                hull = ConvexHull(points)
+                if hull_options["qhull_options"] is not None:
+                    hull = ConvexHull(points,options=hull_options["qhull_options"])
+                else:
+                    hull = ConvexHull(points)
             except QhullError:
-
                 colinearity = True
 
         if colinearity:
@@ -327,10 +335,10 @@ class PytorchBudgetedFittedQ:
                  use_extra_gpu_memory_threshold=0,
                  maximum_number_of_gpu=1,
                  cpu_processes=None,
-                 env =None
+                 env=None
 
                  ):
-        self.env= env
+        self.env = env
         self.cpu_processes = cpu_processes
 
         self.memory_tracking = []
@@ -501,11 +509,8 @@ class PytorchBudgetedFittedQ:
 
             it += 1
 
-
         mask_unique_hull_ns = np.array(mask_unique_hull_ns)
         mask_not_terminal_ns = np.array(mask_not_terminal_ns)
-
-
 
         batch = memory.memory
         self.size_batch = len(batch)
@@ -596,7 +601,7 @@ class PytorchBudgetedFittedQ:
                 self.info("Printing some debug graphics ...")
                 for i_s, state in enumerate(self.disp_next_states):
                     if state is not None:
-                        str_state = "next_state={}_epoch={:03}".format(i_s,self._id_ftq_epoch)
+                        str_state = "next_state={}_epoch={:03}".format(i_s, self._id_ftq_epoch)
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -608,7 +613,7 @@ class PytorchBudgetedFittedQ:
                                         path=self.workspace)
                 for i_s, state in enumerate(self.disp_states):
                     if state is not None:
-                        str_state = "state={}_epoch={:03}_".format(i_s,self._id_ftq_epoch )
+                        str_state = "state={}_epoch={:03}_".format(i_s, self._id_ftq_epoch)
                         self.draw_Qr_and_Qc(state.cpu().numpy(), self._policy_network, str_state)
 
                         _ = convex_hull(s=state,
@@ -786,7 +791,7 @@ class PytorchBudgetedFittedQ:
                 args_for_ns_batch_unique = [
                     (
                         Qsb[(i_ns_unique * len(self.betas_for_discretisation)):
-                            (i_ns_unique + 1)*len(self.betas_for_discretisation)],
+                            (i_ns_unique + 1) * len(self.betas_for_discretisation)],
                         np.zeros(self.N_actions),
                         self.betas_for_discretisation,
                         self.workspace
@@ -932,11 +937,13 @@ class PytorchBudgetedFittedQ:
 
                 mean_qc_neg = 0 if warning_qc_negatif == 0 else offset_qc_negatif / warning_qc_negatif
                 mean_qc__neg = 0 if warning_qc__negatif == 0 else offset_qc__negatif / warning_qc__negatif
-                mean_ns_neg = 0 if next_state_c_neg == 0 else offset_next_state_c_neg/next_state_c_neg
-                self.info("qc < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc_negatif / len(where_not_terminal_ns) * 100.,mean_qc_neg ))
-                self.info("qc_ < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(warning_qc__negatif / len(where_not_terminal_ns) * 100., mean_qc__neg))
+                mean_ns_neg = 0 if next_state_c_neg == 0 else offset_next_state_c_neg / next_state_c_neg
+                self.info("qc < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
+                    warning_qc_negatif / len(where_not_terminal_ns) * 100., mean_qc_neg))
+                self.info("qc_ < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
+                    warning_qc__negatif / len(where_not_terminal_ns) * 100., mean_qc__neg))
                 self.info("next_state_constraints < 0 percentage {:.2f}% with a mean offset of {:.4f}".format(
-                    next_state_c_neg / len(where_not_terminal_ns) * 100.,mean_ns_neg))
+                    next_state_c_neg / len(where_not_terminal_ns) * 100., mean_ns_neg))
                 self.info("compute next values ... end")
                 self.empty_cache()
                 self.track_memory("compute_next_values (end)")
@@ -1171,7 +1178,6 @@ class PytorchBudgetedFittedQ:
             logger.info("[e={:02}]{} {}".format(self._id_ftq_epoch, self.format_memory(memoire), message))
         else:
             logger.info("{} {} ".format(self.format_memory(memoire), message))
-
 
 
 class NetBFTQ(BaseModule):

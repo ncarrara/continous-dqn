@@ -203,12 +203,13 @@ class RandomBudgetedPolicy(Policy):
 
 
 class PytorchBudgetedFittedPolicy(Policy):
-    def __init__(self, env, feature_str, network_path, betas_for_discretisation, device, **kwargs):
+    def __init__(self, env, feature_str, network_path, betas_for_discretisation, device,hull_options, **kwargs):
         self.env = env
         self.feature = feature_factory(feature_str)
         self.betas_for_discretisation = betas_for_discretisation
         self.device = device
         self.network = None
+        self.hull_options=hull_options
         if network_path:
             self.load_network(network_path)
 
@@ -236,7 +237,8 @@ class PytorchBudgetedFittedPolicy(Policy):
                                action_mask=action_mask,
                                id="run_" + str(state), disp=False,
                                betas=self.betas_for_discretisation,
-                               device=self.device)
+                               device=self.device,
+                               hull_options=self.hull_options)
             opt,_ = optimal_pia_pib(beta=beta, hull=hull,statistic={})
             rand = np.random.random()
             a = opt.id_action_inf if rand < opt.proba_inf else opt.id_action_sup

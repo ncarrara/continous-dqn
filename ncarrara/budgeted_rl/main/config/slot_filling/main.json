@@ -3,9 +3,13 @@
     "id": "main",
     "seed": 0,
     "workspace": "tmp/main",
+    "hull_options": {
+      "decimals": null,
+      "qhull_options": "QJ"
+    },
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 4
+      "processes_when_linked_with_gpu": 5
     },
     "dictConfig": {
       "version": 1,

@@ -44,6 +44,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             gamma_c=gamma_c,
             cpu_processes=general["cpu"]["processes"],
             env=e,
+            hull_options=general["hull_options"],
             **bftq_params)
         return bftq
 
@@ -57,7 +58,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         "__class__": repr(EpsilonGreedyPolicy),
         "pi_greedy": {"__class__": repr(RandomBudgetedPolicy)},
         "pi_random": {"__class__": repr(RandomBudgetedPolicy)},
-        "epsilon": decays[0]
+        "epsilon": decays[0],
+        "hull_options": general["hull_options"],
     }
 
     # Main loop
@@ -116,11 +118,11 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             "feature_str": feature_str,
             "network_path": network_path,
             "betas_for_discretisation": bftq.betas_for_discretisation,
-            "device": bftq.device
+            "device": bftq.device,
+            "hull_options": general["hull_options"],
         }
 
-        if isinstance(e,EnvGridWorld):
-
+        if isinstance(e, EnvGridWorld):
             def pi(state, beta):
                 import torch
                 from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import convex_hull, \
@@ -131,7 +133,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                                        action_mask=np.zeros(e.action_space.n),
                                        id="run_" + str(state), disp=False,
                                        betas=bftq.betas_for_discretisation,
-                                       device=device)
+                                       device=device,
+                                       hull_options=general["hull_options"])
                     opt, _ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
                 return opt
 
@@ -139,22 +142,22 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                 import torch
                 s = torch.tensor([[state]], device=device)
                 b = torch.tensor([[[beta]]], device=device)
-                sb = torch.cat((s,b),dim=2)
+                sb = torch.cat((s, b), dim=2)
                 return q(sb).squeeze()[a]
 
             def qc(state, a, beta):
                 import torch
                 s = torch.tensor([[state]], device=device)
                 b = torch.tensor([[[beta]]], device=device)
-                sb = torch.cat((s, b),dim=2)
-                return q(sb).squeeze()[e.action_space.n+a]
+                sb = torch.cat((s, b), dim=2)
+                return q(sb).squeeze()[e.action_space.n + a]
 
-            w = World(e,bftq.betas_for_discretisation)
+            w = World(e, bftq.betas_for_discretisation)
             w.draw_frame()
             w.draw_lattice()
             w.draw_cases()
             w.draw_policy_bftq(pi, qr, qc, bftq.betas_for_discretisation)
-            w.save(bftq.workspace+"/bftq_on_2dworld")
+            w.save(bftq.workspace + "/bftq_on_2dworld")
 
     save_memory(bftq, memory_by_batch, by_batch=True)
 

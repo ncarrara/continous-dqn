@@ -20,7 +20,6 @@ from sys import getsizeof
 
 from torch.utils.data import Dataset, ConcatDataset, TensorDataset
 
-from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.utils.color import Color
 from ncarrara.utils.math_utils import update_lims, near_split
 from ncarrara.utils.miscelanous import pretty_format_list
@@ -56,19 +55,20 @@ def cpuStats():
 
 
 def f(params):
-    Qsb_, action_mask, betas_for_discretisation, path = params
+    Qsb_, action_mask, betas_for_discretisation, path, hull_options = params
     hull, _ = compute_interest_points_NN_Qsb(
         Qsb=Qsb_,
         action_mask=action_mask,
         betas=betas_for_discretisation,
         disp=False,
-        path=path)
+        path=path,
+    hull_options = hull_options)
 
     return hull
 
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default",
-                                   hull_options=C.hull_options):
+                                   hull_options=None):
     with torch.no_grad():
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
@@ -132,8 +132,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 Qs.append(all_Qs[k])
                 betas.append(all_betas[k])
             k += 1
-        if hull_options["decimals"] is not None:
-            points = np.round(np.array(points),decimals= hull_options["decimals"])
+        if hull_options is not None and hull_options["decimals"] is not None:
+            points = np.round(np.array(points), decimals=hull_options["decimals"])
         else:
             points = np.array(points)
 
@@ -155,8 +155,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             colinearity = True
         else:
             try:
-                if hull_options["qhull_options"] is not None:
-                    hull = ConvexHull(points,options=hull_options["qhull_options"])
+                if  hull_options is not None and  hull_options["qhull_options"] is not None:
+                    hull = ConvexHull(points, options=hull_options["qhull_options"])
                 else:
                     hull = ConvexHull(points)
             except QhullError:
@@ -229,15 +229,16 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         return rez, colinearity  # betas, points, idxs_interest_points, Qs, colinearity
 
 
-def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, path=None, id="default"):
+def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, disp=False, path=None, id="default"):
     ss = s.repeat((len(betas), 1, 1))
     bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
     sb = torch.cat((ss, bb), dim=2)
     Qsb = Q(sb)
-    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id)
+    return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id,
+                                          hull_options=hull_options)
 
 
-def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default"):
+def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
     hull, colinearity = compute_interest_points_NN(
@@ -248,7 +249,8 @@ def convex_hull(s, action_mask, Q, disp, betas, device, path=None, id="default")
         device=device,
         disp=disp,
         path=path,
-        id=id)
+        id=id,
+        hull_options=hull_options)
     return hull
 
 
@@ -335,9 +337,11 @@ class PytorchBudgetedFittedQ:
                  use_extra_gpu_memory_threshold=0,
                  maximum_number_of_gpu=1,
                  cpu_processes=None,
-                 env=None
+                 env=None,
+                 hull_options=None
 
                  ):
+        self.hull_options=None
         self.env = env
         self.cpu_processes = cpu_processes
 
@@ -610,7 +614,8 @@ class PytorchBudgetedFittedQ:
                                         id=str_state, disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
-                                        path=self.workspace)
+                                        path=self.workspace,
+                                        hull_options=self.hull_options)
                 for i_s, state in enumerate(self.disp_states):
                     if state is not None:
                         str_state = "state={}_epoch={:03}_".format(i_s, self._id_ftq_epoch)
@@ -622,7 +627,8 @@ class PytorchBudgetedFittedQ:
                                         id=str_state, disp=True,
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
-                                        path=self.workspace)
+                                        path=self.workspace,
+                                        hull_options=self.hull_options)
                 self.info("Printing some debug graphics ... (end)")
             self._id_ftq_epoch += 1
 

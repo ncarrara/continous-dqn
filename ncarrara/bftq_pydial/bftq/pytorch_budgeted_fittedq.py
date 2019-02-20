@@ -58,7 +58,16 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, disp=False, pat
             b_ = torch.tensor([[beta]], device=device, dtype=torch.float32)
             sb = torch.cat((s.float(), b_), 1)
             sb = sb.unsqueeze(0)
-            QQ = Q(sb)[0]
+
+            # sb0n = sb.cpu().detach().numpy()
+            # np.save("sb0.npy", sb0n)
+
+            QQ = Q(sb)
+
+            # Qsb0n = QQ.cpu().detach().numpy()
+            # np.save("Qsb0.npy", Qsb0n)
+
+            QQ = QQ[0]
             QQ = QQ.cpu().detach().numpy()
         for i_a, mask in enumerate(action_mask):
             i_a_ok_act = 0
@@ -647,25 +656,37 @@ class PytorchBudgetedFittedQ:
         return next_state_rewards, next_state_constraints
 
     def _ftq_epoch(self):
+        torch.set_printoptions(precision=10, edgeitems=200)
+        np.set_printoptions(precision=10, edgeitems=200)
         with torch.no_grad():
             if self._id_ftq_epoch > 0:
                 hulls = self.compute_hulls(self._next_state_batch, self._hull_id_batch, self._policy_network, disp=False)
+                logger.info("hulls {}".format(hulls))
+
                 piapib, next_state_beta = self.compute_opts(hulls)
+                logger.info("piapib {}".format(piapib))
+                logger.info("next_state_beta {}".format(next_state_beta))
                 # torch.set_grad_enabled(False)
 
                 Q_next = self._policy_network(next_state_beta)
                 next_state_rewards, next_state_constraints = self.compute_next_values(Q_next, piapib)
+
+                logger.info("next_state_rewards {}".format(next_state_rewards))
+                logger.info("next_state_constraints {}".format(next_state_constraints))
             else:
                 next_state_rewards = torch.zeros(self.size_mini_batch, device=self.device)
                 next_state_constraints = torch.zeros(self.size_mini_batch, device=self.device)
 
             expected_state_action_rewards = self._reward_batch + (self._GAMMA * next_state_rewards)
             expected_state_action_constraints = self._constraint_batch + (self._GAMMA_C * next_state_constraints)
+            logger.info("expected_state_action_rewards {}".format(expected_state_action_rewards))
+            logger.info("expected_state_action_constraints {}".format(expected_state_action_constraints))
 
         losses = self._optimize_model(expected_state_action_rewards, expected_state_action_constraints)
 
         print("losses", losses)
         self.print_net()
+
         if logger.getEffectiveLevel() is logging.INFO:
             with torch.no_grad():
                 self.info("Creating histograms ...")

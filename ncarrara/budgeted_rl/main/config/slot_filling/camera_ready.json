@@ -5,8 +5,12 @@
     "workspace": "tmp/camera_ready",
     "hull_options": {
       "decimals": null,
-      "qhull_options": "QJ",
-      "remove_duplicated_points": true
+      "qhull_options": null,
+      "remove_duplicated_points": true,
+      "library": "pure_python"
+    },
+    "gpu": {
+       "split_batches":10
     },
     "cpu": {
       "processes": null,

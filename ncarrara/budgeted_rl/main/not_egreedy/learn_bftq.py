@@ -31,6 +31,7 @@ def main(load_memory, generate_envs, feature_str, gamma, gamma_c, bftq_params, b
                                **bftq_net_params),
         gamma=gamma,
         gamma_c=gamma_c,
+        split_batches=general["gpu"]["split_batches"],
         cpu_processes=general["cpu"]["processes"],
         env=e,
         **bftq_params)

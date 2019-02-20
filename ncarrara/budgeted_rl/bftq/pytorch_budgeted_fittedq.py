@@ -359,10 +359,13 @@ class PytorchBudgetedFittedQ:
                  maximum_number_of_gpu=1,
                  cpu_processes=None,
                  env=None,
-                 hull_options=None
+                 hull_options=None,
+                 split_batches = 5
+
 
                  ):
-        self.hull_options = None
+        self.hull_options = hull_options
+        self.split_batches = split_batches
         self.env = env
         self.cpu_processes = cpu_processes
 
@@ -798,7 +801,7 @@ class PytorchBudgetedFittedQ:
                 #           "It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"
                 #           .format(len(sb), len(ns_batch_unique), len(self.betas_for_discretisation),
                 #                   len(self.betas_for_discretisation) * len(ns_batch_unique)))
-                num_bins = 5
+                num_bins = self.split_batches
                 batch_sizes = near_split(x=len(sb), num_bins=num_bins)
                 y = []
                 self.info("Splitting x in minibatch to avoid out of memory")

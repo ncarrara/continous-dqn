@@ -56,7 +56,7 @@ def cpuStats():
 
 def f(params):
     Qsb_, action_mask, betas_for_discretisation, path, hull_options = params
-    hull, colinearity,true_colinearity,expection = compute_interest_points_NN_Qsb(
+    hull, colinearity, true_colinearity, expection = compute_interest_points_NN_Qsb(
         Qsb=Qsb_,
         action_mask=action_mask,
         betas=betas_for_discretisation,
@@ -67,7 +67,7 @@ def f(params):
     # force to do tolist, so object is pickable, because multiprocessing may freeze when it's not pickable
     # see  https://stackoverflow.com/questions/24537379/python-multiprocessing-script-freezes-seemingly-without-error
     # https://stackoverflow.com/questions/11854519/python-multiprocessing-some-functions-do-not-return-when-they-are-complete-que/11855207#11855207
-    return hull.tolist(), colinearity,true_colinearity,expection
+    return hull.tolist(), colinearity, true_colinearity, expection
 
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default",
@@ -162,15 +162,27 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             colinearity = True
             true_colinearity = True
         else:
-            try:
-                if hull_options is not None and hull_options["qhull_options"] is not None:
-                    hull = ConvexHull(points, qhull_options=hull_options["qhull_options"])
-                else:
-                    hull = ConvexHull(points)
-            except QhullError:
-                colinearity = True
-                expection = True
-
+            if hull_options is None or "library" not in hull_options or hull_options["library"] == "scipy":
+                try:
+                    if hull_options is not None and hull_options["qhull_options"] is not None:
+                        hull = ConvexHull(points, qhull_options=hull_options["qhull_options"])
+                    else:
+                        hull = ConvexHull(points)
+                    vertices = hull.vertices
+                except QhullError:
+                    colinearity = True
+                    expection = True
+            elif hull_options is not None and hull_options["library"] == "pure_python":
+                if not hull_options["remove_duplicated_points"]:
+                    raise Exception("pure_python convexe_hull can't work without removing duplicate points")
+                from ncarrara.budgeted_rl.tools.convex_hull_graham import convex_hull_graham
+                hull = convex_hull_graham(points.tolist())
+                vertices = []
+                for vertex in hull:
+                    vertices.append(np.where(np.all(points == vertex, axis=1)))
+                vertices = np.asarray(vertices).squeeze()
+            else:
+                raise Exception("Wrong hull options : {}".format(hull_options))
         if colinearity:
             idxs_interest_points = range(0, len(points))  # tous les points d'intéret sont bon a prendre
         else:
@@ -178,8 +190,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             max_Qr = -np.inf
             corr_Qc = None
             max_Qr_index = None
-            for k in range(0, len(hull.vertices)):
-                idx_vertex = hull.vertices[k]
+            for k in range(0, len(vertices)):
+                idx_vertex = vertices[k]
                 Qc, Qr = points[idx_vertex]
                 if Qr > max_Qr:
                     max_Qr = Qr
@@ -193,7 +205,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                         k += 1
 
                     stop = True
-                stop = stop or k >= len(hull.vertices)
+                stop = stop or k >= len(vertices)
             idxs_interest_points = []
             stop = False
             # on va itera a l'envers jusq'a ce que Qc change de sens
@@ -202,7 +214,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             j = 0
             # on peut procéder comme ça car c'est counterclockwise
             while not stop:
-                idx_vertex = hull.vertices[k]
+                idx_vertex = vertices[k]
                 Qc, Qr = points[idx_vertex]
                 if Qc_previous >= Qc:
                     idxs_interest_points.append(idx_vertex)
@@ -210,8 +222,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
                 else:
                     stop = True
                 j += 1
-                k = (k + 1) % len(hull.vertices)  # counterclockwise
-                if j >= len(hull.vertices):
+                k = (k + 1) % len(vertices)  # counterclockwise
+                if j >= len(vertices):
                     stop = True
 
         if disp:
@@ -235,7 +247,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             rez = np.sort(rez, order="Qc")
         else:
             rez = np.flip(rez, 0)  # normalement si ya pas colinearité c'est deja trié dans l'ordre decroissant
-        return rez, colinearity,true_colinearity,expection  # betas, points, idxs_interest_points, Qs, colinearity
+        return rez, colinearity, true_colinearity, expection  # betas, points, idxs_interest_points, Qs, colinearity
 
 
 def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, disp=False, path=None, id="default"):
@@ -250,7 +262,7 @@ def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, d
 def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
-    hull, colinearity,true_colinearity,expection = compute_interest_points_NN(
+    hull, colinearity, true_colinearity, expection = compute_interest_points_NN(
         s=s,
         Q=Q,
         action_mask=action_mask,
@@ -817,24 +829,27 @@ class PytorchBudgetedFittedQ:
 
                 if self.cpu_processes == 1:
                     hulls_for_ns_batch_unique = []
-                    colinearities=[]
-                    true_colinearities=[]
-                    exceptions=[]
+                    colinearities = []
+                    true_colinearities = []
+                    exceptions = []
                     for i_params, params in enumerate(args_for_ns_batch_unique):
                         if i_params % max(1, len(args_for_ns_batch_unique) // 10) == 0:
                             self.info("{} hulls processed (sequentially)".format(i_params))
-                        hull,colinearity,true_colinearity,expection = f(params)
+                        hull, colinearity, true_colinearity, expection = f(params)
                         hulls_for_ns_batch_unique.append(hull)
                 else:
                     self.info("Using multiprocessing")
                     with Pool(self.cpu_processes) as p:
                         # p.map return ordered fashion, so we're cool
                         rez = p.map(f, args_for_ns_batch_unique)
-                        hulls_for_ns_batch_unique,colinearities,true_colinearities,exceptions= zip(*rez)
+                        hulls_for_ns_batch_unique, colinearities, true_colinearities, exceptions = zip(*rez)
 
-                self.info("exceptions : {:.4f} %".format(np.sum(np.array(exceptions))/len(hulls_for_ns_batch_unique) *100.))
-                self.info("true_colinearities : {:.4f} %".format(np.sum(np.array(true_colinearities))/len(hulls_for_ns_batch_unique) *100.))
-                self.info("colinearities : {:.4f} %".format(np.sum(np.array(colinearities))/len(hulls_for_ns_batch_unique) *100.))
+                self.info("exceptions : {:.4f} %".format(
+                    np.sum(np.array(exceptions)) / len(hulls_for_ns_batch_unique) * 100.))
+                self.info("true_colinearities : {:.4f} %".format(
+                    np.sum(np.array(true_colinearities)) / len(hulls_for_ns_batch_unique) * 100.))
+                self.info("colinearities : {:.4f} %".format(
+                    np.sum(np.array(colinearities)) / len(hulls_for_ns_batch_unique) * 100.))
                 self.info("#next_states : {}".format(len(ns_batch)))
                 self.info("#non terminal next_states : {}".format(len(where_not_terminal_ns)))
                 self.info("#hulls actually computed : {}".format(len(hulls_for_ns_batch_unique)))

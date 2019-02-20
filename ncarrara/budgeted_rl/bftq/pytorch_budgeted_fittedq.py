@@ -626,19 +626,25 @@ class PytorchBudgetedFittedQ:
 
     def _ftq_epoch(self, sb_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, mask_unique_hull_ns,
                    mask_not_terminal_ns):
+        torch.set_printoptions(precision=10, edgeitems=200)
+        np.set_printoptions(precision=10, edgeitems=200)
+
         self.track_memory("ftq_epoch")
         self.info("[_ftq_epoch] start ...")
         with torch.no_grad():
             if self._id_ftq_epoch > 0:
                 ns_r, ns_c = self.compute_next_values(ns_batch, h_batch, b_batch, self._policy_network,
                                                       mask_unique_hull_ns, mask_not_terminal_ns)
-
+                logger.info("ns_r {}".format(ns_r))
+                logger.info("ns_c {}".format(ns_c))
             else:
                 ns_r = torch.zeros(self.size_batch, device=self.device)
                 ns_c = torch.zeros(self.size_batch, device=self.device)
 
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
+            logger.info("label_r {}".format(label_r))
+            logger.info("label_c {}".format(label_c))
 
             if self.beta_range:
                 self.info("Clamp target constraints")
@@ -655,6 +661,7 @@ class PytorchBudgetedFittedQ:
 
         print("losses", losses)
         self.print_net()
+
         self.empty_cache()
         if logger.getEffectiveLevel() <= logging.DEBUG:
             with torch.no_grad():
@@ -769,6 +776,13 @@ class PytorchBudgetedFittedQ:
                 sb = torch.cat((ss, bb), dim=1)
                 sb = sb.unsqueeze(1)
 
+                # sb0 = sb[0:1]
+                # sb0n = sb0.cpu().detach().numpy()
+                # np.save("sb0.npy", sb0n)
+                # Qsb0 = Q(sb0)
+                # Qsb0n = Qsb0.cpu().detach().numpy()
+                # np.save("Qsb0.npy", Qsb0n)
+
                 self.track_memory("Qsb (compute_hull) ")
                 # self.info("Forward pass of couple (s',beta). Size of the batch : {}." +
                 #           "It should be equals to #hulls({}) x #beta_for_discretisation({})  : {}"
@@ -780,15 +794,20 @@ class PytorchBudgetedFittedQ:
                 self.info("Splitting x in minibatch to avoid out of memory")
                 self.info("Batch sizes : {}".format(batch_sizes))
                 offset = 0
+                # Q.double()
+                # sb = sb.double()
                 for i in range(num_bins):
                     self.info("mini batch {}".format(i))
                     self.track_memory("mini_batch={}".format(i))
                     mini_batch = sb[offset:offset + batch_sizes[i]]
                     offset += batch_sizes[i]
+
                     y.append(Q(mini_batch))
                     torch.cuda.empty_cache()
                 Qsb = torch.cat(y)
                 Qsb = Qsb.detach().cpu().numpy()
+                # Qsb0p = Qsb[0:1]
+                # print("difference", np.all(Qsb0p == Qsb0n))
                 self.track_memory("Qsb (compute_hull) (end)")
 
                 args_for_ns_batch_unique = [
@@ -820,6 +839,9 @@ class PytorchBudgetedFittedQ:
                 self.info("computing hulls [DONE] ")
                 self.empty_cache()
                 self.track_memory("compute hulls (end)")
+
+                logger.info("hulls_for_ns_batch_unique {}".format(hulls_for_ns_batch_unique[:200]))
+                logger.info("hulls_for_ns_batch_unique {}".format(hulls_for_ns_batch_unique[-200:]))
 
                 #####################################
                 # for each next_state
@@ -860,6 +882,9 @@ class PytorchBudgetedFittedQ:
                 self.track_memory("compute_opts (end)")
                 status = {"regular": 0, "not_solvable": 0, "too_much_budget": 0, "exact": 0}
 
+                logger.info("opts_and_statuses {}".format(opts_and_statuses))
+
+
                 for i_ns_nt, (ns_not_terminal, opt_and_status) in enumerate(
                         zip(ns_batch_not_terminal, opts_and_statuses)):
                     opt, stat = opt_and_status
@@ -870,6 +895,8 @@ class PytorchBudgetedFittedQ:
                                              dim=1)
                     next_state_beta_not_terminal[i_ns_nt * 2 + 0][0] = ns_beta_moins
                     next_state_beta_not_terminal[i_ns_nt * 2 + 1][0] = ns_beta_plus
+
+                logger.info("next_state_beta_not_terminal {}".format(next_state_beta_not_terminal))
 
                 ##############################################################
                 # Forwarding to compute the Q function in s' #################

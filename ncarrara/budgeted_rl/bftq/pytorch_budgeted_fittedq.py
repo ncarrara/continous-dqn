@@ -566,6 +566,11 @@ class PytorchBudgetedFittedQ:
     def getsizeof(self, a, name):
         self.info("size {} : [{}{}{}]".format(name, Color.BOLD, getsizeof(a), Color.END))
 
+
+    def print_net(self):
+        for param in self._policy_network.parameters():
+            logger.info("{}".format(param.data))
+
     def fit(self, transitions):
 
         self.track_memory("fit")
@@ -573,6 +578,8 @@ class PytorchBudgetedFittedQ:
         self._id_ftq_epoch = 0
         self.info("[fit] reseting network ...")
         self.reset_network()
+
+        self.print_net()
 
         sb_batch, s_batch, a_batch, r_batch, c_batch, ns_batch, h_batch, b_batch, mask_unique_hull_ns, mask_not_terminal_ns = \
             self._construct_batch(transitions)
@@ -646,6 +653,8 @@ class PytorchBudgetedFittedQ:
 
         losses = self._optimize_model(sb_batch, a_batch, label_r, label_c)
 
+        print("losses", losses)
+        self.print_net()
         self.empty_cache()
         if logger.getEffectiveLevel() <= logging.DEBUG:
             with torch.no_grad():

@@ -5,7 +5,8 @@
     "workspace": "tmp/main",
     "hull_options": {
       "decimals": null,
-      "qhull_options": "QJ"
+      "qhull_options": "QJ",
+      "remove_duplicated_points": true
     },
     "cpu": {
       "processes": null,

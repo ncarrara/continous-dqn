@@ -141,9 +141,10 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         Qs = np.array(Qs)
 
         # on remove les duplications
-        points, indices = np.unique(points, return_index=True)
-        betas = betas[indices]
-        Qs = Qs[indices]
+        if hull_options is not None and hull_options["remove_duplicated_points"]:
+            points, indices = np.unique(points,axis=0, return_index=True)
+            betas = betas[indices]
+            Qs = Qs[indices]
 
         if disp:
             plt.rcParams["figure.figsize"] = (5, 5)

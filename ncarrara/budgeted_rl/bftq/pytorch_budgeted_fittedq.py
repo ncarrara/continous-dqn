@@ -62,7 +62,7 @@ def f(params):
         betas=betas_for_discretisation,
         disp=False,
         path=path,
-    hull_options = hull_options)
+        hull_options=hull_options)
 
     return hull
 
@@ -142,7 +142,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
 
         # on remove les duplications
         if hull_options is not None and hull_options["remove_duplicated_points"]:
-            points, indices = np.unique(points,axis=0, return_index=True)
+            points, indices = np.unique(points, axis=0, return_index=True)
             betas = betas[indices]
             Qs = Qs[indices]
 
@@ -156,8 +156,8 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             colinearity = True
         else:
             try:
-                if  hull_options is not None and  hull_options["qhull_options"] is not None:
-                    hull = ConvexHull(points, options=hull_options["qhull_options"])
+                if hull_options is not None and hull_options["qhull_options"] is not None:
+                    hull = ConvexHull(points, qhull_options=hull_options["qhull_options"])
                 else:
                     hull = ConvexHull(points)
             except QhullError:
@@ -342,7 +342,7 @@ class PytorchBudgetedFittedQ:
                  hull_options=None
 
                  ):
-        self.hull_options=None
+        self.hull_options = None
         self.env = env
         self.cpu_processes = cpu_processes
 

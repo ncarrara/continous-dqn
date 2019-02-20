@@ -64,7 +64,10 @@ def f(params):
         path=path,
         hull_options=hull_options)
 
-    return hull
+    # force to do tolist, so object is pickable, because multiprocessing may freeze when it's not pickable
+    # see  https://stackoverflow.com/questions/24537379/python-multiprocessing-script-freezes-seemingly-without-error
+    # https://stackoverflow.com/questions/11854519/python-multiprocessing-some-functions-do-not-return-when-they-are-complete-que/11855207#11855207
+    return hull.tolist(), colinearity,true_colinearity,expection
 
 
 def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tmp", id="default",

@@ -29,8 +29,7 @@ class Memory(object):
         self.position = (self.position + 1) % self.capacity
 
     def sample(self, batch_size):
-        batch_size = len(self.memory) if batch_size > len(self.memory) else batch_size
-        return random.sample(self.memory, batch_size)
+        return self.memory
 
     def save_memory(self, path, filename, as_json=True, indent=0):
         makedirs(path)

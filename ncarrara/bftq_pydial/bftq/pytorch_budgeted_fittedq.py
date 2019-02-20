@@ -410,7 +410,7 @@ class PytorchBudgetedFittedQ:
         else:
             self.size_mini_batch = self.BATCH_SIZE_EXPERIENCE_REPLAY
         self.mini_batch = self.memory.sample(self.size_mini_batch)
-        np.random.shuffle(self.mini_batch)
+        # np.random.shuffle(self.mini_batch)
         zipped = TransitionBFTQ(*zip(*self.mini_batch))
         self._action_batch = torch.cat(zipped.action)
         self._reward_batch = torch.cat(zipped.reward)

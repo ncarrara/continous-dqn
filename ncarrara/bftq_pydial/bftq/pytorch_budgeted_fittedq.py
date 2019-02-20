@@ -430,10 +430,16 @@ class PytorchBudgetedFittedQ:
         self.info("[epoch_bftq={:02}][_sample_batch] sampling mini batch ... done"
                     .format(self._id_ftq_epoch))
 
+    def print_net(self):
+        for param in self._policy_network.parameters():
+            logger.info("{}".format(param.data))
+
     def fit(self, transitions):
         self._id_ftq_epoch = 0
         self.info("[fit] reseting network ....")
         self._policy_network.reset()
+
+        self.print_net()
 
         self._construct_batch(transitions)
         if logger.getEffectiveLevel() is logging.INFO:
@@ -658,6 +664,8 @@ class PytorchBudgetedFittedQ:
 
         losses = self._optimize_model(expected_state_action_rewards, expected_state_action_constraints)
 
+        print("losses", losses)
+        self.print_net()
         if logger.getEffectiveLevel() is logging.INFO:
             with torch.no_grad():
                 self.info("Creating histograms ...")

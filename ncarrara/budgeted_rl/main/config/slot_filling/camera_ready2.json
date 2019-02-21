@@ -26,7 +26,7 @@
       },
       "handlers": {
         "default": {
-          "level": "ERROR",
+          "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -36,7 +36,7 @@
           "handlers": [
             "default"
           ],
-          "level": "ERROR",
+          "level": "DEBUG",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -57,7 +57,7 @@
           "handlers": [
             "default"
           ],
-          "level": "ERROR",
+          "level": "WARN",
           "propagate": false
         }
       }
@@ -194,7 +194,7 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 25,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [

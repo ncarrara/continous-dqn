@@ -68,7 +68,11 @@ def plot_all(data, path, params):
                params=params, filename=os.path.join(path, "results_extra.png"))
     plot_patch(means_of_means, std_of_means, counts, x="C", y="R", curves="algorithm", points="parameter",
                params=params, filename=os.path.join(path, "results_intra.png"))
-    plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", points="parameter", filename=os.path.join(path, "results_disc_ids.png"))
+    try:
+        plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", points="parameter", filename=os.path.join(path, "results_disc_ids.png"))
+    except ValueError:
+        logger.warning("Too many ids to use different styles")
+        plot_lines(means, x='Cd', y='Rd', hue="algorithm", points="parameter", filename=os.path.join(path, "results_disc_ids.png"))
 
 
 def plot_patch(mean, std, counts, x, y, curves, points, params, filename=None):

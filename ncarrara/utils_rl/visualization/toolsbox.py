@@ -39,7 +39,7 @@ def create_Q_histograms(title, values, path, labels, lims=(-1.1, 1.1)):
     plt.legend(loc='upper right')
     if not os.path.exists(path):
         os.mkdir(path)
-    plt.savefig(path + "/" + title)
+    plt.savefig(path / title)
     plt.show()
     plt.close()
 
@@ -74,7 +74,7 @@ def fast_create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=No
     # plt.show()
     if not os.path.exists(path):
         os.mkdir(path)
-    plt.savefig(path + "/" + title)
+    plt.savefig(path / title)
     plt.show()
     plt.close()
 
@@ -131,7 +131,7 @@ def create_Q_histograms_for_actions(title, QQ, path, labels, mask_action=None, l
     # plt.legend()
     if not os.path.exists(path):
         os.mkdir(path)
-    plt.savefig(path + "/" + title)
+    plt.savefig(path / title)
     plt.close()
 
 

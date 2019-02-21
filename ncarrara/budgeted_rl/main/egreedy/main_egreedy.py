@@ -91,7 +91,7 @@ def main(config):
         for lambda_ in lambdas:
             print("test_ftq_duplicate, lambda={}".format(lambda_))
             torch.cuda.empty_cache()
-            workspace = config.path_ftq_duplicate + "/lambda={}".format(lambda_)
+            workspace = config.path_ftq_duplicate / "lambda={}".format(lambda_)
             test_ftq.main(
                 lambda_=lambda_, device=config.device, seed=config.seed,
                 workspace=workspace,
@@ -109,7 +109,7 @@ def main(config):
         for lambda_ in lambdas:
             print("learn_ftq_egreedy lambda={}".format(lambda_))
             torch.cuda.empty_cache()
-            workspace = config.path_ftq_egreedy + "/lambda={}".format(lambda_)
+            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
             learn_ftq_egreedy.main(
                 lambda_=lambda_, seed=config.seed, device=config.device,
                 workspace=workspace,
@@ -126,7 +126,7 @@ def main(config):
         for lambda_ in lambdas:
             print("test_ftq_greed lambda={}".format(lambda_))
             torch.cuda.empty_cache()
-            workspace = config.path_ftq_egreedy + "/lambda={}".format(lambda_)
+            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
             test_ftq.main(
                 lambda_=lambda_, device=config.device, seed=config.seed,
                 workspace=workspace,

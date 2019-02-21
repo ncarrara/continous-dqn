@@ -32,7 +32,7 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         "clamp_Qc": bftq_params["clamp_Qc"]
     }
     mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
-    makedirs(workspace / ""+"trajs")
+    makedirs(workspace / "trajs")
 
     makedirs(path_results)
     set_seed(seed)
@@ -45,11 +45,6 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
             workers_params = list(zip_with_singletons(
                 generate_envs, pi_config, workers_seeds, gamma, gamma_c, workers_n_trajectories, beta,
                 None, "{}/beta={}.results".format(path_results, beta), general["dictConfig"]))
-            # Collect trajectories
-            # for params in workers_params:
-            #     print("------------------")
-            #     for param in params:
-            #         print(param)
             logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
             with Pool(cpu_processes) as pool:
                 results = pool.starmap(execute_policy_from_config, workers_params)
@@ -60,16 +55,16 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
                     trajs += t
             print("BFTQ({:.2f}) : {}".format(beta, format_results(rez)))
 
-            if isinstance(mock_env,EnvGridWorld):
+            if isinstance(mock_env, EnvGridWorld):
                 from ncarrara.utils_rl.environments.gridworld.world import World
                 w = World(mock_env)
                 w.draw_frame()
                 w.draw_lattice()
                 w.draw_cases()
                 w.draw_test_trajectories(trajs)
-                w.save(workspace / "trajs/trajs_beta={:.2f}".format(beta))
+                w.save(workspace / "trajs" / "trajs_beta={:.2f}".format(beta))
         if isinstance(mock_env, EnvGridWorld):
-            os.system("convert -delay 10 -loop 0 "+workspace / "trajs/"+"*.png "+workspace / "out.gif")
+            os.system("convert -delay 10 -loop 0 " + workspace / "trajs/" + "*.png " + workspace / "out.gif")
 
     except FileNotFoundError as e:
         logger.warning("Could not load policy: {}".format(e))

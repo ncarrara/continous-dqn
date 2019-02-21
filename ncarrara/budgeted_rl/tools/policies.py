@@ -195,9 +195,10 @@ class RandomBudgetedPolicy(Policy):
             bias=beta,
             min_x=0,
             max_x=1)
-        a = np.random.choice(a=actions,
-                             p=action_repartition)
-        beta_ = budget_repartion[a]
+        index = np.random.choice(a=range(len(actions)),
+                                 p=action_repartition)
+        a = actions[index]
+        beta_ = budget_repartion[index]
         info["beta"] = beta_
         return a, False, info
 

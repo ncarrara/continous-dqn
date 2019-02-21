@@ -220,7 +220,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             plt.plot(points[idxs_interest_points][:, 0], points[idxs_interest_points][:, 1], 'x', markersize=15,
                      color="tab:pink")
             plt.grid()
-            plt.savefig(path + str(id) + ".png", dpi=300, bbox_inches="tight")
+            plt.savefig(path / "{}.png".format(id), dpi=300, bbox_inches="tight")
             plt.close()
 
         rez = np.zeros(len(idxs_interest_points), dtype=dtype)

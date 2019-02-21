@@ -74,3 +74,13 @@ def generate_envs(envs_str, envs_params):
     # for param in rez_params:
     #     logger.info("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()]))
     return envs, rez_params
+
+
+def get_actions_str(env):
+    if hasattr(env, "action_str"):
+        actions_str = env.action_str
+    elif hasattr(env, "ACTIONS"):
+        actions_str = [env.ACTIONS[a] for a in range(env.action_space.n)]
+    else:
+        actions_str = [str(a) for a in range(env.action_space.n)]
+    return actions_str

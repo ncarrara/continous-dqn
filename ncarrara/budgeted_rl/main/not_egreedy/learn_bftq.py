@@ -10,6 +10,7 @@ import ncarrara.budgeted_rl.tools.utils_run as urpy
 
 import logging
 
+from ncarrara.utils_rl.environments.envs_factory import get_actions_str
 from ncarrara.utils_rl.transition.replay_memory import Memory
 
 
@@ -26,7 +27,7 @@ def main(load_memory, generate_envs, feature_str, gamma, gamma_c, bftq_params, b
     bftq = PytorchBudgetedFittedQ(
         device=device,
         workspace=workspace / "batch=0",
-        actions_str=None if not hasattr(e, "action_str") else e.action_str,
+        actions_str=get_actions_str(e),
         policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
                                **bftq_net_params),
         gamma=gamma,

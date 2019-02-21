@@ -68,10 +68,6 @@ class PytorchBudgetedDQN():
         self.i_episode = 0
         self.hulls_key_id = {}
         self.N_actions = policy_net.predict.out_features // 2
-        if actions_str is None:
-            self.actions_str = [str(a) for a in range(self.N_actions)]
-        else:
-            self.actions_str = actions_str
         logger.info('actions_str={}'.format(self.actions_str))
         logger.info('N_actions={}'.format(self.N_actions))
         self.reset()

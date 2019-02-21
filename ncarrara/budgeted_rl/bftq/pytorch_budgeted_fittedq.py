@@ -374,8 +374,6 @@ class PytorchBudgetedFittedQ:
 
         self.workspace = workspace
         self.N_actions = policy_network.predict.out_features // 2
-        if actions_str is None:
-            actions_str = [str(i) for i in range(self.N_actions)]
         self.actions_str = actions_str
 
         if type(betas_for_duplication) == type(""):

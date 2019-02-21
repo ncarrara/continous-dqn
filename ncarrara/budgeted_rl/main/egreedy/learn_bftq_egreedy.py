@@ -10,6 +10,7 @@ from ncarrara.utils.math_utils import set_seed, near_split, zip_with_singletons
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import get_memory_for_pid
 from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.utils_rl.environments.envs_factory import get_actions_str
 from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
 from ncarrara.utils_rl.environments.gridworld.world import World
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -37,7 +38,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         bftq = PytorchBudgetedFittedQ(
             device=device,
             workspace=workspace / "batch=0",
-            actions_str=None if not hasattr(e, "action_str") else e.action_str,
+            actions_str=get_actions_str(e),
             policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
                                    **bftq_net_params),
             gamma=gamma,

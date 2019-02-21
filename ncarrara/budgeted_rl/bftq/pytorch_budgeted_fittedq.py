@@ -728,6 +728,7 @@ class PytorchBudgetedFittedQ:
                                                action_mask=np.zeros(self.env.action_space.n),
                                                id="run_" + str(state), disp=False,
                                                betas=self.betas_for_discretisation,
+                                               hull_options=self.hull_options,
                                                device=self.device)
                             opt, _ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
                         return opt

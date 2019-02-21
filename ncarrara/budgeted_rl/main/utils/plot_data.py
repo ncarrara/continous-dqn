@@ -16,27 +16,22 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 def parse_data(path, params):
-    with open(path + "/" + "params") as f:
-        ids = re.findall(r"id=(\d+)", f.read(), re.MULTILINE)
-
     # Extract results for each valid (algorithm, id) pair
+    ids = os.listdir(path)
     data = pd.DataFrame()
     for algo in params.keys():
         results = pd.DataFrame()
         for id in ids:
             # Results directory
             file_id = "{}/{}/{}/results".format(path, id, algo)
-            logger.info("------------------------------")
-            logger.info("processing {}".format(file_id))
             if not os.path.exists(file_id):
-                logging.warning("{} does not exist , skipping it".format(file_id))
                 continue
 
+            logger.info("Loading from {}".format(file_id))
             # Results files
             id_results = pd.DataFrame()
             for file_param in os.listdir(file_id):
                 m = re.search("=(.*).result", file_param)
-                logger.info("processing {}".format(file_param))
                 if m:  # valid filename
                     param = m.group(1)
                     res = pd.read_csv(file_id + "/" + file_param, sep=' ', names=['R', 'C', 'Rd', 'Cd'])

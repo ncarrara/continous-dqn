@@ -1,13 +1,21 @@
 {
   "general": {
-    "id": "continuous-3x3",
+    "id": "continuous-3x3bis",
     "seed": 0,
-
+    "hull_options": {
+      "decimals": null,
+      "qhull_options": null,
+      "remove_duplicated_points": true,
+      "library": "pure_python"
+    },
+    "gpu": {
+       "split_batches":10
+    },
     "cpu": {
       "processes": 1,
       "processes_when_linked_with_gpu": 1
     },
-    "workspace": "tmp/continuous-3x3",
+    "workspace": "tmp/continuous-3x3bis",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,

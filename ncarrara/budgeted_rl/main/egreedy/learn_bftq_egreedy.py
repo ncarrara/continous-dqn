@@ -45,6 +45,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             gamma_c=gamma_c,
             cpu_processes=general["cpu"]["processes"],
             env=e,
+            split_batches=general["gpu"]["split_batches"],
             hull_options=general["hull_options"],
             **bftq_params)
         return bftq

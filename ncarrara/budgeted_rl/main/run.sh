@@ -1,5 +1,5 @@
 #!/bin/bash
-
+echo $BASHPID
 for i in $(seq $1 $2)
 do
      echo "Seed $i"

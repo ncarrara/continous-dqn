@@ -28,7 +28,8 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         "network_path": policy_path,
         "betas_for_discretisation": eval(bftq_params["betas_for_discretisation"]),
         "device": device,
-        "hull_options": general["hull_options"]
+        "hull_options": general["hull_options"],
+        "clamp_Qc": bftq_params["clamp_Qc"]
     }
     mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
     makedirs(workspace / ""+"trajs")

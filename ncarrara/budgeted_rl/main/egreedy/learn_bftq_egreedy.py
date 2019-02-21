@@ -60,6 +60,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         "pi_random": {"__class__": repr(RandomBudgetedPolicy)},
         "epsilon": decays[0],
         "hull_options": general["hull_options"],
+        "clamp_Qc": bftq_params["clamp_Qc"]
     }
 
     # Main loop
@@ -120,6 +121,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             "betas_for_discretisation": bftq.betas_for_discretisation,
             "device": bftq.device,
             "hull_options": general["hull_options"],
+            "clamp_Qc": bftq_params["clamp_Qc"]
         }
 
         if isinstance(e, EnvGridWorld):
@@ -134,7 +136,8 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
                                        id="run_" + str(state), disp=False,
                                        betas=bftq.betas_for_discretisation,
                                        device=device,
-                                       hull_options=general["hull_options"])
+                                       hull_options=general["hull_options"],
+                                       clamp_Qc=bftq_params["clamp_Qc"])
                     opt, _ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
                 return opt
 

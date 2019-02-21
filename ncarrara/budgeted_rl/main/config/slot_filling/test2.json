@@ -125,6 +125,7 @@
     "maximum_number_of_gpu": 1,
     "betas_for_discretisation": "np.linspace(0.,1.,21)",
     "betas_for_duplication": "[]",
+    "clamp_Qc": false,
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",

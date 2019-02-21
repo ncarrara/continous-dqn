@@ -238,16 +238,19 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         return rez, colinearity,true_colinearity,expection  # betas, points, idxs_interest_points, Qs, colinearity
 
 
-def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, disp=False, path=None, id="default"):
+def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, clamp_Qc,
+                               disp=False, path=None, id="default"):
     ss = s.repeat((len(betas), 1, 1))
     bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
     sb = torch.cat((ss, bb), dim=2)
     Qsb = Q(sb)
+    if clamp_Qc:
+        Qsb[:, len(action_mask):] = torch.clamp(Qsb[:, len(action_mask):], min=min(betas), max=max(betas))
     return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id,
                                           hull_options=hull_options)
 
 
-def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, path=None, id="default"):
+def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, clamp_Qc, path=None, id="default"):
     if not type(action_mask) == type(np.zeros(1)):
         action_mask = np.asarray(action_mask)
     hull, colinearity,true_colinearity,expection = compute_interest_points_NN(
@@ -259,7 +262,8 @@ def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, path=None,
         disp=disp,
         path=path,
         id=id,
-        hull_options=hull_options)
+        hull_options=hull_options,
+        clamp_Qc=clamp_Qc)
     return hull
 
 
@@ -334,7 +338,7 @@ class PytorchBudgetedFittedQ:
                  batch_size_experience_replay=50,
                  nn_loss_stop_condition=0.0,
                  weights_losses=[1., 1.],
-                 beta_range=[],
+                 clamp_Qc=False,
                  # disp_states=[],
                  # disp_next_states=[],
                  workspace="tmp",
@@ -361,7 +365,7 @@ class PytorchBudgetedFittedQ:
         self.device = device
         self.print_q_function = print_q_function
         self.weights_losses = weights_losses
-        self.beta_range = beta_range
+        self.clamp_Qc = clamp_Qc
         self.stop_loss_value = nn_loss_stop_condition
         self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
         self.DELTA = delta_stop
@@ -627,7 +631,8 @@ class PytorchBudgetedFittedQ:
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace,
-                                        hull_options=self.hull_options)
+                                        hull_options=self.hull_options,
+                                        clamp_Qc=self.clamp_Qc)
                 for i_s, state in enumerate(self.disp_states):
                     if state is not None:
                         str_state = "state={}_epoch={:03}_".format(i_s, self._id_ftq_epoch)
@@ -640,7 +645,8 @@ class PytorchBudgetedFittedQ:
                                         betas=self.betas_for_discretisation,
                                         device=self.device,
                                         path=self.workspace,
-                                        hull_options=self.hull_options)
+                                        hull_options=self.hull_options,
+                                        clamp_Qc=self.clamp_Qc)
                 self.info("Printing some debug graphics ... (end)")
             self._id_ftq_epoch += 1
 
@@ -662,9 +668,11 @@ class PytorchBudgetedFittedQ:
             label_r = r_batch + (self._GAMMA * ns_r)
             label_c = c_batch + (self._GAMMA_C * ns_c)
 
-            if self.beta_range:
+            if self.clamp_Qc:
                 self.info("Clamp target constraints")
-                label_c = torch.clamp(label_c, min=self.beta_range[0], max=self.beta_range[1])
+                label_c = torch.clamp(label_c,
+                                      min=min(self.betas_for_discretisation),
+                                      max=max(self.betas_for_discretisation))
 
             self.empty_cache()
 
@@ -716,7 +724,8 @@ class PytorchBudgetedFittedQ:
                                                action_mask=np.zeros(self.env.action_space.n),
                                                id="run_" + str(state), disp=False,
                                                betas=self.betas_for_discretisation,
-                                               device=self.device)
+                                               device=self.device,
+                                               clamp_Qc=self.clamp_Qc)
                             opt, _ = optimal_pia_pib(beta=beta, hull=hull, statistic={})
                         return opt
 
@@ -803,6 +812,11 @@ class PytorchBudgetedFittedQ:
                     y.append(Q(mini_batch))
                     torch.cuda.empty_cache()
                 Qsb = torch.cat(y)
+                if self.clamp_Qc:
+                    self.info("Clamp target constraints")
+                    Qsb[:, self.N_actions:] = torch.clamp(Qsb[:, self.N_actions:],
+                                                          min=min(self.betas_for_discretisation),
+                                                          max=max(self.betas_for_discretisation))
                 Qsb = Qsb.detach().cpu().numpy()
                 self.track_memory("Qsb (compute_hull) (end)")
 

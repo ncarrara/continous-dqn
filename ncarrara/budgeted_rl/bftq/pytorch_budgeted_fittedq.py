@@ -1104,8 +1104,6 @@ class PytorchBudgetedFittedQ:
 
             for ia in actions:
                 plt.plot(betas, yr[:, ia], ls="-", marker='o', markersize=2)
-                lims_x = update_lims(lims_x, betas)
-                lims_y = update_lims(lims_y, yr[:, ia])
             if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
             plt.title(title)
@@ -1116,12 +1114,8 @@ class PytorchBudgetedFittedQ:
             plt.close(fig)
 
             fig = plt.figure()
-            lims_x = (-1.1, 1.1)
-            lims_y = (-1.1, 1.1)
             for ia in actions:
                 plt.plot(betas, yc[:, ia], ls="-", marker='^', markersize=2)
-                lims_x = update_lims(lims_x, betas)
-                lims_y = update_lims(lims_y, yc[:, ia])
             if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
             plt.title(title)
@@ -1134,8 +1128,6 @@ class PytorchBudgetedFittedQ:
             fig, ax = plt.subplots()
             for ia in actions:
                 plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
-                lims_x = update_lims(lims_x, yc[:, ia])
-                lims_y = update_lims(lims_y, yr[:, ia])
             if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
             plt.title(title)

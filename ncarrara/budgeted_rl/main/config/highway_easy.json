@@ -146,6 +146,11 @@
     "N_trajs": 150,
     "betas_test": "np.linspace(0.,1.,11)"
   },
+  "render_bftq": {
+    "policy_path": "final_policy.pt",
+    "N_trajs": 5,
+    "betas_test": "np.linspace(0.,0.3,3)"
+  },
 
   "-learn_ftq_egreedy": {
     "lambdas": "[0, 1, 2, 3, 4, 6, 8, 10, 15, 20]",

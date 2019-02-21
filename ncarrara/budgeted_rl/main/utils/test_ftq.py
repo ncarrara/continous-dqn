@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 def main(device, workspace, policy_path, generate_envs, feature_str, gamma, gamma_c,
          N_trajs, seed, lambda_, path_results, general, **args):
     if not os.path.isabs(policy_path):
-        policy_path = workspace + "/" + policy_path
+        policy_path = workspace / policy_path
 
     pi_config = {
         "__class__": repr(PytorchFittedPolicy),

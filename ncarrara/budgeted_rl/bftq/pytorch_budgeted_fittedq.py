@@ -682,12 +682,12 @@ class PytorchBudgetedFittedQ:
                 create_Q_histograms(title="Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                     values=[label_r.cpu().numpy(),
                                             state_action_rewards.cpu().numpy().flatten()],
-                                    path=self.workspace + "/histogram",
+                                    path=self.workspace / "histogram",
                                     labels=["target", "prediction"])
                 create_Q_histograms(title="Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                     values=[label_c.cpu().numpy(),
                                             state_action_constraints.cpu().numpy().flatten()],
-                                    path=self.workspace + "/histogram",
+                                    path=self.workspace / "histogram",
                                     labels=["target", "prediction"])
 
                 QQr = QQ[:, 0:self.N_actions]
@@ -695,12 +695,12 @@ class PytorchBudgetedFittedQ:
                 mask_action = np.zeros(len(self.actions_str))
                 fast_create_Q_histograms_for_actions(title="actions_Qr(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                                      QQ=QQr.cpu().numpy(),
-                                                     path=self.workspace + "/histogram",
+                                                     path=self.workspace / "histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
                 fast_create_Q_histograms_for_actions(title="actions_Qc(s)_pred_target_e={}".format(self._id_ftq_epoch),
                                                      QQ=QQc.cpu().numpy(),
-                                                     path=self.workspace + "/histogram",
+                                                     path=self.workspace / "histogram",
                                                      labels=self.actions_str,
                                                      mask_action=mask_action)
 
@@ -740,7 +740,7 @@ class PytorchBudgetedFittedQ:
                     w.draw_lattice()
                     w.draw_cases()
                     w.draw_policy_bftq(pi, qr, qc, self.betas_for_discretisation)
-                    w.save(self.workspace + "/bftq_on_2dworld_e_={}".format(self._id_ftq_epoch))
+                    w.save(self.workspace / "bftq_on_2dworld_e_={}".format(self._id_ftq_epoch))
 
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")
@@ -954,11 +954,11 @@ class PytorchBudgetedFittedQ:
                     self.info("\n[compute_next_values] Q(s') sur le batch")
                     create_Q_histograms("Qr(s')_e={}".format(self._id_ftq_epoch),
                                         values=next_state_rewards.cpu().numpy().flatten(),
-                                        path=self.workspace + "/histogram",
+                                        path=self.workspace / "histogram",
                                         labels=["next value"])
                     create_Q_histograms("Qc(s')_e={}".format(self._id_ftq_epoch),
                                         values=next_state_constraints.cpu().numpy().flatten(),
-                                        path=self.workspace + "/histogram",
+                                        path=self.workspace / "histogram",
                                         labels=["next value"])
                     self.info("printing some graphs in next_values ... done")
 
@@ -1080,8 +1080,8 @@ class PytorchBudgetedFittedQ:
             plt.rcParams["figure.figsize"] = (5, 5)
             plt.clf()
             actions = range(self.N_actions)  # [2
-            if not os.path.exists(self.workspace + "/behavior/"):
-                os.makedirs(self.workspace + "/behavior/")
+            if not os.path.exists(self.workspace / "behavior"):
+                os.makedirs(self.workspace / "behavior")
             betas = self.betas_for_discretisation  # np.linspace(0, self.beta_max, 100)
             title = id
             yr = np.zeros((len(betas), self.N_actions))
@@ -1105,7 +1105,7 @@ class PytorchBudgetedFittedQ:
             plt.xlabel("beta")
             plt.ylabel("Qr")
             plt.grid()
-            plt.savefig(self.workspace + "/behavior/Qr_" + title + ".png")
+            plt.savefig(self.workspace / "behavior" / "Qr_{}.png".format(title), bbox_inches="tight")
             plt.close()
             plt.clf()
 
@@ -1123,7 +1123,7 @@ class PytorchBudgetedFittedQ:
             plt.xlabel("beta")
             plt.ylabel("Qc")
             plt.grid()
-            plt.savefig(self.workspace + "/behavior/Qc_" + title + ".png")
+            plt.savefig(self.workspace / "behavior" / "Qc_{}.png".format(title), bbox_inches="tight")
             plt.close()
             plt.clf()
 
@@ -1142,12 +1142,13 @@ class PytorchBudgetedFittedQ:
             plt.xlabel("Qc")
             plt.ylabel("Qr")
             plt.grid()
-            plt.savefig(self.workspace + "/behavior/QrQc_" + title + ".png")
+            if show:
             plt.close()
+            plt.savefig(self.workspace / "behavior" / "QrQc_{}.png".format(title), bbox_inches="tight")
 
     def save_policy(self, policy_path=None):
         if policy_path is None:
-            policy_path = self.workspace + "/policy.pt"
+            policy_path = self.workspace / "policy.pt"
         self.info("saving bftq policy at {}".format(policy_path))
         torch.save(self._policy_network, policy_path)
         return policy_path

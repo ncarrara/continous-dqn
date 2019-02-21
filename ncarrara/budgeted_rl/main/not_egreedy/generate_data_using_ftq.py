@@ -81,7 +81,7 @@ def main():
     # for sample in rm.memory:
     #     print(sample)
     rm.save_memory(C.workspace, "/" + C["create_data"]["filename_data"], C["create_data"]["as_json"])
-    np.savetxt(C.workspace + "/" + C.id + ".results", rez)
+    np.savetxt(C.workspace / C.id + ".results", rez)
 
     _, rez = urpy.execute_policy(e, pi_epsilon_greedy,
                                  gamma_r=C["gamma"], gamma_c=C["gamma_c"],

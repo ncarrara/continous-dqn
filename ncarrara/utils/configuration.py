@@ -1,6 +1,6 @@
 import json
 import os
-
+from pathlib import Path
 from ncarrara.utils.os import makedirs
 
 
@@ -69,7 +69,7 @@ class Configuration(object):
             raise TypeError("Wrong type for configuration, must be a path or a dict")
 
         self.id = self.dict["general"]["id"]
-        self.workspace = self.dict["general"]["workspace"]
+        self.workspace = Path(self.dict["general"]["workspace"])
 
         import logging.config as config
         config.dictConfig(self.dict["general"]["dictConfig"])
@@ -128,5 +128,5 @@ class Configuration(object):
         Dump the configuration a json file in the workspace.
         """
         makedirs(self.workspace)
-        with open(os.path.join(self.workspace, filename), 'w') as f:
+        with open(self.workspace / filename, 'w') as f:
             json.dump(self.dict, f, indent=2)

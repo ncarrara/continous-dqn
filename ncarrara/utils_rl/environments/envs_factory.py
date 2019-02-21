@@ -2,8 +2,6 @@ from sklearn.model_selection import ParameterGrid
 import gym
 import logging
 
-from ncarrara.utils_rl.environments.gridworld.world import World
-
 logger = logging.getLogger(__name__)
 
 

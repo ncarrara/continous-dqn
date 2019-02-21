@@ -25,7 +25,7 @@ def main(load_memory, generate_envs, feature_str, gamma, gamma_c, bftq_params, b
 
     bftq = PytorchBudgetedFittedQ(
         device=device,
-        workspace=workspace + "/batch=0",
+        workspace=workspace / "batch=0",
         actions_str=None if not hasattr(e, "action_str") else e.action_str,
         policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
                                **bftq_net_params),

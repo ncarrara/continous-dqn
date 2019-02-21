@@ -183,11 +183,11 @@ class BudgetedUtils():
         if logger.getEffectiveLevel() is logging.INFO:
             create_Q_histograms("id={}_Qr(s')".format(self.id),
                                 values=next_state_rewards.cpu().numpy().flatten(),
-                                path=self.workspace + "/histogram",
+                                path=self.workspace / "histogram",
                                 labels=["next value"])
             create_Q_histograms("id={}_Qc(s')".format(self.id),
                                 values=next_state_constraints.cpu().numpy().flatten(),
-                                path=self.workspace + "/histogram",
+                                path=self.workspace / "histogram",
                                 labels=["next value"])
 
             logger.info("[id={}] [WARNING] qc < 0 percentage {:.2f}%"
@@ -272,7 +272,7 @@ class BudgetedUtils():
 
         dtype = [('Qc', 'f4'), ('Qr', 'f4'), ('beta', 'f4'), ('action', 'i4')]
 
-        workspace = self.workspace + "/hulls"
+        workspace = self.workspace / "hulls"
         # print path
         colinearity = False
         test = False

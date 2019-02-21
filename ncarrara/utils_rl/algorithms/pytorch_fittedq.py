@@ -177,7 +177,7 @@ class PytorchFittedQ:
                 plt.legend()
                 plt.title(title)
                 plt.grid()
-                plt.savefig(self.workspace + '/' + title)
+                plt.savefig(self.workspace / title)
                 plt.show()
                 plt.close()
             self.logger.info("[epoch_ftq={}] delta={}".format(self._id_ftq_epoch, self.delta))
@@ -262,7 +262,7 @@ class PytorchFittedQ:
                      marker='o')
             plt.title(title)
             plt.grid()
-            plt.savefig(self.workspace + '/' + title)
+            plt.savefig(self.workspace / title)
             plt.show()
             plt.close()
 
@@ -272,7 +272,7 @@ class PytorchFittedQ:
         if self.logger.getEffectiveLevel() is logging.INFO:
             plot(losses,
                  title="losses_epoch={}".format(self._id_ftq_epoch),
-                 path_save=self.workspace + "/losses_epoch={}".format(self._id_ftq_epoch))
+                 path_save=self.workspace / "losses_epoch={}".format(self._id_ftq_epoch))
         return losses
 
     def _compute_loss(self):
@@ -295,7 +295,7 @@ class PytorchFittedQ:
 
     def save_policy(self, policy_path=None):
         if policy_path is None:
-            policy_path = self.workspace+"/policy.pt"
+            policy_path = self.workspace / "policy.pt"
         self.logger.info("saving ftq policy at {}".format(policy_path))
         torch.save(self._policy_network, policy_path)
         return policy_path

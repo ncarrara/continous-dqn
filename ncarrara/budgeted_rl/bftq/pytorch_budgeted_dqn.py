@@ -145,13 +145,13 @@ class PytorchBudgetedDQN():
                             fast_create_Q_histograms_for_actions(
                                 title="actions_Qr(s)_pred_target_e={}".format(self.i_episode),
                                 QQ=QQr.cpu().numpy(),
-                                path=self.workspace + "/histogram",
+                                path=self.workspace / "histogram",
                                 labels=self.actions_str,
                                 mask_action=mask_action)
                             fast_create_Q_histograms_for_actions(
                                 title="actions_Qc(s)_pred_target_e={}".format(self.i_episode),
                                 QQ=QQc.cpu().numpy(),
-                                path=self.workspace + "/histogram",
+                                path=self.workspace / "histogram",
                                 labels=self.actions_str,
                                 mask_action=mask_action)
 

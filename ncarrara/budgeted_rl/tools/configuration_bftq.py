@@ -1,5 +1,4 @@
 from ncarrara.utils.configuration import Configuration
-import os
 
 class ConfigurationBFTQ(Configuration):
     import logging
@@ -25,25 +24,25 @@ class ConfigurationBFTQ(Configuration):
         self.id_ftq_duplicate= "ftq_duplicate"
         self.result_folder = "results"
 
-        self.path_bftq_egreedy = os.path.join(self.workspace, self.id_bftq_egreedy)
-        self.path_bftq_egreedy_results = os.path.join(self.workspace, self.id_bftq_egreedy, self.result_folder)
-        self.path_bftq_duplicate = os.path.join(self.workspace, self.id_bftq_duplicate)
-        self.path_bftq_duplicate_results = os.path.join(self.workspace, self.id_bftq_duplicate, self.result_folder)
-        self.path_ftq_egreedy = os.path.join(self.workspace, self.id_ftq_egreedy)
-        self.path_ftq_egreedy_results = os.path.join(self.workspace, self.id_ftq_egreedy, self.result_folder)
-        self.path_ftq_duplicate = os.path.join(self.workspace, self.id_ftq_duplicate)
-        self.path_ftq_duplicate_results = os.path.join(self.workspace, self.id_ftq_duplicate, self.result_folder)
+        self.path_bftq_egreedy = self.workspace / self.id_bftq_egreedy
+        self.path_bftq_egreedy_results = self.workspace / self.id_bftq_egreedy / self.result_folder
+        self.path_bftq_duplicate = self.workspace / self.id_bftq_duplicate
+        self.path_bftq_duplicate_results = self.workspace / self.id_bftq_duplicate / self.result_folder
+        self.path_ftq_egreedy = self.workspace / self.id_ftq_egreedy
+        self.path_ftq_egreedy_results = self.workspace / self.id_ftq_egreedy / self.result_folder
+        self.path_ftq_duplicate = self.workspace / self.id_ftq_duplicate
+        self.path_ftq_duplicate_results = self.workspace / self.id_ftq_duplicate / self.result_folder
 
-        self.path_hdc_results = self.workspace + "/hdc/results"
-        self.path_hdc = self.workspace + "/hdc"
-        self.path_ftq_results = self.workspace + "/ftq/results"
-        self.path_ftq = self.workspace + "/ftq"
-        self.path_bftq_results = self.workspace + "/bftq/results"
-        self.path_bftq = self.workspace + "/bftq"
-        self.path_dqn_results = self.workspace + "/dqn/results"
-        self.path_dqn = self.workspace + "/dqn"
-        self.path_bdqn_results = self.workspace + "/bdqn/results"
-        self.path_bdqn = self.workspace + "/bdqn"
+        self.path_hdc_results = self.workspace / "hdc" / "results"
+        self.path_hdc = self.workspace / "hdc"
+        self.path_ftq_results = self.workspace / "ftq" / "results"
+        self.path_ftq = self.workspace / "ftq"
+        self.path_bftq_results = self.workspace / "bftq" / "results"
+        self.path_bftq = self.workspace / "bftq"
+        self.path_dqn_results = self.workspace / "dqn" / "results"
+        self.path_dqn = self.workspace / "dqn"
+        self.path_bdqn_results = self.workspace / "bdqn" / "results"
+        self.path_bdqn = self.workspace / "bdqn"
 
 
 C = ConfigurationBFTQ()

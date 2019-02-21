@@ -83,7 +83,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         ftq = build_fresh_ftq()
         ftq.reset(True)
-        ftq.workspace = workspace + "/batch={}".format(batch)
+        ftq.workspace = workspace / "batch={}".format(batch)
         makedirs(ftq.workspace)
         ftq.fit(transitions_ftq)
 
@@ -99,7 +99,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
             "device": ftq.device
         }
     if save_memory is not None:
-        rm.save_memory(workspace + "/" + save_memory["path"], save_memory["as_json"])
+        rm.save_memory(workspace / save_memory["path"], save_memory["as_json"])
 
 
 if __name__ == "__main__":

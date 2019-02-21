@@ -36,7 +36,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     def build_fresh_bftq():
         bftq = PytorchBudgetedFittedQ(
             device=device,
-            workspace=workspace + "/batch=0",
+            workspace=workspace / "batch=0",
             actions_str=None if not hasattr(e, "action_str") else e.action_str,
             policy_network=NetBFTQ(size_state=len(feature(e.reset(), e)), n_actions=e.action_space.n,
                                    **bftq_net_params),
@@ -101,7 +101,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         logger.info("[BATCH={}]---------------------------------------".format(batch))
         bftq = build_fresh_bftq()
         bftq.reset(True)
-        bftq.workspace = workspace + "/batch={}".format(batch)
+        bftq.workspace = workspace / "batch={}".format(batch)
         makedirs(bftq.workspace)
         q = bftq.fit(transition_bftq)
 
@@ -157,7 +157,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             w.draw_lattice()
             w.draw_cases()
             w.draw_policy_bftq(pi, qr, qc, bftq.betas_for_discretisation)
-            w.save(bftq.workspace + "/bftq_on_2dworld")
+            w.save(bftq.workspace / "bftq_on_2dworld")
 
     save_memory(bftq, memory_by_batch, by_batch=True)
 
@@ -174,7 +174,7 @@ def save_memory(bftq, memory_by_batch, by_batch=False):
             id, memory = couple
             plt.scatter(i, memory, s=25)
             plt.text(i, memory, id, props, rotation=90)
-        plt.savefig(bftq.workspace + "/memory_tracking.png")
+        plt.savefig(bftq.workspace / "memory_tracking.png")
         plt.rcParams["figure.figsize"] = (5, 5)
         plt.close()
         memory_by_batch.append(get_current_memory())
@@ -182,7 +182,7 @@ def save_memory(bftq, memory_by_batch, by_batch=False):
         plt.plot(range(len(memory_by_batch)), memory_by_batch)
         plt.grid()
         plt.title("memory_by_batch")
-        plt.savefig(bftq.workspace + "/memory_by_batch.png")
+        plt.savefig(bftq.workspace / "memory_by_batch.png")
         plt.close()
 
 

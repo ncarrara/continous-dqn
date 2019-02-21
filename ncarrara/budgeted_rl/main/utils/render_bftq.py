@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 def main(betas_test, policy_path, generate_envs, feature_str, device, workspace, gamma, gamma_c,
          bftq_params, seed, N_trajs, path_results, general, **args):
     if not os.path.isabs(policy_path):
-        policy_path = workspace / policy_path
+        policy_path = workspace + "/" + policy_path
 
     pi_config = {
         "__class__": repr(PytorchBudgetedFittedPolicy),
@@ -31,7 +31,7 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
         "hull_options": general["hull_options"]
     }
     mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
-    makedirs(workspace / ""+"trajs")
+    makedirs(workspace+"/"+"trajs")
 
     makedirs(path_results)
     set_seed(seed)
@@ -66,9 +66,9 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
                 w.draw_lattice()
                 w.draw_cases()
                 w.draw_test_trajectories(trajs)
-                w.save(workspace / "trajs/trajs_beta={:.2f}".format(beta))
+                w.save(workspace+"/trajs/trajs_beta={:.2f}".format(beta))
         if isinstance(mock_env, EnvGridWorld):
-            os.system("convert -delay 10 -loop 0 "+workspace / "trajs/"+"*.png "+workspace / "out.gif")
+            os.system("convert -delay 10 -loop 0 "+workspace+"/trajs/"+"*.png "+workspace+"/out.gif")
 
     except FileNotFoundError as e:
         logger.warning("Could not load policy: {}".format(e))

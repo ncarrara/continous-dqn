@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from sklearn.model_selection import ParameterGrid
 import os
 from ncarrara.budgeted_rl.tools.configuration_bftq import C
@@ -15,7 +17,7 @@ def main(config_file, override_param_grid, override_device_str=None, f=lambda x:
         import json
 
         dict = json.load(infile)
-        workspace = dict["general"]["workspace"]
+        workspace = Path(dict["general"]["workspace"])
         makedirs(workspace)
 
     if "matplotlib_backend" in dict["general"]:
@@ -28,8 +30,8 @@ def main(config_file, override_param_grid, override_device_str=None, f=lambda x:
 
     grid = ParameterGrid(override_param_grid)
 
-    if os.path.exists(workspace + "/params"):
-        with open(workspace + "/params", 'r') as infile:
+    if os.path.exists(workspace / "params"):
+        with open(workspace / "params", 'r') as infile:
             lines = infile.readlines()
             id_offset = re.match('^id=([0-9]+) ', lines[-1])
         id_offset = int(id_offset.group(1)) + 1
@@ -41,7 +43,7 @@ def main(config_file, override_param_grid, override_device_str=None, f=lambda x:
         str_params += "id=" + str(id_offset + i_config) + ' ' + ''.join(
             [k + "=" + str(v) + ' ' for k, v in params.items()]) + '\n'
 
-    with open(workspace + "/params", 'a') as infile:
+    with open(workspace / "params", 'a') as infile:
         infile.write(str_params)
 
     for i_config, params in enumerate(grid):
@@ -53,7 +55,7 @@ def main(config_file, override_param_grid, override_device_str=None, f=lambda x:
             for ik in range(len(keys) - 1):
                 tochange = tochange[keys[ik]]
             tochange[keys[-1]] = v
-        dict["general"]["workspace"] = workspace + "/" + str(i_config)
+        dict["general"]["workspace"] = str(workspace / str(i_config))
         C.load(dict).create_fresh_workspace(force=True)
         C.dump_to_workspace()
 

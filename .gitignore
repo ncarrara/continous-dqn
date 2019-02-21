@@ -1,6 +1,7 @@
 # Generated content
 tmp
 *.pyc
+*.log
 
 # Editor
 .idea

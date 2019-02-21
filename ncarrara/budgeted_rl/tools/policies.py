@@ -246,12 +246,24 @@ class PytorchBudgetedFittedPolicy(Policy):
             return a, b
 
 
-def policy_factory(config):
+def policy_factory(config, dynamically=False):
     if "__class__" in config:
-        path = config['__class__'].split("'")[1]
-        module_name, class_name = path.rsplit(".", 1)
-        policy_class = getattr(importlib.import_module(module_name), class_name)
-        policy = policy_class.from_config(config)
-        return policy
+        if dynamically:
+            path = config['__class__'].split("'")[1]
+            module_name, class_name = path.rsplit(".", 1)
+            policy_class = getattr(importlib.import_module(module_name), class_name)
+            return policy_class.from_config(config)
+        elif config['__class__'] == repr(RandomPolicy):
+            return RandomPolicy.from_config(config)
+        elif config['__class__'] == repr(FittedPolicy):
+            return FittedPolicy.from_config(config)
+        elif config['__class__'] == repr(PytorchFittedPolicy):
+            return PytorchFittedPolicy.from_config(config)
+        elif config['__class__'] == repr(EpsilonGreedyPolicy):
+            return EpsilonGreedyPolicy.from_config(config)
+        elif config['__class__'] == repr(RandomBudgetedPolicy):
+            return RandomBudgetedPolicy.from_config(config)
+        elif config['__class__'] == repr(PytorchBudgetedFittedPolicy):
+            return PytorchBudgetedFittedPolicy.from_config(config)
     else:
         raise ValueError("The configuration should specify the policy __class__")

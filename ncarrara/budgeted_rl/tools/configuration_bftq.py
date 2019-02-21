@@ -11,10 +11,8 @@ class ConfigurationBFTQ(Configuration):
     def load(self, config):
         super(ConfigurationBFTQ, self).load(config)
         self.update_paths()
-        if "hull_options" in config["general"]:
-            self.hull_options = config["general"]["hull_options"]
-        else:
-            self.hull_options = {"decimals": None, "qhull_options": None}
+        if "hull_options" not in self.dict["general"]:
+            self.dict["general"]["hull_options"] = {"decimals": None, "qhull_options": None}
         return self
 
     def update_paths(self):

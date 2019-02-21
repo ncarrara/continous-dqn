@@ -50,14 +50,42 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         config_file = sys.argv[1]
     else:
-        config_file = "../config/test_egreedy.json"
-    from ncarrara.budgeted_rl.tools.configuration import C
-
+        config_file = "../config/debug_bftq.json"
+    if len(sys.argv) > 2:
+        id = sys.argv[2]
+    else:
+        id = None
+    from ncarrara.budgeted_rl.tools.configuration_bftq import C
     C.load(config_file).load_pytorch().load_matplotlib('agg')
-    main(lambda_=0,
-         device=C.device,
-         seed=C.seed,
-         workspace=C.path_learn_ftq_egreedy,
-         path_results=C.path_learn_ftq_egreedy,
-         **C.dict["test_ftq"],
-         **C.dict)
+    if id:
+        C.workspace += "/{}".format(id)
+        C.update_paths()
+
+    print("-------- test_ftq_greedy --------")
+    lambdas = eval(C.dict["learn_ftq_egreedy"]["lambdas"])
+    for lambda_ in lambdas:
+        print("test_ftq_greed lambda={}".format(lambda_))
+        workspace = C.path_ftq_egreedy + "/lambda={}".format(lambda_)
+        main(
+            lambda_=lambda_, device=C.device, seed=C.seed,
+            workspace=workspace,
+            path_results=C.path_ftq_egreedy_results,
+            **C.dict["test_ftq"], **C.dict
+        )
+
+    print("-------- test_ftq_duplicate --------")
+    try:
+        lambdas = C.dict["learn_ftq_duplicate"]["lambdas"]
+        if type(lambdas) is str:
+            lambdas = eval(lambdas)
+    except KeyError:
+        lambdas = []
+    for lambda_ in lambdas:
+        print("test_ftq_duplicate, lambda={}".format(lambda_))
+        workspace = C.path_ftq_duplicate + "/lambda={}".format(lambda_)
+        main(
+            lambda_=lambda_, device=C.device, seed=C.seed,
+            workspace=workspace,
+            path_results=C.path_ftq_duplicate_results,
+            **C.dict["test_ftq_duplicate"], **C.dict
+        )

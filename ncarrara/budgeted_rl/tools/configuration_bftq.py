@@ -1,5 +1,6 @@
 from ncarrara.utils.configuration import Configuration
 
+
 class ConfigurationBFTQ(Configuration):
     import logging
     logger = logging.getLogger(__name__)
@@ -12,7 +13,10 @@ class ConfigurationBFTQ(Configuration):
         super(ConfigurationBFTQ, self).load(config)
         self.update_paths()
         if "hull_options" not in self.dict["general"]:
-            self.dict["general"]["hull_options"] = {"decimals": None, "qhull_options": None,"library":"scipy"}
+            self.dict["general"]["hull_options"] = {"decimals": None, "qhull_options": None, "library": "scipy"}
+
+        if "gpu" not in self.dict["general"]:
+            self.dict["general"]["gpu"] = {"split_batches": 5}
         self.hull_options = self.dict["general"]["hull_options"]
 
         return self
@@ -20,8 +24,8 @@ class ConfigurationBFTQ(Configuration):
     def update_paths(self):
         self.id_bftq_egreedy = "bftq_egreedy"
         self.id_bftq_duplicate = "bftq_duplicate"
-        self.id_ftq_egreedy= "ftq_egreedy"
-        self.id_ftq_duplicate= "ftq_duplicate"
+        self.id_ftq_egreedy = "ftq_egreedy"
+        self.id_ftq_duplicate = "ftq_duplicate"
         self.result_folder = "results"
 
         self.path_bftq_egreedy = self.workspace / self.id_bftq_egreedy

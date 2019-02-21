@@ -118,6 +118,19 @@ def execute_policy_one_trajectory(env, pi, gamma_r=1.0, gamma_c=1.0, beta=None):
     return trajectory, rew_r, rew_c, ret_r, ret_c
 
 
+def get_action_mask(env):
+    action_mask = np.zeros(env.action_space.n)
+    if hasattr(env, "action_space_executable"):
+        raise Exception("Remove this expection please")
+        actions = env.action_space_executable()
+        action_mask[actions] = 1
+    elif hasattr(env, "get_available_actions"):
+        actions = env.get_available_actions()
+        action_mask = np.ones(env.action_space.n)
+        action_mask[actions] = 0
+    return action_mask
+
+
 def execute_policy(env, pi,
                    gamma_r=1.0,
                    gamma_c=1.0,

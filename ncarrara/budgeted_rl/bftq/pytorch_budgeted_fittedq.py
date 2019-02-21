@@ -220,7 +220,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
             plt.plot(points[idxs_interest_points][:, 0], points[idxs_interest_points][:, 1], 'x', markersize=15,
                      color="tab:pink")
             plt.grid()
-            plt.savefig(path + str(id) + ".png", dpi=300)
+            plt.savefig(path + str(id) + ".png", dpi=300, bbox_inches="tight")
             plt.close()
 
         rez = np.zeros(len(idxs_interest_points), dtype=dtype)
@@ -1075,15 +1075,14 @@ class PytorchBudgetedFittedQ:
         self.optimizer.step()
         return loss.detach().item()
 
-    def draw_Qr_and_Qc(self, s, Q, id):
+    def draw_Qr_and_Qc(self, s, Q, title):
         with torch.no_grad():
             plt.rcParams["figure.figsize"] = (5, 5)
-            plt.clf()
+            fig = plt.figure()
             actions = range(self.N_actions)  # [2
             if not os.path.exists(self.workspace / "behavior"):
                 os.makedirs(self.workspace / "behavior")
             betas = self.betas_for_discretisation  # np.linspace(0, self.beta_max, 100)
-            title = id
             yr = np.zeros((len(betas), self.N_actions))
             yc = np.zeros((len(betas), self.N_actions))
             for idx, beta in enumerate(betas):
@@ -1091,60 +1090,48 @@ class PytorchBudgetedFittedQ:
                 yr[idx] = qrqc[0][:self.N_actions]
                 yc[idx] = qrqc[0][self.N_actions:]
 
-            lims_x = (-1.1, 1.1)
-            lims_y = (-1.1, 1.1)
             for ia in actions:
                 plt.plot(betas, yr[:, ia], ls="-", marker='o', markersize=2)
                 lims_x = update_lims(lims_x, betas)
                 lims_y = update_lims(lims_y, yr[:, ia])
-            if self.N_actions < 4:
+            if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
-            plt.xlim(*lims_x)
-            plt.ylim(*lims_y)
             plt.title(title)
             plt.xlabel("beta")
             plt.ylabel("Qr")
             plt.grid()
             plt.savefig(self.workspace / "behavior" / "Qr_{}.png".format(title), bbox_inches="tight")
-            plt.close()
-            plt.clf()
+            plt.close(fig)
 
+            fig = plt.figure()
             lims_x = (-1.1, 1.1)
             lims_y = (-1.1, 1.1)
             for ia in actions:
                 plt.plot(betas, yc[:, ia], ls="-", marker='^', markersize=2)
                 lims_x = update_lims(lims_x, betas)
                 lims_y = update_lims(lims_y, yc[:, ia])
-            if self.N_actions < 4:
+            if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
             plt.title(title)
-            plt.xlim(*lims_x)
-            plt.ylim(*lims_y)
             plt.xlabel("beta")
             plt.ylabel("Qc")
             plt.grid()
             plt.savefig(self.workspace / "behavior" / "Qc_{}.png".format(title), bbox_inches="tight")
-            plt.close()
-            plt.clf()
+            plt.close(fig)
 
             fig, ax = plt.subplots()
-            lims_x = (-1.1, 1.1)
-            lims_y = (-1.1, 1.1)
             for ia in actions:
                 plt.plot(yc[:, ia], yr[:, ia], ls="-", marker='v', markersize=2)
                 lims_x = update_lims(lims_x, yc[:, ia])
                 lims_y = update_lims(lims_y, yr[:, ia])
-            if self.N_actions < 4:
+            if self.N_actions <= 5:
                 plt.legend([self.actions_str[a] for a in actions])
             plt.title(title)
-            plt.xlim(*lims_x)
-            plt.ylim(*lims_y)
             plt.xlabel("Qc")
             plt.ylabel("Qr")
             plt.grid()
-            if show:
-            plt.close()
             plt.savefig(self.workspace / "behavior" / "QrQc_{}.png".format(title), bbox_inches="tight")
+            plt.close(fig)
 
     def save_policy(self, policy_path=None):
         if policy_path is None:

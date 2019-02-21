@@ -93,17 +93,8 @@ def execute_policy_one_trajectory(env, pi, gamma_r=1.0, gamma_c=1.0, beta=None):
 
     while not end:
         s = s_
-        action_mask = [0.] * env.action_space.n
-        if hasattr(env, "action_space_executable"):
-            # print("action_space_executable !!!")
-            raise Exception("Remove this expection please")
-            actions = env.action_space_executable()
-            action_mask = np.zeros(env.action_space.n)
-            for action in actions:
-                action_mask[action] = 1
-
+        action_mask = get_action_mask(env)
         beta = info_pi["beta"]
-
         info_pi = merge_two_dicts(info_pi, info_env)
 
         a, is_master_action, info_pi = pi.execute(s, action_mask, info_pi)

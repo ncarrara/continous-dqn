@@ -80,7 +80,7 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
         dtype = [('Qc', 'f4'), ('Qr', 'f4'), ('beta', 'f4'), ('action', 'i4')]
 
         if path:
-            path = path + "/interest_points/"
+            path = path / "interest_points"
         colinearity = False
         if disp:
             if not os.path.exists(path):

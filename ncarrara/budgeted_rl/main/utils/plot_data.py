@@ -49,7 +49,6 @@ def parse_data(path, params):
             results = results.append(id_results, sort=False)
         results["algorithm"] = algo
         data = data.append(results, sort=False)
-    data.id = data.id.astype(int)
     return data
 
 

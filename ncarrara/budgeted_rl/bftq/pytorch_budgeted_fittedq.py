@@ -56,14 +56,15 @@ def cpuStats():
 
 
 def f(params):
-    Qsb_, action_mask, betas_for_discretisation, path, hull_options = params
+    Qsb_, action_mask, betas_for_discretisation, path, hull_options, clamp_Qc = params
     hull, colinearity, true_colinearity, expection = compute_interest_points_NN_Qsb(
         Qsb=Qsb_,
         action_mask=action_mask,
         betas=betas_for_discretisation,
         disp=False,
         path=path,
-        hull_options=hull_options)
+        hull_options=hull_options,
+        clamp_Qc=clamp_Qc)
 
     # force to do tolist, so object is pickable, because multiprocessing may freeze when it's not pickable
     # see  https://stackoverflow.com/questions/24537379/python-multiprocessing-script-freezes-seemingly-without-error

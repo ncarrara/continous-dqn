@@ -8,6 +8,7 @@ from ncarrara.budgeted_rl.tools.configuration_bftq import C
 from ncarrara.budgeted_rl.main.utils import test_bftq, test_ftq, abstract_main
 from ncarrara.budgeted_rl.main.egreedy import learn_ftq_egreedy, learn_bftq_egreedy, learn_ftq_full_batch
 import sys
+import numpy as np
 
 
 def main(config):

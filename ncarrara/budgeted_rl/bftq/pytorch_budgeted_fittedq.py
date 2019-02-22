@@ -700,6 +700,12 @@ class PytorchBudgetedFittedQ:
         self.empty_cache()
         if logger.getEffectiveLevel() <= logging.DEBUG:
             with torch.no_grad():
+                plt.plot(range(len(losses)), np.log(losses))
+                plt.title("log-loss during regression")
+                plt.xlabel("epoch")
+                plt.ylabel("log-loss")
+                plt.savefig(self.workspace / "losses_e={}.png".format(self._id_ftq_epoch))
+                plt.close()
                 self.info("Creating histograms ...")
                 self.info("forward pass ...")
                 QQ = self._policy_network(sb_batch)

@@ -1,7 +1,6 @@
 #!/bin/bash
 echo $BASHPID
-#for i in $(seq $1 $2)
-for i in 0 1 1000 1001
+for i in $(seq $1 $2)
 do
      echo "Seed $i"
      python egreedy/main_egreedy.py config/slot_filling/camera_ready.json $i 1

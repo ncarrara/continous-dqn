@@ -67,24 +67,22 @@ def set_seed(seed, env=None):
             env.reset()
 
 
-
-
-def epsilon_decay(start=1.0, decay=0.01, N=100,savepath=None):
+def epsilon_decay(start=1.0, decay=0.01, N=100, savepath=None):
     makedirs(savepath)
-    if decay ==0:
-        decays = np.full(N,start)
-    elif decay >0 :
+    if decay == 0:
+        decays = np.full(N, start)
+    elif decay > 0:
         decays = np.exp(-np.arange(N) / (1. / decay)) * start
     else:
         raise Exception("Decay must be positive")
     str_decay = pretty_format_list(decays)
     logger.info("Epsilons (decayed) : [{}]".format(str_decay))
     if logger.getEffectiveLevel() <= logging.DEBUG:
-        plt.plot(range(len(decays)),decays)
+        plt.plot(range(len(decays)), decays)
         plt.title("epsilon decays")
         plt.show()
         if savepath is not None:
-            plt.savefig(savepath+"/epsilon_decay")
+            plt.savefig(savepath / "epsilon_decay")
         plt.close()
     return decays
 
@@ -138,7 +136,6 @@ def near_split(x, num_bins=None, size_bins=None):
         return near_split(x, num_bins=int(np.ceil(x / size_bins)))
 
 
-
 def zip_with_singletons(*args):
     """
         Zip lists and singletons by repeating singletons
@@ -150,5 +147,5 @@ def zip_with_singletons(*args):
     return zip(*(arg if isinstance(arg, list) else itertools.repeat(arg) for arg in args))
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     epsilon_decay(1.0, 0.0005, 10000, show=True)

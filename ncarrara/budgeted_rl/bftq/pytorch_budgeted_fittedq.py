@@ -77,10 +77,9 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
     with torch.no_grad():
 
         if clamp_Qc is not None:
-            logger.info("Clamp target constraints")
-            Qsb[:, len(action_mask):] = torch.clamp(Qsb[:, len(action_mask):],
-                                                    min=clamp_Qc[0],
-                                                    max=clamp_Qc[1])
+            Qsb[:, len(action_mask):] = np.clip(Qsb[:, len(action_mask):],
+                                                    a_min=clamp_Qc[0],
+                                                    a_max=clamp_Qc[1])
 
         if not type(action_mask) == type(np.zeros(1)):
             action_mask = np.asarray(action_mask)
@@ -261,12 +260,13 @@ def compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=False, path="tm
 
 def compute_interest_points_NN(s, Q, action_mask, betas, device, hull_options, clamp_Qc,
                                disp=False, path=None, id="default"):
-    ss = s.repeat((len(betas), 1, 1))
-    bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
-    sb = torch.cat((ss, bb), dim=2)
-    Qsb = Q(sb)
+    with torch.no_grad():
+        ss = s.repeat((len(betas), 1, 1))
+        bb = torch.from_numpy(betas).float().unsqueeze(1).unsqueeze(1).to(device=device)
+        sb = torch.cat((ss, bb), dim=2)
+        Qsb = Q(sb).detach().cpu().numpy()
     return compute_interest_points_NN_Qsb(Qsb, action_mask, betas, disp=disp, path=path, id=id,
-                                          hull_options=hull_options, clamp_Qc=clamp_Qc)
+                                              hull_options=hull_options, clamp_Qc=clamp_Qc)
 
 
 def convex_hull(s, action_mask, Q, disp, betas, device, hull_options, clamp_Qc, path=None, id="default"):

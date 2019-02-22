@@ -32,7 +32,7 @@ def datas_to_transitions(datas, env, feature, lambda_, normalize_reward):
     for data in datas:
         # if not data.a in 'hello()':
         r_ = data.r_
-        beta = data.info["beta"]
+        beta = data.info.get("beta", None)
         s = feature(data.s, e)
         if data.done:
             s_ = None

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     from ncarrara.budgeted_rl.tools.configuration_bftq import C
     C.load(config_file).load_pytorch().load_matplotlib('agg')
     if id:
-        C.workspace += "/{}".format(id)
+        C.workspace /= "{}".format(id)
         C.update_paths()
 
     print("-------- test_ftq_greedy --------")
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         lambdas = []
     for lambda_ in lambdas:
         print("test_ftq_duplicate, lambda={}".format(lambda_))
-        workspace = C.path_ftq_duplicate + "/lambda={}".format(lambda_)
+        workspace = C.path_ftq_duplicate / "lambda={}".format(lambda_)
         main(
             lambda_=lambda_, device=C.device, seed=C.seed,
             workspace=workspace,

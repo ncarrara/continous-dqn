@@ -45,7 +45,7 @@ def parse_data(path, params):
             if id_results.empty:
                 logging.warning("Could not find any result at {}".format(file_id))
                 continue
-            id_results["id"] = id
+            id_results["id"] = "id=" + id
             results = results.append(id_results, sort=False)
         results["algorithm"] = algo
         data = data.append(results, sort=False)
@@ -89,7 +89,7 @@ def plot_all(data, path, params):
             #            params=params, filename=os.path.join(path, "results_intra_annot={}.png".format(show_annotation)))
 
     try:
-        plot_lines(means, x='Cd', y='Rd', hue="algorithm", style="id", points="parameter",
+        plot_lines(means, x='Cd', y='Rd', hue="id", style="algorithm", points="parameter",
                    filename=os.path.join(path, "results_disc_ids.png"))
     except ValueError:
         logger.warning("Too many ids to use different styles")

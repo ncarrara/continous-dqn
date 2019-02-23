@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "camera_ready",
+    "id": "lunar_lander",
     "seed": 0,
-    "workspace": "tmp/camera_ready",
+    "workspace": "tmp/lunar_lander",
     "hull_options": {
       "decimals": null,
       "qhull_options": null,
@@ -10,11 +10,11 @@
       "library": "pure_python"
     },
     "gpu": {
-       "split_batches":15
+      "split_batches": 15
     },
     "cpu": {
       "processes": null,
-      "processes_when_linked_with_gpu": 5
+      "processes_when_linked_with_gpu": 1
     },
     "dictConfig": {
       "version": 1,
@@ -26,7 +26,7 @@
       },
       "handlers": {
         "default": {
-          "level": "ERROR",
+          "level": "INFO",
           "formatter": "standard",
           "class": "logging.StreamHandler"
         }
@@ -36,7 +36,7 @@
           "handlers": [
             "default"
           ],
-          "level": "ERROR",
+          "level": "DEBUG",
           "propagate": false
         },
         "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
@@ -63,60 +63,27 @@
       }
     }
   },
-  "feature_str": "feature_basic",
+  "feature_str": "feature_identity",
   "generate_envs": {
-    "envs_str": "slot_filling_env_v0",
-    "envs_params": {
-      "user_params": [
-        {
-          "cerr": -0.25,
-          "cok": 0.25,
-          "ser": 0.6,
-          "cstd": 0.6,
-          "proba_hangup": 0.25
-        }
-      ],
-      "max_turn": [
-        10
-      ],
-      "size_constraints": [
-        3
-      ],
-      "penalty_if_bye": [
-        0.0
-      ],
-      "penalty_if_hangup": [
-        0.0
-      ],
-      "penalty_if_summarize_fail": [
-        0.0
-      ],
-      "penalty_by_turn": [
-        0.0
-      ],
-      "penalty_if_max_turn": [
-        0.0
-      ],
-      "reward_if_sucess": [
-        100.0
-      ],
-      "can_say_bye": [
-        false
-      ]
-    }
+    "envs_str": "LunarLanderBudgetedConfig-v0",
+    "envs_params": {}
   },
-
-  "test_ftq": {
+  "test_bftq": {
+    "policy_path": "final_policy.pt",
+    "N_trajs": 500,
+    "betas_test": "np.linspace(0.,100.,101)"
+  },
+  "-test_ftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 500
   },
-  "test_ftq_duplicate": {
+  "-test_ftq_duplicate": {
     "N_trajs": 500,
     "policy_path": "policy.pt"
   },
-  "gamma": 1.0,
-  "gamma_c": 1.0,
-  "learn_ftq_egreedy": {
+  "gamma": 0.95,
+  "gamma_c": 0.95,
+  "-learn_ftq_egreedy": {
     "lambdas": "[0.,10.,20.,30,40.,50.,60.,70.,80.,90.]",
     "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
@@ -130,7 +97,7 @@
       "as_json": true
     }
   },
-  "learn_ftq_duplicate": {
+  "-learn_ftq_duplicate": {
     "lambdas": "np.concatenate((np.linspace(0,50,11),np.linspace(60,100,5)))",
     "generate_data": {
       "lambda_": 0.0,
@@ -154,19 +121,13 @@
       "normalize_reward": true
     }
   },
-  "-test_bftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 500,
-    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
-  },
-  "-learn_bftq_egreedy": {
-
-    "trajs_by_ftq_batch": 1000,
-    "normalize_reward": true,
-    "N_trajs": 10000,
+  "learn_bftq_egreedy": {
+    "trajs_by_ftq_batch": 5000,
+    "normalize_reward": false,
+    "N_trajs": 5000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.0005
+      "decay": 0
     },
     "betas_for_exploration": "[]"
   },
@@ -176,13 +137,13 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,101)",
+    "betas_for_discretisation": "np.linspace(0.,20.,41)",
     "betas_for_duplication": "[]",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 11,
+    "max_ftq_epoch": 110,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -196,13 +157,13 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 10,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
-      256,
       128,
-      64
+      64,
+      32
     ]
   },
   "ftq_params": {

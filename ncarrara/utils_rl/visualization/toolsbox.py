@@ -3,7 +3,6 @@ from functools import partial
 
 import matplotlib.pyplot as plt
 
-from ncarrara import utils_rl as fs
 import os
 import numpy as np
 

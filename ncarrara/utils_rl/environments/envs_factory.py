@@ -33,6 +33,9 @@ def generate_envs(envs_str, envs_params):
         elif envs_str == "LunarLanderConfig-v0":
             from ncarrara.utils_rl.environments.lunar_lander_config_env import LunarLanderConfigEnv
             env = LunarLanderConfigEnv(**param)
+        elif envs_str == "LunarLanderBudgetedConfig-v0":
+            from ncarrara.utils_rl.environments.lunar_lander_budgeted_config_env import LunarLanderBudgetedConfigEnv
+            env = LunarLanderBudgetedConfigEnv(**param)
         elif envs_str == "gym_pydial":
             env_pydial = __import__("gym_pydial.env.env_pydial")
             env = env_pydial.EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
@@ -45,10 +48,10 @@ def generate_envs(envs_str, envs_params):
             env.configure(dict(**param))
         elif envs_str == "test_death_trap":
             from ncarrara.utils_rl.environments.gridworld.model_generator import generate_test_death_trap
-            env,_ = generate_test_death_trap()
+            env, _ = generate_test_death_trap()
         elif envs_str == "3xWidth":
             from ncarrara.utils_rl.environments.gridworld.model_generator import generate_3xWidth
-            env,_ = generate_3xWidth(**param)
+            env, _ = generate_3xWidth(**param)
         elif envs_str == "continuous-3xWidth":
             from ncarrara.utils_rl.environments.gridworld.model_generator import generate_continuous3xWidth
             env, _ = generate_continuous3xWidth(**param)
@@ -70,7 +73,8 @@ def generate_envs(envs_str, envs_params):
                 setattr(env, k, v)
         envs.append(env)
         rez_params.append(param)
-    logger.info("[generate_envs] actual params : \n\n{}".format("".join(["{}\n".format("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()])) for param in rez_params])))
+    logger.info("[generate_envs] actual params : \n\n{}".format("".join(
+        ["{}\n".format("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()])) for param in rez_params])))
     # for param in rez_params:
     #     logger.info("".join(["\t{} : {}\n".format(k, v) for k, v in param.items()]))
     return envs, rez_params

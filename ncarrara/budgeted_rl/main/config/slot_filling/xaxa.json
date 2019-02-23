@@ -154,12 +154,12 @@
       "normalize_reward": true
     }
   },
-  "-test_bftq": {
+  "test_bftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 500,
     "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
   },
-  "-learn_bftq_egreedy": {
+  "learn_bftq_egreedy": {
 
     "trajs_by_ftq_batch": 1000,
     "normalize_reward": true,

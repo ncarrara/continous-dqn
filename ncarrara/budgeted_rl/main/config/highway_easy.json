@@ -90,14 +90,14 @@
   "gamma_c": 1.0,
 
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 150,
+    "trajs_by_ftq_batch": 200,
     "normalize_reward": false,
-    "N_trajs": 1500,
+    "N_trajs": 2000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.002
+      "decay": 0.0015
     },
-    "betas_for_exploration": "np.logspace(np.log10(0.1), np.log10(1+0.1), 20)-0.1"
+    "betas_for_exploration": "np.logspace(np.log10(0.1), np.log10(1+0.1), 30)-0.1"
   },
   "-learn_bftq_full_batch": {
     "load_memory": {
@@ -111,8 +111,8 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 2,
-    "betas_for_discretisation": "np.logspace(np.log10(0.1), np.log10(1+0.1), 20)-0.1",
-    "betas_for_duplication": "np.linspace(0, 1, 21)",
+    "betas_for_discretisation": "np.logspace(np.log10(0.1), np.log10(1+0.1), 30)-0.1",
+    "betas_for_duplication": "np.logspace(np.log10(0.1), np.log10(1+0.1), 30)-0.1",
     "clamp_Qc": [0, 1],
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 400,
@@ -154,9 +154,9 @@
 
   "-learn_ftq_egreedy": {
     "lambdas": "[0, 1, 2, 3, 4, 6, 8, 10, 15, 20]",
-    "trajs_by_ftq_batch": 100,
+    "trajs_by_ftq_batch": 20,
     "normalize_reward": true,
-    "N_trajs": 1000,
+    "N_trajs": 200,
     "epsilon_decay": {
       "start": 1.0,
       "decay": 0.003
@@ -166,16 +166,16 @@
       "as_json": false
     }
   },
-  "-learn_ftq_duplicate": {
+  "learn_ftq_duplicate": {
     "lambdas": "[0, 1, 2, 3, 4, 6, 8, 10, 15, 20]",
     "generate_data": {
       "lambda_": 0.0,
-      "trajs_by_ftq_batch": 1000,
+      "trajs_by_ftq_batch": 200,
       "normalize_reward": true,
-      "N_trajs": 10000,
+      "N_trajs": 2000,
       "epsilon_decay": {
         "start": 1.0,
-        "decay": 0.0003
+        "decay": 0.0015
       },
       "save_memory": {
         "path": "samples_for_duplicate.data",
@@ -215,7 +215,7 @@
     "policy_path": "final_policy.pt",
     "N_trajs": 150
   },
-  "-test_ftq_duplicate": {
+  "test_ftq_duplicate": {
     "N_trajs": 150,
     "policy_path": "policy.pt"
   }

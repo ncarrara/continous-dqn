@@ -8,6 +8,8 @@ from ncarrara.utils.math_utils import set_seed, near_split, zip_with_singletons
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.algorithms.pytorch_fittedq import NetFTQ, PytorchFittedQ
 from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
+from ncarrara.utils_rl.environments.gridworld.world import World
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy, RandomPolicy
 from ncarrara.budgeted_rl.tools.policies import EpsilonGreedyPolicy
@@ -85,6 +87,20 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         ftq.reset(True)
         ftq.workspace = workspace / "batch={}".format(batch)
         makedirs(ftq.workspace)
+
+        if isinstance(e, EnvGridWorld):
+            trajs = []
+            for trajectories, _ in results:
+                for traj in trajectories:
+                        trajs.append(traj)
+
+            w = World(e)
+            w.draw_frame()
+            w.draw_lattice()
+            w.draw_cases()
+            w.draw_source_trajectories(trajs)
+            w.save(ftq.workspace / "bftq_on_2dworld_sources")
+
         ftq.fit(transitions_ftq)
 
         # Save policy

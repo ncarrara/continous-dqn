@@ -229,9 +229,9 @@ class World():
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.set_font_size(20)
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.3) * self.dh)
-        self.ctx.show_text("R=" + str(reward))
+        self.ctx.show_text("R={:.2f}".format(reward))
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.5) * self.dh)
-        self.ctx.show_text("C=" + str(constraint))
+        self.ctx.show_text("C={:.2f}".format(constraint))
 
     def draw_hole(self, hole):
         rect, reward, constraint, isabsorbing = hole
@@ -240,9 +240,9 @@ class World():
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.set_font_size(20)
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.3) * self.dh)
-        self.ctx.show_text("R=" + str(reward))
+        self.ctx.show_text("R={:.2f}".format(reward))
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.5) * self.dh)
-        self.ctx.show_text("C=" + str(constraint))
+        self.ctx.show_text("C={:.2f}".format(constraint))
 
     def draw_case(self, case):
         rect, reward, constraint, isabsorbing = case
@@ -282,7 +282,7 @@ class World():
             self.draw_test_trajectory(trajectory, alpha)
 
     def save(self, filename):
-        file = filename + ".png"
+        file = filename.with_suffix('.png').as_posix()
         # logging.info("[WORLD] saving to {}".format(file))
         self.ctx.close_path()
         self.ctx.stroke()

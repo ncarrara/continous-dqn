@@ -102,7 +102,7 @@ def plot_patch(type, mean, std, counts, x, y, curves, points, params, show_std=F
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     result = pd.concat([mean, std.add_suffix("_std"), counts.add_suffix("_count")], axis=1, sort=False)
-
+    print(result)
     # nb_run =
 
     # handlers = []

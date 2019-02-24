@@ -10,6 +10,10 @@ from ncarrara.utils.os import makedirs
 from ncarrara.budgeted_rl.tools.policies import PytorchFittedPolicy
 
 import logging
+
+from ncarrara.utils_rl.environments import envs_factory
+from ncarrara.utils_rl.environments.gridworld.envgridworld import EnvGridWorld
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -19,6 +23,7 @@ def main(device, workspace, policy_path, generate_envs, feature_str, gamma, gamm
     if not os.path.isabs(policy_path):
         policy_path = workspace / policy_path
 
+    mock_env = envs_factory.generate_envs(**generate_envs)[0][0]
     pi_config = {
         "__class__": repr(PytorchFittedPolicy),
         "feature_str": feature_str,
@@ -39,9 +44,22 @@ def main(device, workspace, policy_path, generate_envs, feature_str, gamma, gamm
     logger.info("Collecting trajectories with {} workers...".format(cpu_processes))
     with Pool(cpu_processes) as pool:
         results = pool.starmap(execute_policy_from_config, workers_params)
-        results = np.concatenate([result for _, result in results], axis=0)
+        rez = np.concatenate([result for _, result in results], axis=0)
+        trajs = []
+        for t, _ in results:
+            trajs += t
 
-    print("FTQ({}) : {}".format(lambda_, format_results(results)))
+    if isinstance(mock_env, EnvGridWorld):
+        from ncarrara.utils_rl.environments.gridworld.world import World
+        w = World(mock_env)
+        w.draw_frame()
+        w.draw_lattice()
+        w.draw_cases()
+        w.draw_test_trajectories(trajs)
+        makedirs(workspace / "trajs")
+        w.save(workspace / "trajs" / "trajs_lambda{:.2f}".format(lambda_))
+
+    print("FTQ({}) : {}".format(lambda_, format_results(rez)))
 
 
 if __name__ == "__main__":

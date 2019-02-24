@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "mega_final",
+    "id": "double_path3",
     "seed": 0,
-    "workspace": "tmp/mega_final",
+    "workspace": "tmp/double_path3",
     "hull_options": {
       "decimals": null,
       "qhull_options": null,
@@ -10,7 +10,7 @@
       "library": "pure_python"
     },
     "gpu": {
-      "split_batches": 20
+      "split_batches": 5
     },
     "cpu": {
       "processes": null,
@@ -63,123 +63,96 @@
       }
     }
   },
-  "feature_str": "feature_basic",
+  "feature_str": "feature_identity",
   "generate_envs": {
-    "envs_str": "slot_filling_env_v0",
+    "envs_str": "double_path",
     "envs_params": {
-      "user_params": [
-        {
-          "cerr": -0.25,
-          "cok": 0.25,
-          "ser": 0.6,
-          "cstd": 0.6,
-          "proba_hangup": 0.25
-        }
+      "high": [
+        9
       ],
-      "max_turn": [
-        10
-      ],
-      "size_constraints": [
-        3
-      ],
-      "penalty_if_bye": [
-        0.0
-      ],
-      "penalty_if_hangup": [
-        0.0
-      ],
-      "penalty_if_summarize_fail": [
-        0.0
-      ],
-      "penalty_by_turn": [
-        0.0
-      ],
-      "penalty_if_max_turn": [
-        0.0
-      ],
-      "reward_if_sucess": [
-        100.0
-      ],
-      "can_say_bye": [
-        false
+      "std": [
+        [
+          0.5,
+          0.5
+        ]
       ]
     }
   },
   "test_ftq": {
     "policy_path": "final_policy.pt",
-    "N_trajs": 1000
+    "N_trajs": 500
   },
   "test_ftq_duplicate": {
-    "N_trajs": 1000,
+    "N_trajs": 500,
     "policy_path": "policy.pt"
   },
   "test_bftq": {
     "policy_path": "final_policy.pt",
-    "N_trajs": 1000,
-    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
+    "N_trajs": 500,
+    "betas_test": "np.linspace(0.,10.,11)"
   },
   "test_bftq_duplicate": {
-    "policy_path": "policy.pt", 
-    "N_trajs": 1000,
-    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
+    "policy_path": "final_policy.pt",
+    "N_trajs": 500,
+    "betas_test": "np.linspace(0.,10.,11)"
   },
   "gamma": 1.0,
   "gamma_c": 1.0,
   "learn_ftq_egreedy": {
-    "lambdas": "[0.,20.,40.,60.]",
-    "trajs_by_ftq_batch": 125,
+    "lambdas": "[0.,2.5,5.,10.,15.,25.,50.,100.,1000.]",
+    "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
-    "N_trajs": 1250,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.025
+      "decay": 0.005
     },
     "save_memory": {
       "path": "learn_ftq_egreedy.data",
-      "as_json": true
+      "as_json": false
     }
   },
   "learn_ftq_duplicate": {
-    "lambdas": "[0.,15.,20.,25.,30.,35.,40.,60.]",
+    "lambdas": "[0.,2.5,5.,10.,15.,25.,50.,100.,1000.]",
     "generate_data": {
       "lambda_": 0.0,
-      "trajs_by_ftq_batch": 500,
+      "trajs_by_ftq_batch": 100,
       "normalize_reward": true,
-      "N_trajs": 5000,
+      "N_trajs": 1000,
       "epsilon_decay": {
         "start": 1.0,
-        "decay": 0.001
+        "decay": 0.005
       },
       "save_memory": {
         "path": "samples_for_duplicate.data",
-        "as_json": true
+        "as_json": false
       }
     },
     "learn_ftq_full_batch": {
       "load_memory": {
         "path": "samples_for_duplicate.data",
-        "as_json": true
+        "as_json": false
       },
       "normalize_reward": true
     }
   },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 500,
+    "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
-    "N_trajs": 5000,
+    "N_trajs": 1000,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.001
+      "decay": 0.005
     },
     "betas_for_exploration": "[]",
     "betas_for_duplication": "[]"
   },
   "learn_bftq_duplicate": {
-    "betas_for_duplication": "np.linspace(0.,1.,11)",
+    "betas_for_duplication": "np.linspace(0.,10.,11)",
     "load_memory": {
-        "path": "../ftq_duplicate/samples_for_duplicate.data",
-        "as_json": true
-      },
+      "path": "../ftq_duplicate/samples_for_duplicate.data",
+      "as_json": false
+    },
     "normalize_reward": true
   },
   "bftq_params": {
@@ -188,12 +161,12 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,101)",
+    "betas_for_discretisation": "np.linspace(0.,10.,101)",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 11,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
@@ -207,7 +180,7 @@
   },
   "bftq_net_params": {
     "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
+    "size_beta_encoder": 2,
     "activation_type": "RELU",
     "reset_type": "XAVIER",
     "intra_layers": [
@@ -221,7 +194,7 @@
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 11,
+    "max_ftq_epoch": 12,
     "learning_rate": 0.001,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,

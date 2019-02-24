@@ -105,42 +105,14 @@
       ]
     }
   },
-  "test_ftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 1000
-  },
   "test_ftq_duplicate": {
     "N_trajs": 1000,
     "policy_path": "policy.pt"
   },
-  "test_bftq": {
-    "policy_path": "final_policy.pt",
-    "N_trajs": 1000,
-    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
-  },
-  "test_bftq_duplicate": {
-    "policy_path": "policy.pt", 
-    "N_trajs": 1000,
-    "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
-  },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "learn_ftq_egreedy": {
-    "lambdas": "[0.,20.,40.,60.]",
-    "trajs_by_ftq_batch": 125,
-    "normalize_reward": true,
-    "N_trajs": 1250,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.025
-    },
-    "save_memory": {
-      "path": "learn_ftq_egreedy.data",
-      "as_json": true
-    }
-  },
   "learn_ftq_duplicate": {
-    "lambdas": "[0.,15.,20.,25.,30.,35.,40.,60.]",
+    "lambdas": "[15.,25.,30.,35]",
     "generate_data": {
       "lambda_": 0.0,
       "trajs_by_ftq_batch": 500,
@@ -162,59 +134,6 @@
       },
       "normalize_reward": true
     }
-  },
-  "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 500,
-    "normalize_reward": true,
-    "N_trajs": 5000,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.001
-    },
-    "betas_for_exploration": "[]",
-    "betas_for_duplication": "[]"
-  },
-  "learn_bftq_duplicate": {
-    "betas_for_duplication": "np.linspace(0.,1.,11)",
-    "load_memory": {
-        "path": "../ftq_duplicate/samples_for_duplicate.data",
-        "as_json": true
-      },
-    "normalize_reward": true
-  },
-  "bftq_params": {
-    "clamp_Qc": null,
-    "use_data_loader": false,
-    "use_data_parallel": false,
-    "use_extra_gpu_memory_threshold": 100,
-    "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,101)",
-    "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 5000,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "max_ftq_epoch": 11,
-    "learning_rate": 0.001,
-    "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
-    "weight_decay": 0.0005,
-    "batch_size_experience_replay": "ALL_BATCH",
-    "loss_function_c": "l2",
-    "weights_losses": [
-      1.0,
-      1.0
-    ]
-  },
-  "bftq_net_params": {
-    "beta_encoder_type": "LINEAR",
-    "size_beta_encoder": 50,
-    "activation_type": "RELU",
-    "reset_type": "XAVIER",
-    "intra_layers": [
-      256,
-      128,
-      64
-    ]
   },
   "ftq_params": {
     "nn_loss_stop_condition": 0.001,

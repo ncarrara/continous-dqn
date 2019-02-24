@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "mega_final",
+    "id": "mega_final2",
     "seed": 0,
-    "workspace": "tmp/mega_final",
+    "workspace": "tmp/mega_final2",
     "hull_options": {
       "decimals": null,
       "qhull_options": null,
@@ -105,11 +105,11 @@
       ]
     }
   },
-  "test_ftq": {
+  "-test_ftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 1000
   },
-  "test_ftq_duplicate": {
+  "-test_ftq_duplicate": {
     "N_trajs": 1000,
     "policy_path": "policy.pt"
   },
@@ -118,14 +118,14 @@
     "N_trajs": 1000,
     "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
   },
-  "test_bftq_duplicate": {
+  "-test_bftq_duplicate": {
     "policy_path": "policy.pt", 
     "N_trajs": 1000,
     "betas_test": "np.concatenate((np.linspace(0.,0.5,11),np.linspace(0.6,1.,5)))"
   },
   "gamma": 1.0,
   "gamma_c": 1.0,
-  "learn_ftq_egreedy": {
+  "-learn_ftq_egreedy": {
     "lambdas": "[0.,20.,40.,60.]",
     "trajs_by_ftq_batch": 125,
     "normalize_reward": true,
@@ -139,7 +139,7 @@
       "as_json": true
     }
   },
-  "learn_ftq_duplicate": {
+  "-learn_ftq_duplicate": {
     "lambdas": "[0.,15.,20.,25.,30.,35.,40.,60.]",
     "generate_data": {
       "lambda_": 0.0,
@@ -174,7 +174,7 @@
     "betas_for_exploration": "[]",
     "betas_for_duplication": "[]"
   },
-  "learn_bftq_duplicate": {
+  "-learn_bftq_duplicate": {
     "betas_for_duplication": "np.linspace(0.,1.,11)",
     "load_memory": {
         "path": "../ftq_duplicate/samples_for_duplicate.data",
@@ -188,7 +188,7 @@
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,101)",
+    "betas_for_discretisation": "np.linspace(0.,1.,501)",
     "nn_loss_stop_condition": 0.001,
     "max_nn_epoch": 5000,
     "optimizer": "ADAM",

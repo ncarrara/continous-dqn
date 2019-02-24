@@ -56,6 +56,40 @@ def main(config):
             )
     torch.cuda.empty_cache()
 
+
+
+    if "learn_ftq_egreedy" in config:
+        print("-------- learn_ftq_egreedy --------")
+        lambdas = config.dict["learn_ftq_egreedy"]["lambdas"]
+        if type(lambdas) is str:
+            lambdas = eval(lambdas)
+        for lambda_ in lambdas:
+            print("learn_ftq_egreedy lambda={}".format(lambda_))
+            torch.cuda.empty_cache()
+            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
+            learn_ftq_egreedy.main(
+                lambda_=lambda_, seed=config.seed, device=config.device,
+                workspace=workspace,
+                **config.dict["learn_ftq_egreedy"], **config.dict
+            )
+    torch.cuda.empty_cache()
+
+    if "test_ftq" in config:
+        print("-------- test_ftq_greedy --------")
+        lambdas = eval(config.dict["learn_ftq_egreedy"]["lambdas"])
+        if type(lambdas) is str:
+            lambdas = eval(lambdas)
+        for lambda_ in lambdas:
+            print("test_ftq_greed lambda={}".format(lambda_))
+            torch.cuda.empty_cache()
+            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
+            test_ftq.main(
+                lambda_=lambda_, device=config.device, seed=config.seed,
+                workspace=workspace,
+                path_results=config.path_ftq_egreedy_results,
+                **config.dict["test_ftq"], **config.dict
+            )
+
     if "learn_bftq_duplicate" in config:
         print("-------- learn_bftq_duplicate --------")
         workspace = config.path_bftq_duplicate
@@ -105,38 +139,6 @@ def main(config):
         )
 
     torch.cuda.empty_cache()
-
-    if "learn_ftq_egreedy" in config:
-        print("-------- learn_ftq_egreedy --------")
-        lambdas = config.dict["learn_ftq_egreedy"]["lambdas"]
-        if type(lambdas) is str:
-            lambdas = eval(lambdas)
-        for lambda_ in lambdas:
-            print("learn_ftq_egreedy lambda={}".format(lambda_))
-            torch.cuda.empty_cache()
-            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
-            learn_ftq_egreedy.main(
-                lambda_=lambda_, seed=config.seed, device=config.device,
-                workspace=workspace,
-                **config.dict["learn_ftq_egreedy"], **config.dict
-            )
-    torch.cuda.empty_cache()
-
-    if "test_ftq" in config:
-        print("-------- test_ftq_greedy --------")
-        lambdas = eval(config.dict["learn_ftq_egreedy"]["lambdas"])
-        if type(lambdas) is str:
-            lambdas = eval(lambdas)
-        for lambda_ in lambdas:
-            print("test_ftq_greed lambda={}".format(lambda_))
-            torch.cuda.empty_cache()
-            workspace = config.path_ftq_egreedy / "lambda={}".format(lambda_)
-            test_ftq.main(
-                lambda_=lambda_, device=config.device, seed=config.seed,
-                workspace=workspace,
-                path_results=config.path_ftq_egreedy_results,
-                **config.dict["test_ftq"], **config.dict
-            )
 
     plot_data.main(os.path.join(config.workspace, os.pardir))
 

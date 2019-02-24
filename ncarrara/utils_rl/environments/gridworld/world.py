@@ -230,13 +230,28 @@ class World():
         self.ctx.set_font_size(20)
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.3) * self.dh)
         self.ctx.show_text("R={:.2f}".format(reward))
-        self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.5) * self.dh)
-        self.ctx.show_text("C={:.2f}".format(constraint))
+        # self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.5) * self.dh)
+        # self.ctx.show_text("C={:.2f}".format(constraint))
+
+    def draw_wall(self, rect):
+        x1, y1, x2, y2 = rect
+        self.draw_rectangle(rect, (0.3, 0.3, 0.3))
 
     def draw_hole(self, hole):
         rect, reward, constraint, isabsorbing = hole
         x1, y1, x2, y2 = rect
         self.draw_rectangle(rect, (0.6, 0, 0))
+        self.ctx.set_source_rgb(0, 0, 0)
+        self.ctx.set_font_size(20)
+        self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.3) * self.dh)
+        self.ctx.show_text("C={:.2f}".format(constraint))
+        # self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.5) * self.dh)
+        # self.ctx.show_text("C={:.2f}".format(constraint))
+
+    def draw_mixte(self, hole):
+        rect, reward, constraint, isabsorbing = hole
+        x1, y1, x2, y2 = rect
+        self.draw_rectangle(rect, (0.3, 0.3, 0))
         self.ctx.set_source_rgb(0, 0, 0)
         self.ctx.set_font_size(20)
         self.ctx.move_to((x1 + 0.02) * self.dw, (y1 + 0.3) * self.dh)
@@ -246,14 +261,19 @@ class World():
 
     def draw_case(self, case):
         rect, reward, constraint, isabsorbing = case
-        if reward > 0.:
+        if reward > 0. and constraint == 0.:
             self.draw_goal(case)
-        elif constraint > 0.:
+        elif constraint > 0. and reward ==0.:
             self.draw_hole(case)
+        else:
+            self.draw_mixte(case)
 
     def draw_cases(self):
         for case in self.model.cases:
             self.draw_case(case)
+
+        for case in self.model.blocks:
+            self.draw_wall(case)
 
     def draw_bftq(self, source_trajectories=None, test_trajectories=None, A=None, A_str=None, qr=None, qc=None,
                   bs=None,

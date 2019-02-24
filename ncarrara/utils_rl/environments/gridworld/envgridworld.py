@@ -28,13 +28,14 @@ class EnvGridWorld(object):
 
     def __init__(self, dim, std, cases, trajectoryMaxSize, walls_around, noise_type="gaussian_bis", id="default_id",
                  penalty_on_move=0, actions=CARDINAL_ACTIONS, actions_str=CARDINAL_ACTIONS_STR, init_s=(0.5, 0.5),
-                 cost_on_move=0):
+                 cost_on_move=0,blocks=[]):
         # random.seed(seed)
         # np.random.seed(seed)
         # self.seed = seed
         # List des actions possible et leur description textuelle
         self.actions = actions
         self.actions_str = actions_str
+        self.blocks= blocks
 
         # identifiant de l'environement
         self.id = id
@@ -114,17 +115,31 @@ class EnvGridWorld(object):
 
         sp = (xp, yp)
 
+        block = None
+        for wall in self.blocks:
+            if inRectangle((xp, yp), wall):
+                # on bouge pas
+                block=wall
+                break
+
         if (x == xp and y == yp):  # on a rien fait
             rp = 0.
             cp = 0.
             sp = (x, y)
-        elif self.walls_around:
-            # On rebondit sur les murs
+        elif self.walls_around and block is None:
+            # # On rebondit sur les murs
             if xp < 0: xp = -xp
             if yp < 0: yp = -yp
             if xp >= self.w: xp = 2 * self.w - xp
             if yp >= self.h: yp = 2 * self.h - yp
+            # on bouge pas
+            # sp = s
             sp = (xp, yp)
+        elif block is not None:
+            sp = (x,y)
+        else:
+            raise Exception("impossible")
+
         for case in self.cases:
             rectangle, r, c, is_absorbing = case
             if inRectangle(sp, rectangle):

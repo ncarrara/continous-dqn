@@ -34,6 +34,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     rm = Memory()
     feature = feature_factory(feature_str)
 
+
     def build_fresh_bftq():
         bftq = PytorchBudgetedFittedQ(
             device=device,
@@ -95,6 +96,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
 
         # Fill memory
         [rm.push(*sample) for trajectories, _ in results for trajectory in trajectories for sample in trajectory]
+
         transitions_ftq, transition_bftq = datas_to_transitions(rm.memory, e, feature, 0, normalize_reward)
 
         # Fit model
@@ -106,6 +108,18 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         bftq.reset(True)
         bftq.workspace = workspace / "batch={}".format(batch)
         makedirs(bftq.workspace)
+        if isinstance(e, EnvGridWorld):
+            trajs = []
+            for trajectories, _ in results:
+                for traj in trajectories:
+                        trajs.append(traj)
+
+            w = World(e)
+            w.draw_frame()
+            w.draw_lattice()
+            w.draw_cases()
+            w.draw_source_trajectories(trajs)
+            w.save(bftq.workspace / "bftq_on_2dworld_sources")
         q = bftq.fit(transition_bftq)
 
         # Save policy

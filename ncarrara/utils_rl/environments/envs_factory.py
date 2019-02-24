@@ -67,6 +67,9 @@ def generate_envs(envs_str, envs_params):
         elif envs_str == "test2":
             from ncarrara.utils_rl.environments.gridworld.model_generator import generate_test_2
             env, _ = generate_test_2()
+        elif envs_str == "generate_safe_explo":
+            from ncarrara.utils_rl.environments.gridworld.model_generator import generate_safe_explo
+            env, _ = generate_safe_explo(**param)
         else:
             env = gym.make(envs_str)
             for k, v in param.items():

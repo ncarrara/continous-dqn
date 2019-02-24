@@ -53,7 +53,7 @@ def generate(
     # print holes
     cases = holes + goals
     union = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, id="union",
-                               penalty_on_move=penalty_on_move, init_s=start)
+                         penalty_on_move=penalty_on_move, init_s=start)
 
     for l in range(0, N_models):
         h = []
@@ -68,7 +68,7 @@ def generate(
         # print indexes
         cases = h + goals
         source = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type,
-                                    id="source_{}".format(l), penalty_on_move=penalty_on_move, init_s=start)
+                              id="source_{}".format(l), penalty_on_move=penalty_on_move, init_s=start)
         sources.append(source)
     return union, sources
 
@@ -138,7 +138,7 @@ def generate_random_model(
         A = [(0., 0.), (0., 1.), (1., 0.), (0.707107, 0.707107)]
         A_str = ["X", "E", "S", "SE"]  # ,
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str, penalty_on_move=penalty_on_move)
+                     actions_str=A_str, penalty_on_move=penalty_on_move)
 
     emax = dim_x + dim_y + 5
     return m, emax
@@ -158,7 +158,7 @@ def generate_test_0(std=(0.25, 0.25), trajectory_max_size=None, noise_type="norm
          (0.707106, 0.707106)]  # ,(-1.,0.),(0,-1.)]
     A_str = ["X", "E", "SE", "S", "e", "s", "se"]  # ,"<-","^"]
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, penalty_on_move=0., noise_type=noise_type,
-                           init_s=start, actions=A, actions_str=A_str)
+                     init_s=start, actions=A, actions_str=A_str)
 
     emax = dim_x + dim_y + 5  # voir plus avec bruit gaussian et aller retour
     return m, emax
@@ -177,7 +177,7 @@ def generate_test_1(std=(0.5, 0.5), trajectory_max_size=None, noise_type="gaussi
     A = [(0., 0.), (0., 1.), (1., 0.)]  # ,(-1.,0.),(0,-1.)]
     A_str = ["X", "v", ">"]  # ,"<-","^"]
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str, penalty_on_move=0.)
+                     actions_str=A_str, penalty_on_move=0.)
 
     emax = dim_x + dim_y + 5  # voir plus avec bruit gaussian et aller retour
     return m, emax
@@ -190,14 +190,14 @@ def generate_test_2(std=(0.75, 0.75), trajectory_max_size=None, noise_type="gaus
         trajectory_max_size = int((dim_x + dim_y) + (dim_x + dim_y) / 2.)
     # goals = [((1, 0, 2, 1), 0.01, 0, True), ((2, 0, 3, 1), 0.1, 0, True), ((0, 3, 1, 4), 1., 0, True)]
     goals = [((0, 3, 1, 4), 1., 0, True)]
-    holes = [((1, 0, 2, 1), 0.0, 1., True), ((2, 0, 3, 1), 0., 1., True),((0, 2, 2, 3), 0, 1, True)]
+    holes = [((1, 0, 2, 1), 0.0, 1., True), ((2, 0, 3, 1), 0., 1., True), ((0, 2, 2, 3), 0, 1, True)]
 
     cases = holes + goals
     A = [(0., 0.), (0., 1.), (1., 0.), (-1., 0), (0., -1.)]  # ,(-1.,0.),(0,-1.)]
     A_str = ["X", "v", ">", "<", "^"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = dim_x + dim_y + 10  # voir plus avec bruit gaussian et aller retour
     return m, emax
 
@@ -215,7 +215,7 @@ def generate_test_boucle(std=(0.5, 0.5), trajectory_max_size=None, noise_type="g
     A_str = ["X", "v", "->", "<-", "^"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = dim_x + dim_y + 10  # voir plus avec bruit gaussian et aller retour
     return m, emax
 
@@ -231,7 +231,7 @@ def generate_test_death_trap():
     holes = [((1, 0, 2, 1), 0, 1, True)]
     cases = holes + goals
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type="test_death_trap", init_s=start,
-                           actions=A, actions_str=A_str)
+                     actions=A, actions_str=A_str)
     emax = 1
     return m, emax
 
@@ -250,8 +250,49 @@ def generate_3xWidth(width=3):
     dim = (width, 3)
     std = None
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type="3xWidth", init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = width
+    return m, emax
+
+
+def generate_safe_explo(nb_cases=6, offset=2):
+    start_position = nb_cases + 0.5 + offset
+    A_str = ["X", "v", "->", "<-", "^"]
+    # A_str = [ "->" "X"]
+    trajectory_max_size = int(offset + nb_cases + 2)
+    A = [(0., 0.), (0., 1.), (1., 0.), (-1., 0), (0., -1.)]
+    # A = [(1., 0.), (0., 0.)]
+    start = np.array([start_position, 1.5])
+    goals = []
+    holes = []
+    std = (0.75, 0.75)
+
+    reward_safe = np.flip(np.linspace(0.01, 0.1, nb_cases + offset))
+    reward_unsafe = np.linspace(np.sum(reward_safe), 1., nb_cases)
+
+    for case in range(0, nb_cases):
+        w_unsafe = start_position + case + 0.5
+        absorbing = False
+        reward = reward_unsafe[case]
+        goals.append(((w_unsafe, 1, w_unsafe + 1, 2), reward, 0, absorbing))
+        holes.append(((w_unsafe, 0, w_unsafe + 1, 1), 0, 1, True))
+
+
+    for case in range(0, nb_cases + offset):
+        absorbing = False
+        w_safe = case
+        r = reward_safe[case]
+        goals.append(((w_safe, 1, w_safe+1, 2), r, 0, absorbing))
+
+    cases = goals + holes
+    # print(goals)
+    # print(holes)
+    dim = (nb_cases * 2 + 1 + offset, 2)
+    m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type="gaussian_bis", init_s=start,
+                     actions=A,
+                     actions_str=A_str)
+    emax = None
+    # exit()
     return m, emax
 
 
@@ -269,8 +310,8 @@ def generate_continuous3xWidth(width=3):
     dim = (width, 3)
     std = (0.5, 0.5)
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type="gaussian_bis", init_s=start,
-                           actions=A,
-                           actions_str=A_str)
+                     actions=A,
+                     actions_str=A_str)
     emax = np.ceil(width * 1.5)
     return m, emax
 
@@ -288,7 +329,7 @@ def generate_test_3(std=(0.5, 0.5), trajectory_max_size=None, noise_type="gaussi
     A_str = ["X", "v", "->"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = dim_x + dim_y + 2  # voir plus avec bruit gaussian et aller retour
     return m, emax
 
@@ -306,7 +347,7 @@ def generate_test_4(std=(0.5, 0.5), trajectory_max_size=None, noise_type="gaussi
     A_str = ["X", "v", "->"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = dim_x + dim_y + 2  # voir plus avec bruit gaussian et aller retour
     return m, emax
 
@@ -327,7 +368,7 @@ def generate_test_5(std=(0.5, 0.5), trajectory_max_size=None, noise_type="gaussi
     A_str = ["X", "v", "->"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str)
+                     actions_str=A_str)
     emax = dim_x + dim_y + 2  # voir plus avec bruit gaussian et aller retour
     return m, emax
 
@@ -348,6 +389,6 @@ def generate_test_6(std=(0.5, 0.5), trajectory_max_size=None, noise_type="gaussi
     A_str = ["X", "v", "->"]  # ,"<-","^"]
     start = np.array([.5, .5])
     m = EnvGridWorld(dim, std, cases, trajectory_max_size, True, noise_type=noise_type, init_s=start, actions=A,
-                           actions_str=A_str, penalty_on_move=0.)
+                     actions_str=A_str, penalty_on_move=0.)
     emax = dim_x + dim_y + 2  # voir plus avec bruit gaussian et aller retour
     return m, emax

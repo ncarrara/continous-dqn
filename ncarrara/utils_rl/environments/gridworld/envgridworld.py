@@ -150,7 +150,7 @@ class EnvGridWorld(object):
                 rectangle, r, c, is_absorbing = case
                 if inRectangle(sp, rectangle):
                     info["state_is_absorbing"] = is_absorbing
-                    self.ended = True
+                    self.ended = is_absorbing
                     break
         # if is_absorbing:
         #     observation = None

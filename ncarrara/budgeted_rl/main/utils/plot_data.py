@@ -13,6 +13,11 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 import seaborn as sns
 
+
+# plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -78,6 +83,12 @@ def plot_all(data, path, params):
                            params=params,
                            filename=os.path.join(path, "{}_{}_annot={}.png".format(type, type_varation,
                                                                                    show_annotation)))
+                plot_patch(type, means, stds, counts, show_annotation=show_annotation,
+                           show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
+                           curves="algorithm", points="parameter",
+                           params=params,
+                           filename=os.path.join(path, "{}_{}_annot={}.eps".format(type, type_varation,
+                                                                                   show_annotation)))
 
             # plot_patch(means_of_means, mean_of_stds, counts, show_annotation=show_annotation,x="Cd", y="Rd", curves="algorithm", points="parameter",
             #            params=params, filename=os.path.join(path, "results_disc_extra_annot={}.png".format(show_annotation)))
@@ -122,6 +133,11 @@ def plot_patch(type, mean, std, counts, x, y, curves, points, params, show_std=F
         # exit()
         ax1 = data.plot.scatter(x=x, y=y, ax=ax, c=[params[group_label][0]], marker=params[group_label][1], s=30,
                                 zorder=2, label=group_label)
+
+        ax_xlabel = ax.xaxis.get_label()
+        ax_ylabel = ax.yaxis.get_label()
+        plt.xlabel(rename_label(ax_xlabel._text))
+        plt.ylabel(rename_label(ax_ylabel._text))
         # ax1.legend(group_label)
         # lines,_ = ax1.get_legend_handles_labels()
         # handlers.append(lines)
@@ -183,16 +199,34 @@ def plot_lines(data, x=None, y=None, filename=None, points=None, **kwargs):
     plt.close()
 
 
+def rename_fields(data, algos):
+    data = data.replace("ftq_duplicate", "FTQ")
+    data = data.replace("ftq_egreedy", "FTQ")
+    data = data.replace("bftq_egreedy", "BFTQ")
+    data = data.replace("bftq_duplicate", "BFTQ")
+    algos["FTQ"] = algos["ftq_duplicate"]
+    algos["BFTQ"] = algos["bftq_egreedy"]
+    return data, algos
+
+
+def rename_label(label):
+    replacement = {"Rd": r"$\mathcal{R}^\pi$", "Cd": r"$\mathcal{C}^\pi$"}
+    return replacement.get(label, label)
+
+
+
+
 def main(workspace):
     palette = itertools.cycle(sns.color_palette())
     marker = itertools.cycle(('^', 'v', '*', '+', '*'))
     algos = {
+        "bftq_egreedy": [next(palette), next(marker), r"bftq egreedy($\beta$)"],
         "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
         "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
-        "bftq_egreedy": [next(palette), next(marker), r"bftq egreedy($\beta$)"],
         "bftq_duplicate": [next(palette), next(marker), r"bftq duplicate($\beta$)"],
     }
     data = parse_data(workspace, algos)
+    data, algos = rename_fields(data, algos)
     print(data)
     plot_all(data, workspace, algos)
 

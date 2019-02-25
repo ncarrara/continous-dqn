@@ -303,9 +303,9 @@ def double_path(high=5, std=[0.75, 0.75]):
     reward_safe = []
     for i in range(1,high):
         reward_safe.append(i)
-    reward_unsafe = [10] * (high - 1)
     reward_safe += [100.]
-    reward_unsafe += [10.]
+    reward_safe = np.asarray(reward_safe)
+    reward_unsafe = reward_safe * 10
 
 
     safe_path = []

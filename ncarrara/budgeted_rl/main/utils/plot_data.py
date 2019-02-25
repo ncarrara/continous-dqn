@@ -87,7 +87,7 @@ def plot_all(data, path, params):
                            show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
                            curves="algorithm", points="parameter",
                            params=params,
-                           filename=os.path.join(path, "{}_{}_annot={}.eps".format(type, type_varation,
+                           filename=os.path.join(path, "{}_{}_annot={}.svg".format(type, type_varation,
                                                                                    show_annotation)))
 
             # plot_patch(means_of_means, mean_of_stds, counts, show_annotation=show_annotation,x="Cd", y="Rd", curves="algorithm", points="parameter",

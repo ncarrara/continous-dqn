@@ -301,24 +301,24 @@ def double_path(high=5, std=[0.75, 0.75]):
     blocks = []
 
     reward_safe = []
-    for i in range(1,high):
+    for i in range(1, high):
         reward_safe.append(i)
     reward_safe += [100.]
-    reward_safe = np.asarray(reward_safe)
-    reward_unsafe = reward_safe * 10
-
+    reward_unsafe = []
+    for i in range(1, high + 1):
+        reward_unsafe.append(i * 10)
 
     safe_path = []
     unsafe_path = []
 
     for h in range(0, high):
-        unsafe_path.append(((2, h + 1, 3, h + 2), reward_unsafe[h], 1, False))
+        unsafe_path.append(((2, h + 1, 3, h + 2), reward_unsafe[h], 1. / (high), False))
         safe_path.append(((0, h + 1, 1, h + 2), reward_safe[h], 0, False))
         blocks.append((1, h + 1, 2, h + 2))
 
     cases = safe_path + unsafe_path
     dim = (3, h + 2)
-    m = EnvGridWorld(dim, std, cases, high + 3, True, noise_type="gaussian_bis", init_s=start,
+    m = EnvGridWorld(dim, std, cases, high + 1, True, noise_type="gaussian_bis", init_s=start,
                      actions=A,
                      actions_str=A_str,
                      blocks=blocks)

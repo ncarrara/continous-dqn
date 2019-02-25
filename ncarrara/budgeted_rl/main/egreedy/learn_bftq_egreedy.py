@@ -67,6 +67,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
     }
 
     # Main loop
+    trajs = []
     for batch, batch_size in enumerate(batch_sizes):
         # Prepare workers
         cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), batch_size)
@@ -109,7 +110,6 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
         bftq.workspace = workspace / "batch={}".format(batch)
         makedirs(bftq.workspace)
         if isinstance(e, EnvGridWorld):
-            trajs = []
             for trajectories, _ in results:
                 for traj in trajectories:
                         trajs.append(traj)

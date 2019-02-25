@@ -1,8 +1,8 @@
 {
   "general": {
-    "id": "double_path_camera_ready",
+    "id": "main5",
     "seed": 0,
-    "workspace": "tmp/double_path/main",
+    "workspace": "tmp/double_path/main5",
     "hull_options": {
       "decimals": null,
       "qhull_options": null,
@@ -78,12 +78,11 @@
       ]
     }
   },
-
-  "test_ftq": {
+  "-test_ftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 1000
   },
-  "test_ftq_duplicate": {
+  "-test_ftq_duplicate": {
     "N_trajs": 1000,
     "policy_path": "policy.pt"
   },
@@ -97,47 +96,22 @@
     "N_trajs": 1000,
     "betas_test": "np.linspace(0.,1.,10)"
   },
-
   "gamma": 1.0,
   "gamma_c": 1.0,
-
-  "learn_ftq_egreedy": {
-    "lambdas": "[1000.,0.,100.,50.,10.,5.,500.]",
-    "trajs_by_ftq_batch": 50,
-    "normalize_reward": true,
-    "N_trajs": 1000,
-    "epsilon_decay": {
-      "start": 1.0,
-      "decay": 0.005
-    },
-    "save_memory": {
-      "path": "learn_ftq_egreedy.data",
-      "as_json": false
-    }
-  },
-
   "learn_ftq_duplicate": {
-    "lambdas": "[1000.,0.,100.,50.,10.,5.,500.",
     "generate_data": {
       "lambda_": 0.0,
       "trajs_by_ftq_batch": 50,
       "normalize_reward": true,
-      "N_trajs": 1000,
+      "N_trajs": 500,
       "epsilon_decay": {
         "start": 1.0,
-        "decay": 0.005
+        "decay": 0.01
       },
       "save_memory": {
         "path": "samples_for_duplicate.data",
         "as_json": false
       }
-    },
-    "learn_ftq_full_batch": {
-      "load_memory": {
-        "path": "samples_for_duplicate.data",
-        "as_json": false
-      },
-      "normalize_reward": true
     }
   },
   "learn_bftq_duplicate": {
@@ -148,28 +122,26 @@
     },
     "normalize_reward": true
   },
-
   "learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 50,
     "normalize_reward": true,
-    "N_trajs": 1000,
+    "N_trajs": 500,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.005
+      "decay": 0.01
     },
     "betas_for_exploration": "[]",
     "betas_for_duplication": "[]"
   },
-
   "bftq_params": {
     "clamp_Qc": null,
     "use_data_loader": false,
     "use_data_parallel": false,
     "use_extra_gpu_memory_threshold": 100,
     "maximum_number_of_gpu": 1,
-    "betas_for_discretisation": "np.linspace(0.,1.,101)",
+    "betas_for_discretisation": "np.linspace(0.,1.,51)",
     "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 5000,
+    "max_nn_epoch": 1000,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "max_ftq_epoch": 12,
@@ -193,27 +165,6 @@
       256,
       128,
       64
-    ]
-  },
-  "ftq_params": {
-    "nn_loss_stop_condition": 0.001,
-    "max_nn_epoch": 5000,
-    "optimizer": "ADAM",
-    "loss_function": "l2",
-    "max_ftq_epoch": 12,
-    "learning_rate": 0.001,
-    "reset_policy_each_ftq_epoch": true,
-    "delta_stop": 0.001,
-    "weight_decay": 0.001,
-    "batch_size_experience_replay": "ALL_BATCH"
-  },
-  "ftq_net_params": {
-    "activation_type": "RELU",
-    "reset_type": "XAVIER",
-    "intra_layers": [
-      128,
-      64,
-      32
     ]
   }
 }

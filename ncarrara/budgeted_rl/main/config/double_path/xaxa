@@ -1,0 +1,148 @@
+  [TURN 0] --------------- 
+  [TURN 0] cons_status : [0, 0, 0] 
+  [TURN 0] recos_status : [ None None None ] 
+  [TURN 0] system says "ASK_ORAL(1)" 
+  [TURN 0] user says "INFORM" 
+  [TURN 1] --------------- 
+  [TURN 1] cons_status : [0, 0, 0] 
+  [TURN 1] recos_status : [ None 0.48 None ] 
+  [TURN 1] system says "ASK_ORAL(2)" 
+  [TURN 1] user says "INFORM" 
+  [TURN 2] --------------- 
+  [TURN 2] cons_status : [0, 0, 0] 
+  [TURN 2] recos_status : [ None 0.48 0.22 ] 
+  [TURN 2] system says "ASK_ORAL(0)" 
+  [TURN 2] user says "INFORM" 
+  [TURN 3] --------------- 
+  [TURN 3] cons_status : [0, 0, 0] 
+  [TURN 3] recos_status : [ 0.62 0.48 0.22 ] 
+  [TURN 3] system says "ASK_ORAL(2)" 
+  [TURN 3] user says "INFORM" 
+  [TURN 4] --------------- 
+  [TURN 4] cons_status : [0, 0, 0] 
+  [TURN 4] recos_status : [ 0.62 0.48 0.66 ] 
+  [TURN 4] system says "ASK_ORAL(1)" 
+  [TURN 4] user says "INFORM" 
+  [TURN 5] --------------- 
+  [TURN 5] cons_status : [0, 1, 0] 
+  [TURN 5] recos_status : [ 0.62 0.56 0.66 ] 
+  [TURN 5] system says "ASK_ORAL(2)" 
+  [TURN 5] user says "INFORM" 
+  [TURN 6] --------------- 
+  [TURN 6] cons_status : [0, 1, 0] 
+  [TURN 6] recos_status : [ 0.62 0.56 0.14 ] 
+  [TURN 6] system says "ASK_ORAL(2)" 
+  [TURN 6] user says "INFORM" 
+  [TURN 7] --------------- 
+  [TURN 7] cons_status : [0, 1, 1] 
+  [TURN 7] recos_status : [ 0.62 0.56 0.30 ] 
+  [TURN 7] system says "ASK_ORAL(2)" 
+  [TURN 7] user says "INFORM" 
+  [TURN 8] --------------- 
+  [TURN 8] cons_status : [0, 1, 1] 
+  [TURN 8] recos_status : [ 0.62 0.56 0.49 ] 
+  [TURN 8] system says "ASK_ORAL(2)" 
+  [TURN 8] user says "INFORM" 
+  [TURN 9] --------------- 
+  [TURN 9] cons_status : [0, 1, 1] 
+  [TURN 9] recos_status : [ 0.62 0.56 0.65 ] 
+  [TURN 9] system says "SUMMARIZE_AND_INFORM" 
+  [TURN 9] max size reached !
+
+
+    [TURN 0] ---------------
+  [TURN 0] cons_status : [0, 0, 0]
+  [TURN 0] recos_status : [ None None None ]
+  [TURN 0] system says "ASK_ORAL(2)"
+  [TURN 0] user says "INFORM"
+  [TURN 1] ---------------
+  [TURN 1] cons_status : [0, 0, 1]
+  [TURN 1] recos_status : [ None None 0.60 ]
+  [TURN 1] system says "ASK_ORAL(0)"
+  [TURN 1] user says "INFORM"
+  [TURN 2] ---------------
+  [TURN 2] cons_status : [0, 0, 1]
+  [TURN 2] recos_status : [ 0.33 None 0.60 ]
+  [TURN 2] system says "ASK_ORAL(1)"
+  [TURN 2] user says "INFORM"
+  [TURN 3] ---------------
+  [TURN 3] cons_status : [0, 0, 1]
+  [TURN 3] recos_status : [ 0.33 0.42 0.60 ]
+  [TURN 3] system says "ASK_ORAL(0)"
+  [TURN 3] user says "INFORM"
+  [TURN 4] ---------------
+  [TURN 4] cons_status : [0, 0, 1]
+  [TURN 4] recos_status : [ 0.72 0.42 0.60 ]
+  [TURN 4] system says "ASK_NUM_PAD(1)"
+  [TURN 4] user says "INFORM"
+  [TURN 5] ---------------
+  [TURN 5] cons_status : [0, 1, 1]
+  [TURN 5] recos_status : [ 0.72 1.00 0.60 ]
+  [TURN 5] system says "SUMMARIZE_AND_INFORM"
+  [TURN 5] user says "DENY_SUMMARIZE"
+  [TURN 6] ---------------
+  [TURN 6] cons_status : [0, 1, 1]
+  [TURN 6] recos_status : [ 0.72 1.00 0.60 ]
+  [TURN 6] system says "ASK_NUM_PAD(2)"
+  [TURN 6] user says "INFORM"
+  [TURN 7] ---------------
+  [TURN 7] cons_status : [0, 1, 1]
+  [TURN 7] recos_status : [ 0.72 1.00 1.00 ]
+  [TURN 7] system says "SUMMARIZE_AND_INFORM"
+  [TURN 7] user says "DENY_SUMMARIZE"
+  [TURN 8] ---------------
+  [TURN 8] cons_status : [0, 1, 1]
+  [TURN 8] recos_status : [ 0.72 1.00 1.00 ]
+  [TURN 8] system says "ASK_NUM_PAD(0)"
+  [TURN 8] user hang up ! 
+
+  [TURN 0] --------------- 
+  [TURN 0] cons_status : [0, 0, 0] 
+  [TURN 0] recos_status : [ None None None ] 
+  [TURN 0] system says "ASK_ORAL(2)" 
+  [TURN 0] user says "INFORM" 
+  [TURN 1] --------------- 
+  [TURN 1] cons_status : [0, 0, 0] 
+  [TURN 1] recos_status : [ None None 0.44 ] 
+  [TURN 1] system says "ASK_ORAL(0)" 
+  [TURN 1] user says "INFORM" 
+  [TURN 2] --------------- 
+  [TURN 2] cons_status : [1, 0, 0] 
+  [TURN 2] recos_status : [ 0.38 None 0.44 ] 
+  [TURN 2] system says "ASK_ORAL(1)" 
+  [TURN 2] user says "INFORM" 
+  [TURN 3] --------------- 
+  [TURN 3] cons_status : [1, 1, 0] 
+  [TURN 3] recos_status : [ 0.38 0.50 0.44 ] 
+  [TURN 3] system says "ASK_ORAL(0)" 
+  [TURN 3] user says "INFORM" 
+  [TURN 4] --------------- 
+  [TURN 4] cons_status : [0, 1, 0] 
+  [TURN 4] recos_status : [ 0.60 0.50 0.44 ] 
+  [TURN 4] system says "SUMMARIZE_AND_INFORM" 
+  [TURN 4] user says "DENY_SUMMARIZE" 
+  [TURN 5] --------------- 
+  [TURN 5] cons_status : [0, 1, 0] 
+  [TURN 5] recos_status : [ 0.60 0.50 0.44 ] 
+  [TURN 5] system says "ASK_ORAL(2)" 
+  [TURN 5] user says "INFORM" 
+  [TURN 6] --------------- 
+  [TURN 6] cons_status : [0, 1, 0] 
+  [TURN 6] recos_status : [ 0.60 0.50 0.22 ] 
+  [TURN 6] system says "ASK_NUM_PAD(2)" 
+  [TURN 6] user says "INFORM" 
+  [TURN 7] --------------- 
+  [TURN 7] cons_status : [0, 1, 1] 
+  [TURN 7] recos_status : [ 0.60 0.50 1.00 ] 
+  [TURN 7] system says "ASK_NUM_PAD(1)" 
+  [TURN 7] user says "INFORM" 
+  [TURN 8] --------------- 
+  [TURN 8] cons_status : [0, 1, 1] 
+  [TURN 8] recos_status : [ 0.60 1.00 1.00 ] 
+  [TURN 8] system says "ASK_NUM_PAD(0)" 
+  [TURN 8] user says "INFORM" 
+  [TURN 9] --------------- 
+  [TURN 9] cons_status : [1, 1, 1] 
+  [TURN 9] recos_status : [ 1.00 1.00 1.00 ] 
+  [TURN 9] system says "SUMMARIZE_AND_INFORM" 
+  [TURN 9] success ! 

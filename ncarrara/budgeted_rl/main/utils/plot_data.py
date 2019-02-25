@@ -222,8 +222,8 @@ def main(workspace):
     algos = {
         "bftq_egreedy": [next(palette), next(marker), r"bftq egreedy($\beta$)"],
         "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
-        "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
-        "bftq_duplicate": [next(palette), next(marker), r"bftq duplicate($\beta$)"],
+        # "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
+        # "bftq_duplicate": [next(palette), next(marker), r"bftq duplicate($\beta$)"],
     }
     data = parse_data(workspace, algos)
     data, algos = rename_fields(data, algos)

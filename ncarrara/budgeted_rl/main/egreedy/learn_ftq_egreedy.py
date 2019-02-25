@@ -53,6 +53,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
     }
 
     # Main loop
+    trajs = []
     for batch, batch_size in enumerate(batch_sizes):
         # Prepare workers
         cpu_processes = min(general["cpu"]["processes_when_linked_with_gpu"] or os.cpu_count(), batch_size)
@@ -89,7 +90,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
         makedirs(ftq.workspace)
 
         if isinstance(e, EnvGridWorld):
-            trajs = []
+
             for trajectories, _ in results:
                 for traj in trajectories:
                         trajs.append(traj)

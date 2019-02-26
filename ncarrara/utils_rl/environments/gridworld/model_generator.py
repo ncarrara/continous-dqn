@@ -327,6 +327,38 @@ def double_path(high=5, std=[0.75, 0.75]):
     return m, emax
 
 
+def omega(high=5, std=[0.75, 0.75]):
+    A_str = ["X", "v", "->", "<-", "^"]
+    A = [(0., 0.), (0., 1.), (1., 0.), (-1., 0), (0., -1.)]
+    start = np.array([3.5, 0.5])
+    blocks = []
+
+    safe_path = [((0, high - 1, 1, high), 1000, 0., False)]
+    unsafe_path = [((4, 0, 5, 1), 0, 1. / (high + 2), False), ((5, 0, 6, 1), 0, 1. / (high + 2), False),
+                   ((6, high - 1, 7, high), 100, 1. / (high + 2), False)]
+
+    for h in range(1, high):
+        unsafe_path.append(((5, h, 6, h + 1), 10 * h, 1. / (high + 2), False))
+        safe_path.append(((1, h, 2, h + 1), 1 * h, 0, False))
+        blocks.append((2, h, 3, h + 1))
+        blocks.append((3, h, 4, h + 1))
+        blocks.append((4, h, 5, h + 1))
+
+    for h in range(0, high - 1):
+        blocks.append((0, h, 1, h + 1))
+        blocks.append((6, h, 7, h + 1))
+
+    cases = safe_path + unsafe_path
+    dim = (7, high)
+    m = EnvGridWorld(dim, std, cases, high + 3, True, noise_type="gaussian_bis", init_s=start,
+                     actions=A,
+                     actions_str=A_str,
+                     blocks=blocks)
+    emax = None
+    # exit()
+    return m, emax
+
+
 def generate_continuous3xWidth(width=3):
     trajectory_max_size = width + 1
     A_str = ["top", "right"]

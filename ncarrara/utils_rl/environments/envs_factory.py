@@ -73,6 +73,9 @@ def generate_envs(envs_str, envs_params):
         elif envs_str == "double_path":
             from ncarrara.utils_rl.environments.gridworld.model_generator import double_path
             env, _ = double_path(**param)
+        elif envs_str == "omega":
+            from ncarrara.utils_rl.environments.gridworld.model_generator import omega
+            env, _ = omega(**param)
         else:
             env = gym.make(envs_str)
             for k, v in param.items():

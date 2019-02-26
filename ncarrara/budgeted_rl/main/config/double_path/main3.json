@@ -86,7 +86,7 @@
     "N_trajs": 1000,
     "policy_path": "policy.pt"
   },
-  "test_bftq": {
+  "-test_bftq": {
     "policy_path": "final_policy.pt",
     "N_trajs": 1000,
     "betas_test": "np.linspace(0.,1.,10)"
@@ -122,7 +122,7 @@
     },
     "normalize_reward": true
   },
-  "learn_bftq_egreedy": {
+  "-learn_bftq_egreedy": {
     "trajs_by_ftq_batch": 100,
     "normalize_reward": true,
     "N_trajs": 500,
@@ -165,6 +165,27 @@
       256,
       128,
       64
+    ]
+  },
+   "ftq_params": {
+    "nn_loss_stop_condition": 0.001,
+    "max_nn_epoch": 5000,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "max_ftq_epoch": 12,
+    "learning_rate": 0.001,
+    "reset_policy_each_ftq_epoch": true,
+    "delta_stop": 0.001,
+    "weight_decay": 0.001,
+    "batch_size_experience_replay": "ALL_BATCH"
+  },
+  "ftq_net_params": {
+    "activation_type": "RELU",
+    "reset_type": "XAVIER",
+    "intra_layers": [
+      128,
+      64,
+      32
     ]
   }
 }

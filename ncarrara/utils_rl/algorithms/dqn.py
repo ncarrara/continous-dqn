@@ -48,9 +48,11 @@ class DQN:
                  workspace=None,
                  lr=None,
                  weight_decay=None,
+                 transfer_module = None,
                  **kwargs):
+        self.tranfer_module=transfer_module
         self.device= device
-        self.BATCH_SIZE_EXPERIENCE_REPLAY = batch_size_experience_replay
+        self.size_mini_batch = batch_size_experience_replay
         self.GAMMA = gamma
         self.TARGET_UPDATE = target_update
         self.workspace = workspace
@@ -63,7 +65,7 @@ class DQN:
         self.i_episode = 0
         self.no_need_for_transfer_anymore = False
         self.n_actions = self.policy_net.predict.out_features
-        self.transfer_experience_replay = None
+        # self.transfer_experience_replay = None
 
         if loss_function == "l2":
             self.loss_function = F.mse_loss
@@ -95,21 +97,23 @@ class DQN:
         self.no_need_for_transfer_anymore = False
 
     def _optimize_model(self):
-        # if self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ADAPTATIVE:
-        #     size_batch = len(self.memory) / 10
-        # elif self.BATCH_SIZE_EXPERIENCE_REPLAY == self.ALL_BATCH:
-        #     size_batch = len(self.memory)
-        # else:
-        size_batch = self.BATCH_SIZE_EXPERIENCE_REPLAY
 
-        transitions = self.memory.sample(len(self.memory) if size_batch > len(self.memory) else size_batch)
+        transitions = self.memory.sample(len(self.memory) if self.size_mini_batch > len(self.memory) else self.size_mini_batch)
 
-        size_transfer = size_batch - len(transitions)
-        if size_transfer > 0 and self.transfer_experience_replay is not None and not self.no_need_for_transfer_anymore:
-            transfer_transitions = self.transfer_experience_replay.sample(size_transfer)
-            transitions = transitions + transfer_transitions
+        if self.tranfer_module is not None:
+            # reeavalute errors
+            # TODO
 
-        self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
+            # transfert samples
+            if self.tranfer_module.get_experience_replay_source() is not None:
+                size_transfer = self.size_mini_batch - len(transitions)
+                if size_transfer > 0 and not self.no_need_for_transfer_anymore:
+                    transfer_transitions = self.tranfer_module.get_experience_replay_source().sample(size_transfer)
+                    transitions = transitions + transfer_transitions
+                self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
+
+            # transfer Q
+            # TODO
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
@@ -134,6 +138,7 @@ class DQN:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
+
     def pi(self, state, action_mask):
 
         with torch.no_grad():
@@ -154,7 +159,10 @@ class DQN:
             next_state = None
         action = torch.tensor([[action]], device=self.device, dtype=torch.long)
         reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
-        self.memory.push(state, action, reward, next_state, done, info)
+        t = state, action, reward, next_state, done, info
+        self.memory.push(*t)
+        if self.tranfer_module is not None:
+            self.tranfer_module.push(*t)
         self._optimize_model()
         if next_state is None:
             self.i_episode += 1

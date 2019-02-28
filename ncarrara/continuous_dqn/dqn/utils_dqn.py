@@ -33,13 +33,18 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
     # transfer_params = {autoencoders, ers,feature_autoencoder,sources_params,test_params}
 
     if transfer_params is not None:
-        tm = TransferModule(models=transfer_params["autoencoders"],
+        tm = TransferModule(auto_encoders=transfer_params["autoencoders"],
                             loss=F.l1_loss,
-                            experience_replays=transfer_params["ers"])
+                            experience_replays=transfer_params["ers"],
+                            Q_sources=transfer_params["Q_sources"]
+                            )
+        transfer_type = transfer_params["transfer_type"]
         tm.reset()
+    else:
+        tm=None
     size_state = len(feature_dqn(env.reset()))
     net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
-    dqn = DQN(policy_network=net, device=device, workspace=workspace, **dqn_params)
+    dqn = DQN(policy_network=net, device=device, transfer_module=tm,workspace=workspace, **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)
     rrr = []
@@ -73,25 +78,6 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
             rr += r_
             t_dqn = (feature_dqn(s), a, r_, feature_dqn(s_), done, info)
             dqn.update(*t_dqn)
-            if transfer_params is not None:
-                # if replay memory mini batch full, no need to transfer anymore
-                if dqn.no_need_for_transfer_anymore:
-                    if not already_warn_for_no_need_transfer:
-                        logger.warning("No need to transfer anymore (number of trajs = {}".format(n))
-                        already_warn_for_no_need_transfer = True
-                else:
-                    t_autoencoder = transfer_params["feature_autoencoder"]((s, a, r_, s_, done, info))
-                    tm.push(t_autoencoder)
-                    best_er, errors = tm.best_source_transitions()
-                    dqn.update_transfer_experience_replay(best_er)
-                    if transfer_params and nb_samples < 10:
-                        logger.info("[N_trajs={},N_samples={}] {}".format(n, nb_samples,
-                                                                          utils.format_errors(errors,
-                                                                                              transfer_params[
-                                                                                                  "sources_params"],
-                                                                                              transfer_params[
-                                                                                                  "test_params"])))
-
             s = s_
             nb_samples += 1
             it += 1
@@ -103,13 +89,12 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
             if traj_max_size is not None and it >= traj_max_size:
                 logger.warning("Max size trajectory reached")
                 break
-        if transfer_params is not None and n % 50 == 0:
+        if transfer_params is not None  and n % 50 == 0:
             logger.info("------------------------------------")
-            logger.info("[N_trajs={},N_samples={}] {}".format(n, nb_samples, utils.format_errors(errors,
-                                                                                                 transfer_params[
-                                                                                                     "sources_params"],
-                                                                                                 transfer_params[
-                                                                                                     "test_params"])))
+            logger.info("[N_trajs={},N_samples={}] {}"
+                        .format(n, nb_samples, utils.format_errors(dqn.transfer_module.errors,
+                                                                   transfer_params["sources_params"],
+                                                                   transfer_params["test_params"])))
             logger.info("--------------------------------------")
         # print("------------------------------->",it,rr)
         rrr.append(rr)

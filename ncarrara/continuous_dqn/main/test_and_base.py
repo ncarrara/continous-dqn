@@ -16,7 +16,7 @@ def main():
     feature_autoencoder = build_feature_autoencoder(C["feature_autoencoder_info"])
 
     all_transitions = utils.read_samples_for_autoencoders(C.path_samples,feature_autoencoder)
-    tm = TransferModule(models=autoencoders, loss=F.l1_loss)
+    tm = TransferModule(auto_encoders=autoencoders, loss=F.l1_loss)
 
     errors_base = []
     for transitions in all_transitions:
@@ -49,7 +49,7 @@ def main():
                 feat=feature_autoencoder((s, a, r_, s_,done,info))
                 tm.push(feat)
                 s = s_
-        errors_test.append(tm.errors())
+        errors_test.append(tm.evaluate_all_memory())
 
     print("================================================ test ================================================")
     print(utils.array_to_cross_comparaison(errors_test, source_params, test_params))

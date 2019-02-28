@@ -100,7 +100,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
             w.draw_lattice()
             w.draw_cases()
             w.draw_source_trajectories(trajs)
-            w.save(ftq.workspace / "bftq_on_2dworld_sources")
+            w.save((ftq.workspace / "bftq_on_2dworld_sources").as_posix())
 
         ftq.fit(transitions_ftq)
 

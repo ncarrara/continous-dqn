@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 def generate_env_params_combination(env_params):
     for k, v in env_params.items():
         if type(v) is str:
+            import numpy as np
             x = eval(v)
             env_params[k] = x
             logger.info("[gepc] <{}> {} -> {}".format(k, v, x))

@@ -1,0 +1,12 @@
+|turn|<img src="https://latex.codecogs.com/gif.latex?\beta=0"/>|<img src="https://latex.codecogs.com/gif.latex?\beta=0.5"/>|
+|----|------|--------|
+|turn 0|valid slots : [0, 0, 0] <br>srs : [ None None None ] <br>system says "ASK_ORAL(1)" <br>user says "INFORM" <br>|valid slots : [0, 0, 0] <br>srs : [ None None None ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>
+|turn 1|valid slots : [0, 0, 0] <br>srs : [ None 0.48 None ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 0, 1] <br>srs : [ None None 0.56 ] <br>system says "ASK_ORAL(0)" <br>user says "INFORM" <br>
+|turn 2|valid slots : [0, 0, 0] <br>srs : [ None 0.48 0.22 ] <br>system says "ASK_ORAL(0)" <br>user says "INFORM" <br>|valid slots : [0, 0, 1] <br>srs : [ 0.30 None 0.56 ] <br>system says "ASK_ORAL(1)" <br>user says "INFORM" <br>
+|turn 3|valid slots : [0, 0, 0] <br>srs : [ 0.62 0.48 0.22 ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 0, 1] <br>srs : [ 0.30 0.54 0.56 ] <br>system says "ASK_ORAL(0)" <br>user says "INFORM" <br>
+|turn 4|valid slots : [0, 0, 0] <br>srs : [ 0.62 0.48 0.66 ] <br>system says "ASK_ORAL(1)" <br>user says "INFORM" <br>|valid slots : [0, 0, 1] <br>srs : [ 0.68 0.54 0.56 ] <br>system says "ASK_NUM_PAD(1)" <br>user says "INFORM" <br>
+|turn 5|valid slots : [0, 1, 0] <br>srs : [ 0.62 0.56 0.66 ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 1, 1] <br>srs : [ 0.68 1.00 0.56 ] <br>system says "SUMMARIZE_AND_INFORM" <br>user says "DENY_SUMMARIZE" <br>
+|turn 6|valid slots : [0, 1, 0] <br>srs : [ 0.62 0.56 0.14 ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 1, 1] <br>srs : [ 0.68 1.00 0.56 ] <br>system says "ASK_NUM_PAD(2)" <br>user says "INFORM" <br>
+|turn 7|valid slots : [0, 1, 1] <br>srs : [ 0.62 0.56 0.30 ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 1, 1] <br>srs : [ 0.68 1.00 1.00 ] <br>system says "SUMMARIZE_AND_INFORM" <br>user says "DENY_SUMMARIZE" <br>
+|turn 8|valid slots : [0, 1, 1] <br>srs : [ 0.62 0.56 0.49 ] <br>system says "ASK_ORAL(2)" <br>user says "INFORM" <br>|valid slots : [0, 1, 1] <br>srs : [ 0.68 1.00 1.00 ] <br>system says "ASK_NUM_PAD(0)" <br>user hangs up ! <br>
+|turn 9|valid slots : [0, 1, 1] <br>srs : [ 0.62 0.56 0.65 ] <br>system says "SUMMARIZE_AND_INFORM" <br>max size reached ! <br>||

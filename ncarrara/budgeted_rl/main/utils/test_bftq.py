@@ -62,10 +62,11 @@ def main(betas_test, policy_path, generate_envs, feature_str, device, workspace,
                 w.draw_lattice()
                 w.draw_cases()
                 w.draw_test_trajectories(trajs)
-                w.save(workspace / "trajs" / "trajs_beta={:.2f}".format(beta))
-        # if isinstance(mock_env, EnvGridWorld):
-        #     os.system(
-        #         "convert -delay 10 -loop 0 " + workspace.as_posix() / "trajs/" + "*.png " + workspace.as_posix() / "out.gif")
+                pp = (workspace / "trajs" / "trajs_beta").as_posix()
+                w.save(pp+"={:.2f}".format(beta))
+        if isinstance(mock_env, EnvGridWorld):
+            os.system(
+                "convert -delay 10 -loop 0 " + workspace.as_posix() + "/trajs/" + "*.png " + workspace.as_posix() + "/out.gif")
 
     except FileNotFoundError as e:
         logger.warning("Could not load policy: {}".format(e))
@@ -93,7 +94,7 @@ if __name__ == "__main__":
 
     main(device=C.device,
          seed=C.seed,
-         workspace=C.path_bftq_egreedy,
+         workspace=C.workspace,
          path_results=C.path_bftq_results,
          **C.dict["test_bftq"],
          **C.dict)

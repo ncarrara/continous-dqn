@@ -200,12 +200,12 @@ def plot_lines(data, x=None, y=None, filename=None, points=None, **kwargs):
 
 
 def rename_fields(data, algos):
-    data = data.replace("ftq_duplicate", "FTQ")
-    data = data.replace("ftq_egreedy", "FTQ")
-    data = data.replace("bftq_egreedy", "BFTQ")
-    data = data.replace("bftq_duplicate", "BFTQ")
-    algos["FTQ"] = algos["ftq_duplicate"]
-    algos["BFTQ"] = algos["bftq_egreedy"]
+    # data = data.replace("ftq_duplicate", "FTQ")
+    # data = data.replace("ftq_egreedy", "FTQ")
+    data = data.replace("bftq_egreedy", "BFTQ(risk-sensitive)")
+    data = data.replace("bftq_duplicate", "BFTQ(risk-neutral)")
+    algos["BFTQ(risk-neutral)"] = algos["bftq_duplicate"]
+    algos["BFTQ(risk-sensitive)"] = algos["bftq_egreedy"]
     return data, algos
 
 
@@ -220,10 +220,10 @@ def main(workspace):
     palette = itertools.cycle(sns.color_palette())
     marker = itertools.cycle(('^', 'v', '*', '+', '*'))
     algos = {
-        "bftq_egreedy": [next(palette), next(marker), r"bftq egreedy($\beta$)"],
-        "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
+        "bftq_egreedy": [next(palette), next(marker), r"bftq risk-sensitive($\beta$)"],
+        "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
+        # "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
         # "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
-        # "bftq_duplicate": [next(palette), next(marker), r"bftq duplicate($\beta$)"],
     }
     data = parse_data(workspace, algos)
     data, algos = rename_fields(data, algos)

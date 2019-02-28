@@ -775,7 +775,7 @@ class PytorchBudgetedFittedQ:
                     w.draw_lattice()
                     w.draw_cases()
                     w.draw_policy_bftq(pi, qr, qc, self.betas_for_discretisation)
-                    w.save(self.workspace / "bftq_on_2dworld_e_={}".format(self._id_ftq_epoch))
+                    w.save((self.workspace / "bftq_on_2dworld").as_posix() +"_e_={}".format(self._id_ftq_epoch))
 
         self.empty_cache()
         self.info("[_ftq_epoch] ... end")

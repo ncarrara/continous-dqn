@@ -333,7 +333,7 @@ def omega(high=5, std=[0.75, 0.75]):
     start = np.array([3.5, 0.5])
     blocks = []
 
-    safe_path = [((0, high - 1, 1, high), 1000, 0., False)]
+    safe_path = [((0, high - 1, 1, high), 100, 0., False)]
     unsafe_path = [((4, 0, 5, 1), 0, 1. / (high + 2), False), ((5, 0, 6, 1), 0, 1. / (high + 2), False),
                    ((6, high - 1, 7, high), 100, 1. / (high + 2), False)]
 

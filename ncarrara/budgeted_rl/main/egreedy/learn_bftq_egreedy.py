@@ -119,12 +119,12 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             w.draw_lattice()
             w.draw_cases()
             w.draw_source_trajectories(trajs)
-            w.save(bftq.workspace / "bftq_on_2dworld_sources")
+            w.save((bftq.workspace / "bftq_on_2dworld_sources").as_posix())
         q = bftq.fit(transition_bftq)
 
         # Save policy
         network_path = bftq.save_policy()
-        os.system("cp {}/policy.pt {}/final_policy.pt".format(bftq.workspace, workspace))
+        os.system("cp {}/policy.pt {}/policy.pt".format(bftq.workspace, workspace))
 
         # Save memory
         save_memory(bftq, memory_by_batch, by_batch=False)
@@ -176,7 +176,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             w.draw_lattice()
             w.draw_cases()
             w.draw_policy_bftq(pi, qr, qc, bftq.betas_for_discretisation)
-            w.save(bftq.workspace / "bftq_on_2dworld")
+            w.save((bftq.workspace / "bftq_on_2dworld").as_posix())
 
     save_memory(bftq, memory_by_batch, by_batch=True)
 

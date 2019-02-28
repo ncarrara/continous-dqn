@@ -57,7 +57,8 @@ def main(device, workspace, policy_path, generate_envs, feature_str, gamma, gamm
         w.draw_cases()
         w.draw_test_trajectories(trajs)
         makedirs(workspace / "trajs")
-        w.save(workspace / "trajs" / "trajs_lambda{:.2f}".format(lambda_))
+        pp = (workspace / "trajs" / "trajs_lambda").as_posix()
+        w.save(pp + "={:.2f}".format(lambda_))
 
     print("FTQ({}) : {}".format(lambda_, format_results(rez)))
 

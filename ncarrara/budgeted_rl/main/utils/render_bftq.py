@@ -89,7 +89,7 @@ def main(policy_path, generate_envs, feature_str, device, workspace, bftq_params
 
 def render(env, workspace, time, action):
     im = Image.fromarray(env.render(mode="rgb_array"))
-    im.save(workspace / "behavior" / "env_t={}_a={}.png".format(time, action))
+    im.save((workspace / "behavior").as_posix()+"/env_t={}_a={}.png".format(time, action))
 
 
 if __name__ == "__main__":

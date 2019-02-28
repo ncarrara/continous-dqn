@@ -302,7 +302,7 @@ class World():
             self.draw_test_trajectory(trajectory, alpha)
 
     def save(self, filename):
-        file = filename.with_suffix('.png').as_posix()
+        file = filename+'.png'
         # logging.info("[WORLD] saving to {}".format(file))
         self.ctx.close_path()
         self.ctx.stroke()

@@ -43,7 +43,7 @@ def test(criterion, optimizer_str, weight_decay, learning_rate, normalize,
 
         if not os.path.exists(C.path_models):
             os.makedirs(C.path_models)
-        path_autoencoder = C.path_models + "/{}.pt".format(ienv)
+        path_autoencoder = C.path_models / "{}.pt".format(ienv)
         logger.info("saving autoencoder at {}".format(path_autoencoder))
         torch.save(autoencoders[ienv], path_autoencoder)
 

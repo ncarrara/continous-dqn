@@ -18,7 +18,7 @@ def load_autoencoders(path_autoencoders):
     autoencoders = [None] * len(files_autoencoders)
     for file in files_autoencoders:
         i_autoencoder = int(file.split(".")[0])
-        path_autoencoder = path_autoencoders + "/" + file
+        path_autoencoder = path_autoencoders / file
         autoencoders[i_autoencoder] = torch.load(path_autoencoder, map_location=C.device)
     return autoencoders
 
@@ -32,7 +32,7 @@ def load_memories(path_data, as_json=True):
         raise Exception("No data files in folder {}".format(path_data))
     for file in files:
         id_env = int(file.split(".")[0])
-        path_file = path_data + "/" + file
+        path_file = path_data / file
         logger.info("reading {}".format(path_file))
         m = Memory()
         m.load_memory(path_file, as_json=as_json)

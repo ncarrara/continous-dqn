@@ -1,6 +1,5 @@
 {
   "general": {
-    "id": "0_random",
     "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
@@ -21,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "DEBUG",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -62,7 +61,8 @@
       }
     },
     "workspace": "tmp/0_random",
-    "seed": null
+    "seed": null,
+    "id": "0_random"
   },
   "feature_str": "identity",
   "test_and_base": {
@@ -93,6 +93,9 @@
       ]
     }
   },
+  "generate_samples": {
+    "as_json": true
+  },
   "n_actions": 2,
   "transfer_dqn": {
     "traj_max_size": 200,
@@ -120,7 +123,6 @@
   },
   "feature_autoencoder_info": {
     "feature_str": "feature_autoencoder_identity"
-
   },
   "feature_dqn_info": {
     "feature_str": "feature_dqn_identity"

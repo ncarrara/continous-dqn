@@ -1,4 +1,4 @@
-from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn_with_transfer, run_dqn_without_transfer
+from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
 from ncarrara.continuous_dqn.tools.configuration import C
@@ -15,13 +15,14 @@ import json
 
 
 def main():
-    epsilon_decay(C["transfer_dqn"]["start_decay"], C["transfer_dqn"]["decay"], C["transfer_dqn"]["N"], show=True)
+    epsilon_decay(C["transfer_dqn"]["start_decay"], C["transfer_dqn"]["decay"], C["transfer_dqn"]["N"],
+                  savepath=C.workspace)
     envs, tests_params = generate_envs(**C["target_envs"])
     feature_autoencoder = build_feature_autoencoder(C["feature_autoencoder_info"])
     feature_dqn = build_feature_dqn(C["feature_dqn_info"])
     source_params = C.load_sources_params()
     autoencoders = utils.load_autoencoders(C.path_models)
-    ers = utils.load_memories(C.path_samples, C["create_data"]["as_json"])
+    ers = utils.load_memories(C.path_samples, C["generate_samples"]["as_json"])
 
     for er in ers:
         er.apply_feature_to_states(feature_dqn)
@@ -44,23 +45,30 @@ def main():
 
         logger.info("======== WITH TRANSFER ==========")
 
-        r_w_t, r_w_t_greedy = run_dqn_with_transfer(env, seed=C.seed,
-                                                    device=C.device,
-                                                    autoencoders=autoencoders,
-                                                    ers=ers,
-                                                    sources_params=source_params,
-                                                    test_params=test_params,
-                                                    feature_autoencoder=feature_autoencoder,
-                                                    feature_dqn=feature_dqn,
-                                                    **C["transfer_dqn"])
+        r_w_t, r_w_t_greedy = run_dqn(
+            env,
+            workspace=C.path_dqn / "with_transfer",
+            seed=C.seed,
+            device=C.device,
+            feature_dqn=feature_dqn,
+            transfer_params={
+                "autoencoders": autoencoders,
+                "ers": ers,
+                "sources_params": source_params,
+                "test_params": test_params,
+                "feature_autoencoder": feature_autoencoder,
+
+            },
+            **C["transfer_dqn"])
 
         logger.info("======== WITHOUT TRANSFER ==========")
-        r_wo_t, r_wo_t_greedy = run_dqn_without_transfer(env, seed=C.seed,
-                                                         device=C.device,
-                                                         sources_params=source_params,
-                                                         feature_autoencoder=feature_autoencoder,
-                                                         feature_dqn=feature_dqn,
-                                                         test_params=test_params, **C["transfer_dqn"])
+        r_wo_t, r_wo_t_greedy = run_dqn(
+            env,
+            workspace=C.path_dqn / "without_transfer",
+            seed=C.seed,
+            feature_dqn=feature_dqn,
+            device=C.device,
+            **C["transfer_dqn"])
 
         results_w_t[i_env] = r_w_t
         results_wo_t[i_env] = r_wo_t

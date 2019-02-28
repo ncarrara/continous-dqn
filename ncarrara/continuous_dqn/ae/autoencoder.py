@@ -40,6 +40,7 @@ class Autoencoder(nn.Module):
         self.to(C.device)
         self.std = None
         self.mean = None
+        print(self)
 
     def set_normalization_params(self, mean, std):
         std[std == 0.] = 1.

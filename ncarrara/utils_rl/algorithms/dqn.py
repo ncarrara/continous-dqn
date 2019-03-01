@@ -5,8 +5,8 @@ import copy
 import torch.nn.functional as F
 
 from ncarrara.continuous_dqn.dqn.tnn import TNN
-from ncarrara.continuous_dqn.tools.configuration import C
-from ncarrara.utils.torch import optimizer_factory, BaseModule
+from ncarrara.utils.os import makedirs
+from ncarrara.utils.torch_utils import BaseModule, optimizer_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import logging
@@ -80,9 +80,14 @@ class DQN:
         self.optimizer = None
         self.reset()
 
-
-    def update_transfer_experience_replay(self, er):
-        self.transfer_experience_replay = er
+    def save(self, path=None):
+        import os
+        makedirs(os.path.dirname(path))
+        if path is None:
+            path = self.workspace / "dqn.pt"
+        logger.info("saving dqn at {}".format(path))
+        torch.save(self.policy_net, path)
+        return path
 
     def reset(self, reset_weight=True):
         self.memory.reset()

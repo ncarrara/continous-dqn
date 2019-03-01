@@ -116,7 +116,7 @@ def main(generate_envs, feature_str, gamma, gamma_c, ftq_params, ftq_net_params,
             "device": ftq.device
         }
     if save_memory is not None:
-        rm.save_memory(workspace / save_memory["path"], save_memory["as_json"])
+        rm.save(workspace / save_memory["path"], save_memory["as_json"])
 
 
 if __name__ == "__main__":

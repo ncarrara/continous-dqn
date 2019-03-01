@@ -64,61 +64,6 @@
     "seed": null,
     "id": "cartpole"
   },
-  "feature_str": "identity",
-  "test_and_base": {
-    "N": 100
-  },
-  "no_transfer_dqn": {
-    "traj_max_size": null,
-    "N": 100,
-    "start_decay": 0.5,
-    "decay": 0.05,
-    "dqn_params": {
-      "gamma": 0.999,
-      "batch_size_experience_replay": 128,
-      "target_update": 10,
-      "optimizer": "ADAM",
-      "loss_function": "l2",
-      "lr": 0.01,
-      "weight_decay": 0.01
-    },
-    "net_params": {
-      "intra_layers": [
-        16,
-        8
-      ]
-    }
-  },
-  "generate_samples": {
-    "as_json": true
-  },
-  "transfer_dqn": {
-    "traj_max_size": 200,
-    "N": 100,
-    "start_decay": 0.5,
-    "decay": 0.05,
-    "dqn_params": {
-      "gamma": 0.999,
-      "batch_size_experience_replay": 2048,
-      "target_update": 10,
-      "optimizer": "ADAM",
-      "loss_function": "l2",
-      "lr": 0.01,
-      "weight_decay": 0.01
-    },
-    "net_params": {
-      "intra_layers": [
-        16,
-        8
-      ]
-    }
-  },
-  "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_identity"
-  },
-  "feature_dqn_info": {
-    "feature_str": "feature_dqn_identity"
-  },
   "source_envs": {
     "envs_params": {
       "gravity": "[9.8]",
@@ -139,6 +84,42 @@
     },
     "envs_str": "CartPoleConfig-v0"
   },
+  "dqn_params": {
+    "gamma": 0.999,
+    "batch_size_experience_replay": 2048,
+    "target_update": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "lr": 0.01,
+    "weight_decay": 0.01
+  },
+  "net_params": {
+    "intra_layers": [
+      16,
+      8
+    ]
+  },
+  "test_and_base": {
+    "N": 100
+  },
+  "generate_sources": {
+    "N": 100,
+    "decay": 0.05,
+    "start_decay": 0.5
+  },
+  "as_json": true,
+  "transfer_dqn": {
+    "traj_max_size": 200,
+    "N": 100,
+    "start_decay": 0.5,
+    "decay": 0.05
+  },
+  "feature_autoencoder_info": {
+    "feature_str": "feature_autoencoder_identity"
+  },
+  "feature_dqn_info": {
+    "feature_str": "feature_dqn_identity"
+  },
   "learn_autoencoders": {
     "weight_decay": 0.0,
     "learning_rate": 0.001,
@@ -150,6 +131,5 @@
     "normalize": true,
     "n_epochs": 500,
     "loss_function_str": "l2"
-  },
-  "N_base_trajectories": 100
+  }
 }

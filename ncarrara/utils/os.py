@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 def makedirs(path):
+    # path = os.path.dirname(path)
     if not os.path.exists(path):
         os.makedirs(path)
     else:

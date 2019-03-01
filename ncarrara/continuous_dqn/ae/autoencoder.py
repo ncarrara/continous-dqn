@@ -50,6 +50,8 @@ class Autoencoder(nn.Module):
 
     def forward(self, x):
         if self.std is not None and self.mean is not None:
+            # print(x.shape)
+            # print(self.mean.shape)
             x = (x.float() - self.mean.float()) / self.std.float()
         x = self.encoder(x)
         x = self.decoder(x)
@@ -57,9 +59,12 @@ class Autoencoder(nn.Module):
 
     def fit(self, datas, weight_decay=1e-5, n_epochs=10, stop_loss=0.01, size_minibatch=None, optimizer=None,
             loss_function=None, normalize=False):
+        # print(datas.shape)
         means = torch.mean(datas, dim=0)
         stds = torch.std(datas, dim=0)
+        # print(means.shape)
         # print(means)
+        # exit()
         # exit()
         if normalize:
             self.set_normalization_params(means, stds)

@@ -39,8 +39,9 @@ class TransferModule:
 
 
 
-    def push(self, s, a, r_, s_, done, info):
-        vector = self.feature((s, a, r_, s_, done, info))
+    def push(self,s, a, r_, s_, done, info):
+        sample = (s, a, r_, s_, done, info)
+        vector = self.feature(sample,self.device)
         self.memory.append(vector)
         if self.evaluate_continuously:
             import torch
@@ -54,7 +55,7 @@ class TransferModule:
 
     def push_memory(self,memory):
         for sample in memory:
-            vector = self.feature(sample)
+            vector = self.feature(sample,self.device)
             self.memory.append(vector)
         if self.evaluate_continuously:
             self.evaluate()
@@ -66,7 +67,9 @@ class TransferModule:
         """
         import torch
         with torch.no_grad():
-            toevaluate = torch.tensor(self.memory[self.evaluation_index: -1]).to(self.device)
+            # toevaluate = torch.stack(self.memory[self.evaluation_index: -1])
+            toevaluate =self.memory[self.evaluation_index: len(self.memory)]
+            toevaluate = torch.tensor(toevaluate).to(self.device)
             # TODO maybe parrale compute of this
             losses = np.array([self.loss(ae(toevaluate), toevaluate).item() for ae in self.auto_encoders])
         self.sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)

@@ -40,13 +40,15 @@ def load_memories(path_data, as_json=True):
     return memories
 
 
-def read_samples_for_autoencoders(path_data, feature):
+def read_samples_for_autoencoders(path_data, feature, device,as_json=True):
     from ncarrara.continuous_dqn.tools.configuration import C
-    memories = load_memories(path_data)
+    memories = load_memories(path_data, as_json=as_json)
     all_transitions = [None] * len(memories)
     for id_env, rm in enumerate(memories):
-        data = np.array([feature(transition) for transition in rm.memory])
+        data = np.array([feature(transition,device) for transition in rm.memory])
         all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
+        # data = torch.stack([feature(transition,device) for transition in rm.memory])
+        # all_transitions[id_env] = data.squeeze()
     return all_transitions
 
 

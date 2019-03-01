@@ -25,13 +25,17 @@ def build_feature_dqn(info):
         raise Exception("Unknown feature : {}".format(feature_str))
 
 
-def feature_autoencoder_identity(transition):
+def feature_autoencoder_identity(transition,device):
     s, a, r, s_, done, info = transition
     if type(s) == type(np.zeros(0)):
         s = s.tolist()
         s_ = s_.tolist()
+    # import torch
+    # if s_ is None:
+    #     s_ = torch.zeros(s.shape).to(device)
+    # rez = torch.cat([s , a.unsqueeze(0).float() , r.unsqueeze(0).unsqueeze(0) , s_],dim=2)
     if s_ is None:
-        s_ = [0.0] * len(s)
+        s_ = [0.] * len(s)
     rez = s + [a] + [r] + s_
     return rez
 

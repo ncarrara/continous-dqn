@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 #                    feature_dqn=feature_dqn, feature_autoencoder=None, start_decay=start_decay)
 
 
-def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj_max_size, feature_dqn, start_decay,
-            transfer_params=None):
+def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay,
+            transfer_params=None,evaluate_greedy_policy =True,traj_max_size=None):
     # transfer_params = {autoencoders, ers,feature_autoencoder,sources_params,test_params}
 
     if transfer_params is not None:
@@ -41,10 +41,10 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
         transfer_type = transfer_params["transfer_type"]
         tm.reset()
     else:
-        tm=None
+        tm = None
     size_state = len(feature_dqn(env.reset()))
     net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
-    dqn = DQN(policy_network=net, device=device, transfer_module=tm,workspace=workspace, **dqn_params)
+    dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)
     rrr = []
@@ -89,7 +89,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
             if traj_max_size is not None and it >= traj_max_size:
                 logger.warning("Max size trajectory reached")
                 break
-        if transfer_params is not None  and n % 50 == 0:
+        if transfer_params is not None and n % 50 == 0:
             logger.info("------------------------------------")
             logger.info("[N_trajs={},N_samples={}] {}"
                         .format(n, nb_samples, utils.format_errors(dqn.transfer_module.errors,
@@ -99,31 +99,32 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, traj
         # print("------------------------------->",it,rr)
         rrr.append(rr)
 
-        s = env.reset()
-        done = False
-        rr = 0
-        it = 0
-        while not done:
-            if hasattr(env, "action_space_executable"):
-                exec = env.action_space_executable()
-                action_mask = np.ones(env.action_space.n)
-                for ex in exec:
-                    action_mask[ex] = 0.
-                a = dqn.pi(feature_dqn(s), action_mask)
-            else:
-                a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
+        if evaluate_greedy_policy:
+            s = env.reset()
+            done = False
+            rr = 0
+            it = 0
+            while not done:
+                if hasattr(env, "action_space_executable"):
+                    exec = env.action_space_executable()
+                    action_mask = np.ones(env.action_space.n)
+                    for ex in exec:
+                        action_mask[ex] = 0.
+                    a = dqn.pi(feature_dqn(s), action_mask)
+                else:
+                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
 
-            s_, r_, done, info = env.step(a)
-            rr += r_
-            s = s_
-            it += 1
-            if it % 100 == 0:
-                if it > 500:
-                    logger.warning("Number of trajectories overflowing : {}".format(it))
-                # else:
-                #     logger.info("step={}".format(it))
-            if traj_max_size is not None and it >= traj_max_size:
-                logger.warning("Max size trajectory reached")
-                break
-        rrr_greedy.append(rr)
-    return rrr, rrr_greedy
+                s_, r_, done, info = env.step(a)
+                rr += r_
+                s = s_
+                it += 1
+                if it % 100 == 0:
+                    if it > 500:
+                        logger.warning("Number of trajectories overflowing : {}".format(it))
+                    # else:
+                    #     logger.info("step={}".format(it))
+                if traj_max_size is not None and it >= traj_max_size:
+                    logger.warning("Max size trajectory reached")
+                    break
+            rrr_greedy.append(rr)
+    return rrr, rrr_greedy, dqn

@@ -60,9 +60,9 @@
         }
       }
     },
-    "workspace": "tmp/0_random",
+    "workspace": "tmp/cartpole",
     "seed": null,
-    "id": "0_random"
+    "id": "cartpole"
   },
   "feature_str": "identity",
   "test_and_base": {
@@ -149,7 +149,7 @@
     "optimizer_str": "ADAM",
     "normalize": true,
     "n_epochs": 500,
-    "criterion": "l1"
+    "loss_function_str": "l2"
   },
   "N_base_trajectories": 100
 }

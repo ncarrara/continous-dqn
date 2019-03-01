@@ -149,7 +149,7 @@
     "optimizer_str": "ADAM",
     "normalize": true,
     "n_epochs": 5,
-    "criterion": "l1"
+    "loss_function_str": "l2"
   },
   "N_base_trajectories": 10
 }

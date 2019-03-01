@@ -4,6 +4,7 @@ import torch
 import copy
 import torch.nn.functional as F
 
+from ncarrara.continuous_dqn.dqn.tnn import TNN
 from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.utils.torch import optimizer_factory, BaseModule
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -102,7 +103,7 @@ class DQN:
 
         if self.tranfer_module is not None:
             # reeavalute errors
-            # TODO
+            self.tranfer_module.evaluate()
 
             # transfert samples
             if self.tranfer_module.get_experience_replay_source() is not None:
@@ -113,7 +114,12 @@ class DQN:
                 self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
 
             # transfer Q
-            # TODO
+            if self.tranfer_module.get_Q_source() is not None:
+                if isinstance(self.policy_net,TNN):
+                    self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
+                else:
+                    raise Exception("Neural network must be instance of TNN")
+
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),

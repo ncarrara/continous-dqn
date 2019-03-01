@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Autoencoder(nn.Module):
-    def __init__(self, n, min_n, max_n):
+    def __init__(self, n, min_n, max_n,device):
         """n_coding must be a power 2 number"""
         super(Autoencoder, self).__init__()
 
@@ -40,6 +40,7 @@ class Autoencoder(nn.Module):
         self.to(C.device)
         self.std = None
         self.mean = None
+        self.to(device)
         print(self)
 
     def set_normalization_params(self, mean, std):
@@ -55,7 +56,7 @@ class Autoencoder(nn.Module):
         return x
 
     def fit(self, datas, weight_decay=1e-5, n_epochs=10, stop_loss=0.01, size_minibatch=None, optimizer=None,
-            criterion=None, normalize=False):
+            loss_function=None, normalize=False):
         means = torch.mean(datas, dim=0)
         stds = torch.std(datas, dim=0)
         # print(means)
@@ -66,13 +67,13 @@ class Autoencoder(nn.Module):
             size_minibatch = datas.shape[0]
         if optimizer is None:
             optimizer = torch.optim.Adam(self.parameters(), lr=0.001, weight_decay=weight_decay)
-        if criterion is None:
-            criterion = F.mse_loss
+        if loss_function is None:
+            loss_function = F.mse_loss
         logger.info("[fit] fitting ...")
         for epoch in range(n_epochs):
             random_indexes = torch.LongTensor(np.random.choice(range(datas.shape[0]), size_minibatch)).to(C.device)
             mini_batch = datas.index_select(0, random_indexes).to(C.device)
-            loss = criterion(self(mini_batch), mini_batch)
+            loss = loss_function(self(mini_batch), mini_batch)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

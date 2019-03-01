@@ -1,42 +1,42 @@
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
+from ncarrara.continuous_dqn.tools.utils import load_memories
+from ncarrara.utils.torch_utils import loss_fonction_factory
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
-import torch.nn.functional as F
 import logging
 import numpy as np
 
-from ncarrara.continuous_dqn.tools.configuration import C
 from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 
 logger = logging.getLogger(__name__)
 
 
-def main():
-    autoencoders = utils.load_autoencoders(C.path_models)
-    feature_autoencoder = build_feature_autoencoder(C["feature_autoencoder_info"])
-
-    all_transitions = utils.read_samples_for_autoencoders(C.path_samples,feature_autoencoder)
-    tm = TransferModule(auto_encoders=autoencoders, loss=F.l1_loss)
-
+def main(loss_function_str, feature_autoencoder_info, target_envs, N,path_models,path_samples,seed,source_params,device):
+    loss_function = loss_fonction_factory(loss_function_str)
+    autoencoders = utils.load_autoencoders(path_models)
+    feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
+    tm = TransferModule(auto_encoders=autoencoders, loss=loss_function, feature=feature_autoencoder,device=device)
     errors_base = []
-    for transitions in all_transitions:
+    # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
+    memories = load_memories(path_samples)
+    for memory in  memories:
         tm.reset()
-        errors_base.append(tm._errors_with_tensors(transitions))
+        tm.push_memory(memory.memory)
+        tm.evaluate()
+        errors_base.append(tm.errors)
 
     print("================================================ base ================================================")
-    source_params = C.load_sources_params()
+    print(errors_base)
     print(utils.array_to_cross_comparaison(errors_base, source_params, source_params))
 
+    test_envs, test_params = generate_envs(**target_envs)
 
-    test_envs, test_params = generate_envs(**C["target_envs"])
-    # seed = C["general"]["seed"]
     errors_test = []
     for ienv, test_env in enumerate(test_envs):
         tm.reset()
-        # utils.set_seed(seed=seed, env=test_env)
-        if C.seed is not None:
-            test_env.seed(C.seed)
-        for _ in range(C["test_and_base"]["N"]):
+        if seed is not None:
+            test_env.seed(seed)
+        for _ in range(N):
             s = test_env.reset()
             done = False
             while not done:
@@ -44,18 +44,17 @@ def main():
                     a = np.random.choice(test_env.action_space_executable())
                 else:
                     a = test_env.action_space.sample()
-                # a = test_env.action_space.sample()
                 s_, r_, done, info = test_env.step(a)
-                feat=feature_autoencoder((s, a, r_, s_,done,info))
-                tm.push(feat)
+                tm.push(s, a, r_, s_, done, info)
                 s = s_
-        errors_test.append(tm.evaluate_all_memory())
+        tm.evaluate()
+        errors_test.append(tm.errors)
 
     print("================================================ test ================================================")
     print(utils.array_to_cross_comparaison(errors_test, source_params, test_params))
 
 
-if __name__ == "__main__":
-    # execute only if run as a script
-    C.load("config/0_pydial.json").load_pytorch()
-    main()
+# if __name__ == "__main__":
+#     # execute only if run as a script
+#     C.load("config/0_pydial.json").load_pytorch()
+#     main()

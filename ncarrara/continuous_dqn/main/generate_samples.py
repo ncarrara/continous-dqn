@@ -16,11 +16,10 @@ def main():
 
     N_trajs = C["N_base_trajectories"]
     for ienv, env in enumerate(envs):
-        # print(env.action_space.n)
-        # print(env.action_space_str)
         logger.info("generating samples for env {}".format(ienv))
         set_seed(seed=seed, env=env)
         rm = Memory()
+        raise Exception("TODO, DQN ici")
         for i_traj in range(N_trajs):
             if i_traj % (N_trajs / 10) == 0:
                 logger.info("i_traj={}/{}".format(i_traj, N_trajs))
@@ -41,6 +40,7 @@ def main():
                         done,
                         info)
                 s = s_
+        raise Exception("TODO save model Q ici")
         rm.save_memory(C.path_samples / "{}.json".format(ienv), C["generate_samples"]["as_json"])
     with open(C.path_sources_params, 'w') as file:
         dump = json.dumps(params, indent=4)

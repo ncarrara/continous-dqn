@@ -24,6 +24,9 @@ def main():
     autoencoders = utils.load_autoencoders(C.path_models)
     ers = utils.load_memories(C.path_samples, C["generate_samples"]["as_json"])
 
+    raise Exception("TODO")
+    Q_sources = utils.load_q_sources(C.path_samples, C["generate_samples"]["as_json"])
+
     for er in ers:
         er.apply_feature_to_states(feature_dqn)
         er.to_tensors(C.device)
@@ -57,6 +60,7 @@ def main():
                 "sources_params": source_params,
                 "test_params": test_params,
                 "feature_autoencoder": feature_autoencoder,
+                "Q_sources":Q_sources
 
             },
             **C["transfer_dqn"])

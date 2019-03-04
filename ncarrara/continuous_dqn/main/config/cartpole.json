@@ -113,7 +113,18 @@
     "traj_max_size": 200,
     "N": 100,
     "start_decay": 0.5,
-    "decay": 0.05
+    "decay": 0.05,
+    "configs": {
+      "no_transfer": {
+        "selection_method": "no_transfer"
+      },
+      "transfer": {
+        "selection_method": "best_fit"
+      },
+      "random_transfer": {
+        "selection_method": "random"
+      }
+    }
   },
   "feature_autoencoder_info": {
     "feature_str": "feature_autoencoder_identity"

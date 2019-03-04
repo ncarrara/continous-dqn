@@ -6,7 +6,8 @@ logger = logging.getLogger(__name__)
 
 class TransferModule:
     def __init__(self, autoencoders, loss_autoencoders, feature_autoencoders, experience_replays=None, Q_sources=None,
-                 evaluate_continuously=False, device=None, **kwargs):
+                 evaluate_continuously=False, device=None, selection_method="best_fit", **kwargs):
+        self.selection_method = selection_method  # best fit or random
         self.loss = loss_autoencoders
         self.device = device
         self.Q_sources = Q_sources
@@ -31,20 +32,28 @@ class TransferModule:
     def is_q_transfering(self):
         return self.Q_sources is not None
 
-
     def is_experience_replay_transfering(self):
         return self.experience_replays is not None
 
-
     def get_experience_replay_source(self):
         if self.experience_replays is not None:
-            return self.experience_replays[self.best_fit]
+            if self.selection_method == "best_fit":
+                return self.experience_replays[self.best_fit]
+            elif self.selection_method == "random":
+                return self.experience_replays[np.random.randint(0, len(self.auto_encoders))]
+            else:
+                raise Exception("unkown selection methode : {}".format(self.selection_method))
         else:
             raise Exception("Transfer module's experience_replays are None")
 
     def get_Q_source(self):
         if self.Q_sources is not None:
-            return self.Q_sources[self.best_fit]
+            if self.selection_method == "best_fit":
+                return self.Q_sources[self.best_fit]
+            elif self.selection_method == "random":
+                return self.Q_sources[np.random.randint(0, len(self.auto_encoders))]
+            else:
+                raise Exception("unkown selection methode : {}".format(self.selection_method))
         else:
             raise Exception("Transfer module's Q_sources are None")
 

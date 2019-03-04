@@ -15,11 +15,12 @@ logger = logging.getLogger(__name__)
 def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay,
             transfer_params=None, evaluate_greedy_policy=True, traj_max_size=None):
     size_state = len(feature_dqn(env.reset()))
-    if transfer_params is not None:
+    if transfer_params is None or transfer_params["selection_method"] == "no_transfer":
+        tm = None
+    else:
         tm = TransferModule(**transfer_params)
         tm.reset()
-    else:
-        tm = None
+
     if tm is not None and tm.is_q_transfering():
         net = TNN2(n_in=size_state, n_out=env.action_space.n, **net_params)
     else:

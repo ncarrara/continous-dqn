@@ -32,20 +32,20 @@ def main(config):
     #     seed=C.seed,
     #     source_params=C.load_sources_params(),
     #     device=C.device)
-    transfer_dqn.main(
-        workspace=C.workspace,
-        seed=C.seed,
-        target_envs=C["target_envs"],
-        net_params=C["net_params"],
-        dqn_params=C["dqn_params"],
-        source_params=C.load_sources_params(),
-        device=C.device,
-        feature_autoencoder_info=C["feature_autoencoder_info"],
-        feature_dqn_info=C["feature_dqn_info"],
-        loss_function_autoencoder_str=C["learn_autoencoders"]["loss_function_str"],
-        **C["transfer_dqn"]
-    )
-    # plot_data.main(workspace=C.workspace, show_all=True)
+    # transfer_dqn.main(
+    #     workspace=C.workspace,
+    #     seed=C.seed,
+    #     target_envs=C["target_envs"],
+    #     net_params=C["net_params"],
+    #     dqn_params=C["dqn_params"],
+    #     source_params=C.load_sources_params(),
+    #     device=C.device,
+    #     feature_autoencoder_info=C["feature_autoencoder_info"],
+    #     feature_dqn_info=C["feature_dqn_info"],
+    #     loss_function_autoencoder_str=C["learn_autoencoders"]["loss_function_str"],
+    #     **C["transfer_dqn"]
+    # )
+    plot_data.main(workspace=C.workspace, show_all=True)
 
 
 if __name__ == "__main__":

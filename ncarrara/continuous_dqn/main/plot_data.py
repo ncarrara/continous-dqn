@@ -13,6 +13,8 @@ logger = logging.getLogger(__name__)
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+import seaborn as sns
+
 
 def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_wo_t_greedy=None, workspace=None,
          show_all=True):
@@ -21,15 +23,16 @@ def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_w
     # print(df.groupby(level=['env']).mean())
     # print(df.groupby(level=['is_greedy']).mean())
 
-    xx = df.mean(level="env")
+    xx = df.mean(level=["config","is_greedy"])
+
     # print(xx)
-    # greedy = xx.iloc[xx.index.get_level_values('is_greedy') == True]
+    xx = xx.iloc[xx.index.get_level_values('is_greedy') == True]
+    print(xx)
     # print(greedy)
 
-    # pl = greedy.plot.line(x='config')
-    # fig = pl.get_figure()
-    # fig.savefig("ok")
-    # plt.show()
+    sns.lmplot('config', '0', data=df, hue='config', fit_reg=False)
+
+    plt.show()
 
 
     # print("-------------")

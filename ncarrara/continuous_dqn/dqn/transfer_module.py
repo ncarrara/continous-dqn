@@ -5,13 +5,13 @@ logger = logging.getLogger(__name__)
 
 
 class TransferModule:
-    def __init__(self, auto_encoders, loss, feature, experience_replays=None, Q_sources=None,
-                 evaluate_continuously=False,device=None):
-        self.loss = loss
-        self.device=device
+    def __init__(self, autoencoders, loss_autoencoders, feature_autoencoders, experience_replays=None, Q_sources=None,
+                 evaluate_continuously=False, device=None, **kwargs):
+        self.loss = loss_autoencoders
+        self.device = device
         self.Q_sources = Q_sources
-        self.auto_encoders = auto_encoders
-        self.feature = feature
+        self.auto_encoders = autoencoders
+        self.feature = feature_autoencoders
         self.evaluate_continuously = evaluate_continuously
         self.experience_replays = experience_replays
         if self.experience_replays is None:
@@ -28,20 +28,32 @@ class TransferModule:
         self.best_fit = np.random.randint(0, len(self.auto_encoders))
         self.evaluation_index = 0
 
+    def is_q_transfering(self):
+        return self.Q_sources is not None
+
+
+    def is_experience_replay_transfering(self):
+        return self.experience_replays is not None
+
+
     def get_experience_replay_source(self):
-        return self.experience_replays[self.best_fit]
+        if self.experience_replays is not None:
+            return self.experience_replays[self.best_fit]
+        else:
+            raise Exception("Transfer module's experience_replays are None")
 
     def get_Q_source(self):
-        return self.Q_sources[self.best_fit]
+        if self.Q_sources is not None:
+            return self.Q_sources[self.best_fit]
+        else:
+            raise Exception("Transfer module's Q_sources are None")
 
     def get_error(self):
         return self.errors[self.best_fit]
 
-
-
-    def push(self,s, a, r_, s_, done, info):
+    def push(self, s, a, r_, s_, done, info):
         sample = (s, a, r_, s_, done, info)
-        vector = self.feature(sample,self.device)
+        vector = self.feature(sample, self.device)
         self.memory.append(vector)
         if self.evaluate_continuously:
             import torch
@@ -53,9 +65,9 @@ class TransferModule:
             self.best_fit = np.argmin(self.errors)
             self.evaluation_index += 1
 
-    def push_memory(self,memory):
+    def push_memory(self, memory):
         for sample in memory:
-            vector = self.feature(sample,self.device)
+            vector = self.feature(sample, self.device)
             self.memory.append(vector)
         if self.evaluate_continuously:
             self.evaluate()
@@ -68,12 +80,14 @@ class TransferModule:
         import torch
         with torch.no_grad():
             # toevaluate = torch.stack(self.memory[self.evaluation_index: -1])
-            toevaluate =self.memory[self.evaluation_index: len(self.memory)]
-            toevaluate = torch.tensor(toevaluate).to(self.device)
+            toevaluate = self.memory[self.evaluation_index: len(self.memory)]
+            if type(toevaluate[0]) == type(torch.zeros(0)):
+                toevaluate = torch.stack(toevaluate)
+            else:
+                toevaluate = torch.tensor(toevaluate).to(self.device)
             # TODO maybe parrale compute of this
             losses = np.array([self.loss(ae(toevaluate), toevaluate).item() for ae in self.auto_encoders])
         self.sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)
         self.errors = self.sum_errors / len(self.memory)
         self.best_fit = np.argmin(self.errors)
         self.evaluation_index = len(self.memory) - 1
-

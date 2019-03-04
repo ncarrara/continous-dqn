@@ -11,17 +11,22 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 logger = logging.getLogger(__name__)
 
 
-def load_autoencoders(path_autoencoders):
-    from ncarrara.continuous_dqn.tools.configuration import C
-    logger.info("reading autoencoders at {}".format(path_autoencoders))
-    files_autoencoders = os.listdir(path_autoencoders)
-    autoencoders = [None] * len(files_autoencoders)
-    for file in files_autoencoders:
+def load_models(path_models, device):
+    files_models = os.listdir(path_models)
+    autoencoders = [None] * len(files_models)
+    for file in files_models:
         i_autoencoder = int(file.split(".")[0])
-        path_autoencoder = path_autoencoders / file
-        autoencoders[i_autoencoder] = torch.load(path_autoencoder, map_location=C.device)
+        path_model = path_models / file
+        autoencoders[i_autoencoder] = torch.load(path_model, map_location=device)
     return autoencoders
 
+def load_autoencoders(path_autoencoders,device):
+    logger.info("reading autoencoders at {}".format(path_autoencoders))
+    return load_models(path_autoencoders,device)
+
+def load_q_sources(path_q_sources, device):
+    logger.info("reading q sources at {}".format(path_q_sources))
+    return load_models(path_q_sources, device)
 
 def load_memories(path_data, as_json=True):
     logger.info("reading samples ...")
@@ -47,8 +52,6 @@ def read_samples_for_autoencoders(path_data, feature, device,as_json=True):
     for id_env, rm in enumerate(memories):
         data = np.array([feature(transition,device) for transition in rm.memory])
         all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
-        # data = torch.stack([feature(transition,device) for transition in rm.memory])
-        # all_transitions[id_env] = data.squeeze()
     return all_transitions
 
 

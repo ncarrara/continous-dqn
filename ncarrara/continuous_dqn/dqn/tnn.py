@@ -28,7 +28,7 @@ class ProbalisticLinear(Module):
 
     @weak_script_method
     def forward(self, input):
-        weight = self.weight / self.weight.sum(1, keepdim=True).clamp(min=self.eps)
+        weight = self.weight / self.weight.sum(1, keepdim=True)  # .clamp(min=self.eps)
         return F.linear(input, weight)
 
     def extra_repr(self):
@@ -76,10 +76,16 @@ class TNN2(BaseModule):
 
         actions_values = []
         for action in range(self.n_out):
-            q = torch.cat((out_Q_transfer[:, action], out_Q[:, action]), dim=1)
-            actions_values.append(self.actions_layers[action](q))
-            y = torch.cat(actions_values, dim=1)
-        return y.view(y.size(0), -1)
+            Q_act = out_Q.narrow(1, action, 1)
+            Q_act_t = out_Q_transfer.narrow(1, action, 1)
+
+            q = torch.cat((Q_act_t, Q_act), dim=1)
+            q_out = self.actions_layers[action](q)
+            actions_values.append(q_out)
+
+        y = torch.cat(actions_values, dim=1)
+        y = y.view(y.size(0), -1)
+        return y
 
 
 class TNN(BaseModule):

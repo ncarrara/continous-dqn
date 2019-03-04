@@ -25,25 +25,31 @@ def build_feature_dqn(info):
         raise Exception("Unknown feature : {}".format(feature_str))
 
 
-def feature_autoencoder_identity(transition,device):
+def feature_autoencoder_identity(transition, device):
     s, a, r, s_, done, info = transition
-    if type(s) == type(np.zeros(0)):
-        s = s.tolist()
-        s_ = s_.tolist()
-    # import torch
-    # if s_ is None:
-    #     s_ = torch.zeros(s.shape).to(device)
-    # rez = torch.cat([s , a.unsqueeze(0).float() , r.unsqueeze(0).unsqueeze(0) , s_],dim=2)
-    if s_ is None:
-        s_ = [0.] * len(s)
-    rez = s + [a] + [r] + s_
+    import torch
+    if type(s) == type(torch.zeros(0)):
+        if s_ is None:
+            s_ = torch.zeros(s.shape).to(device)
+        # print(s.shape,a.shape,r.shape,s_.shape)
+        rez = torch.cat([s, a.unsqueeze(0).float(), r.unsqueeze(0), s_], dim=len(s.shape)-1)
+    else:
+        if type(s) == type(np.zeros(0)):
+            s = s.tolist()
+            s_ = s_.tolist()
+        if s_ is None:
+            s_ = [0.] * len(s)
+        rez = s + [a] + [r] + s_
     return rez
 
+
 from ncarrara.budgeted_rl.tools.features import feature_basic
+
+
 def feature_autoencoder_slot_filling(transition, e):
     s, a, r, s_, done, info = transition
-    s=feature_basic(s)
-    s_=feature_basic(s_)
+    s = feature_basic(s)
+    s_ = feature_basic(s_)
     return s + [a] + [r] + s_
 
 

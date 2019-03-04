@@ -4,9 +4,9 @@ import torch
 import copy
 import torch.nn.functional as F
 
-from ncarrara.continuous_dqn.dqn.tnn import TNN
+from ncarrara.continuous_dqn.dqn.tnn import TNN, TNN2
 from ncarrara.utils.os import makedirs
-from ncarrara.utils.torch_utils import BaseModule, optimizer_factory
+from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 import logging
@@ -49,31 +49,20 @@ class DQN:
                  workspace=None,
                  lr=None,
                  weight_decay=None,
-                 transfer_module = None,
+                 transfer_module=None,
                  **kwargs):
-        self.tranfer_module=transfer_module
-        self.device= device
+        self.tranfer_module = transfer_module
+        self.device = device
         self.size_mini_batch = batch_size_experience_replay
         self.GAMMA = gamma
         self.TARGET_UPDATE = target_update
         self.workspace = workspace
         self.policy_net = policy_network.to(self.device)
-        self.target_net = copy.deepcopy(policy_network)
-        self.target_net.load_state_dict(self.policy_net.state_dict())
-        self.target_net.eval()
-        self.optimizer = optimizer
+
         self.memory = Memory()
         self.i_episode = 0
-        self.no_need_for_transfer_anymore = False
         self.n_actions = self.policy_net.predict.out_features
-        # self.transfer_experience_replay = None
-
-        if loss_function == "l2":
-            self.loss_function = F.mse_loss
-        elif loss_function == "l1":
-            self.loss_function = F.l1_loss
-        else:
-            raise Exception("Unknown loss function : {}".format(loss_function))
+        self.loss_function = loss_fonction_factory(loss_function)
         self.lr = lr
         self.weight_decay = weight_decay
         self.optimizer_type = optimizer
@@ -93,49 +82,68 @@ class DQN:
         self.memory.reset()
         if reset_weight:
             self.policy_net.reset()
+
+        if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+            self.policy_net.set_Q_source(self.tranfer_module.get_Q_source())
+
         self.optimizer = optimizer_factory(self.optimizer_type,
                                            self.policy_net.parameters(),
                                            self.lr,
                                            self.weight_decay)
-        self.target_net.load_state_dict(self.policy_net.state_dict())
+
         self.i_episode = 0
-        self.transfer_experience_replay = None
         self.no_need_for_transfer_anymore = False
+
+        self.target_net = copy.deepcopy(self.policy_net)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.target_net.eval()
+        if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+            self.target_net.set_Q_source(self.policy_net.Q_source)
 
     def _optimize_model(self):
 
-        transitions = self.memory.sample(len(self.memory) if self.size_mini_batch > len(self.memory) else self.size_mini_batch)
+        transitions = self.memory.sample(
+            len(self.memory) if self.size_mini_batch > len(self.memory) else self.size_mini_batch)
+        # print("transtions")
+        # print(transitions)
 
         if self.tranfer_module is not None:
             # reeavalute errors
             self.tranfer_module.evaluate()
 
             # transfert samples
-            if self.tranfer_module.get_experience_replay_source() is not None:
+            if self.tranfer_module.is_experience_replay_transfering():
                 size_transfer = self.size_mini_batch - len(transitions)
                 if size_transfer > 0 and not self.no_need_for_transfer_anymore:
                     transfer_transitions = self.tranfer_module.get_experience_replay_source().sample(size_transfer)
                     transitions = transitions + transfer_transitions
-                self.no_need_for_transfer_anymore = size_transfer <= 0 and self.transfer_experience_replay is not None
+                self.no_need_for_transfer_anymore = size_transfer <= 0
 
             # transfer Q
-            if self.tranfer_module.get_Q_source() is not None:
-                if isinstance(self.policy_net,TNN):
-                    self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
-                else:
-                    raise Exception("Neural network must be instance of TNN")
-
+            if self.tranfer_module.is_q_transfering():
+                self.policy_net.set_Q_source(self.tranfer_module.get_Q_source())
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
                                       device=self.device,
                                       dtype=torch.uint8)
-        non_final_next_states= [s for s in batch.s_ if s is not None]
-        # non_final_next_states = torch.cat(non_final_next_states)
-        self._state_batch = torch.cat(batch.s)
-        self._action_batch = torch.cat(batch.a)
+        non_final_next_states = [s for s in batch.s_ if s is not None]
+
+        state_batch = torch.cat(batch.s)
+        action_batch = torch.cat(batch.a)
         reward_batch = torch.cat(batch.r_)
-        state_action_values = self.policy_net(self._state_batch).gather(1, self._action_batch)
+        Q = self.policy_net(state_batch)
+        # print("------------------")
+        # print("------------------")
+        # print("------------------")
+        # print("state_batch", state_batch)
+        # print("Q : ", Q)
+        # print("action_batch : ", action_batch)
+        action_batch = action_batch.unsqueeze(1)
+        # print("action_batch.unsqueeze(0) : ", action_batch)
+        # print(Q.shape, action_batch.shape)
+        state_action_values = Q.gather(1, action_batch)
+        # print("ok")
         next_state_values = torch.zeros(len(transitions), device=self.device)
         if non_final_next_states:
             next_state_values[non_final_mask] = self.target_net(torch.cat(non_final_next_states)).max(1)[0].detach()
@@ -149,7 +157,6 @@ class DQN:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-
     def pi(self, state, action_mask):
 
         with torch.no_grad():
@@ -157,18 +164,18 @@ class DQN:
                 action_mask = np.asarray(action_mask)
             action_mask[action_mask == 1.] = np.infty
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
-            s = torch.tensor([[state]], device=self.device, dtype=torch.float)
-            a = self.policy_net(s).sub(action_mask).max(1)[1].view(1, 1).item()
+            s = torch.tensor([state], device=self.device, dtype=torch.float)
+            a = self.policy_net(s).squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
             return a
 
     def update(self, *sample):
         state, action, reward, next_state, done, info = sample
-        state = torch.tensor([[state]], device=self.device, dtype=torch.float)
+        state = torch.tensor([state], device=self.device, dtype=torch.float)
         if not done:
-            next_state = torch.tensor([[next_state]], device=self.device, dtype=torch.float)
+            next_state = torch.tensor([next_state], device=self.device, dtype=torch.float)
         else:
             next_state = None
-        action = torch.tensor([[action]], device=self.device, dtype=torch.long)
+        action = torch.tensor([action], device=self.device, dtype=torch.long)
         reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
         t = state, action, reward, next_state, done, info
         self.memory.push(*t)
@@ -180,6 +187,8 @@ class DQN:
             if self.i_episode % self.TARGET_UPDATE == 0:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.target_net.load_state_dict(self.policy_net.state_dict())
+                if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+                    self.target_net.set_Q_source(self.policy_net.Q_source)
 
                 # if self.i_episode % 100 == 0:
                 #     with torch.no_grad():

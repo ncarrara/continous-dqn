@@ -109,7 +109,6 @@
   },
   "as_json": true,
   "transfer_dqn": {
-    "traj_max_size": 200,
     "N": 10,
     "start_decay": 0.5,
     "decay": 0.05

@@ -105,7 +105,8 @@
   "generate_sources": {
     "N": 100,
     "decay": 0.05,
-    "start_decay": 0.5
+    "start_decay": 0.5,
+    "traj_max_size": 200
   },
   "as_json": true,
   "transfer_dqn": {

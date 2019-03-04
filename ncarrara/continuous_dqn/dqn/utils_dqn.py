@@ -1,3 +1,4 @@
+from ncarrara.continuous_dqn.dqn.tnn import TNN2
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
 import torch.nn.functional as F
 from ncarrara.continuous_dqn.tools import utils
@@ -11,39 +12,18 @@ from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 logger = logging.getLogger(__name__)
 
 
-# def run_dqn_with_transfer(env, workspace,device, autoencoders, ers, net_params, dqn_params, decay,
-#                           N, seed, test_params,
-#                           sources_params, traj_max_size, feature_autoencoder, feature_dqn, start_decay):
-#     return run_dqn(env, device, autoencoders, ers, workspace=workspace,net_params=net_params, dqn_params=dqn_params, decay=decay, N=N,
-#                    seed=seed, test_params=test_params, sources_params=sources_params, traj_max_size=traj_max_size,
-#                    feature_autoencoder=feature_autoencoder, feature_dqn=feature_dqn, start_decay=start_decay)
-#
-#
-# def run_dqn_without_transfer(env,workspace, device, net_params, dqn_params,
-#                              decay, N, seed, traj_max_size,
-#                              feature_dqn, start_decay):
-#     return run_dqn(env, device, workspace=workspace,autoencoders=None, ers=None,
-#                    net_params=net_params, dqn_params=dqn_params, decay=decay,
-#                    N=N, seed=seed, test_params=None, sources_params=None, traj_max_size=traj_max_size,
-#                    feature_dqn=feature_dqn, feature_autoencoder=None, start_decay=start_decay)
-
-
 def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay,
-            transfer_params=None,evaluate_greedy_policy =True,traj_max_size=None):
-    # transfer_params = {autoencoders, ers,feature_autoencoder,sources_params,test_params}
-
+            transfer_params=None, evaluate_greedy_policy=True, traj_max_size=None):
+    size_state = len(feature_dqn(env.reset()))
     if transfer_params is not None:
-        tm = TransferModule(auto_encoders=transfer_params["autoencoders"],
-                            loss=F.l1_loss,
-                            experience_replays=transfer_params["ers"],
-                            Q_sources=transfer_params["Q_sources"]
-                            )
-        transfer_type = transfer_params["transfer_type"]
+        tm = TransferModule(**transfer_params)
         tm.reset()
     else:
         tm = None
-    size_state = len(feature_dqn(env.reset()))
-    net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
+    if tm is not None and tm.is_q_transfering():
+        net = TNN2(n_in=size_state, n_out=env.action_space.n, **net_params)
+    else:
+        net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
     dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)
@@ -83,20 +63,19 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
             it += 1
             if it % 100 == 0:
                 if it > 500:
-                    logger.warning("Number of trajectories overflowing : {}".format(it))
+                    logger.warning("Number of transitions overflowing : {}".format(it))
                 # else:
                 #     logger.info("step={}".format(it))
             if traj_max_size is not None and it >= traj_max_size:
                 logger.warning("Max size trajectory reached")
                 break
-        if transfer_params is not None and n % 50 == 0:
+        if tm is not None and n % 50 == 0:
             logger.info("------------------------------------")
             logger.info("[N_trajs={},N_samples={}] {}"
-                        .format(n, nb_samples, utils.format_errors(dqn.transfer_module.errors,
+                        .format(n, nb_samples, utils.format_errors(tm.errors,
                                                                    transfer_params["sources_params"],
                                                                    transfer_params["test_params"])))
             logger.info("--------------------------------------")
-        # print("------------------------------->",it,rr)
         rrr.append(rr)
 
         if evaluate_greedy_policy:

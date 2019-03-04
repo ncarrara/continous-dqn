@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(source_envs, feature_dqn_info, net_params, dqn_params,
-         N, seed, device, workspace, decay, start_decay):
+         N, seed, device, workspace, decay, start_decay,traj_max_size):
     envs, params = generate_envs(**source_envs)
 
     for ienv, env in enumerate(envs):
@@ -27,7 +27,8 @@ def main(source_envs, feature_dqn_info, net_params, dqn_params,
             dqn_params=dqn_params,
             N=N,
             decay=decay,
-            start_decay=start_decay)
+            start_decay=start_decay,
+        traj_max_size=traj_max_size)
 
         dqn.memory.to_lists().save(workspace / "samples" / "{}.json".format(ienv), True)
         dqn.save(workspace / "dqn" / "{}.pt".format(ienv))

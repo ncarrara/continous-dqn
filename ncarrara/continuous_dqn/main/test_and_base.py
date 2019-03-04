@@ -11,11 +11,15 @@ from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 logger = logging.getLogger(__name__)
 
 
-def main(loss_function_str, feature_autoencoder_info, target_envs, N,path_models,path_samples,seed,source_params,device):
-    loss_function = loss_fonction_factory(loss_function_str)
-    autoencoders = utils.load_autoencoders(path_models)
+def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N,path_models,path_samples,seed,source_params,device):
+    loss_autoencoders = loss_fonction_factory(loss_autoencoders_str)
+    autoencoders = utils.load_autoencoders(path_models,device)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
-    tm = TransferModule(auto_encoders=autoencoders, loss=loss_function, feature=feature_autoencoder,device=device)
+    tm = TransferModule(
+        autoencoders=autoencoders,
+        loss_autoencoders=loss_autoencoders,
+        feature_autoencoders=feature_autoencoder,
+        device=device)
     errors_base = []
     # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
     memories = load_memories(path_samples)

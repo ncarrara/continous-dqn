@@ -27,12 +27,16 @@ def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_w
 
     # print(xx)
     xx = xx.iloc[xx.index.get_level_values('is_greedy') == True]
+    xx = xx.reset_index('is_greedy', drop=True).T
     print(xx)
+
+    xx.plot()
+    plt.show()
     # print(greedy)
 
-    sns.lmplot('config', '0', data=df, hue='config', fit_reg=False)
+    # sns.lmplot('config', '0', data=df, hue='config', fit_reg=False)
 
-    plt.show()
+    # plt.show()
 
 
     # print("-------------")

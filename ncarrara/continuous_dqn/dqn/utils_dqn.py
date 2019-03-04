@@ -70,7 +70,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
             if traj_max_size is not None and it >= traj_max_size:
                 logger.warning("Max size trajectory reached")
                 break
-        if tm is not None and n % 50 == 0:
+        if tm is not None and n % 50 == 0 and transfer_params["selection_method"] == "transfer":
             logger.info("------------------------------------")
             logger.info("[N_trajs={},N_samples={}] {}"
                         .format(n, nb_samples, utils.format_errors(tm.errors,

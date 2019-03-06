@@ -20,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "DEBUG",
+          "level": "WARN",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -60,66 +60,74 @@
         }
       }
     },
-    "workspace": "tmp/cartpole/hard",
+    "workspace": "tmp/slot_filling/test",
     "seed": 0,
-    "id": "cartpole_hard"
+    "id": "slot_filling_test"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": [
-        7,
-        12
+      "cerr": [
+        -5,
+        0
       ],
-      "masscart": [
-        0.5,
-        1.5
+      "ser": [
+        0.0,
+        0.6
       ],
-      "masspole": [
-        0.05,
-        0.15
+      "cstd": [
+        0.0,
+        0.6
       ],
-      "length": [
-        0.3,
-        1.5
+      "proba_hangup": [
+        0.0,
+        1.0
       ],
-      "force_mag": [
-        9,
-        11
-      ]
+      "max_turn": 2,
+      "size_constraints": 3,
+      "penalty_if_bye": 0.0,
+      "penalty_if_hangup": 0.0,
+      "penalty_if_summarize_fail": 0.0,
+      "penalty_by_turn": 0.0,
+      "penalty_if_max_turn": 0.0,
+      "reward_if_sucess": 100.0
     },
-    "number_random_env": 30,
-    "envs_str": "CartPoleConfig-v0"
+    "number_random_env": 2,
+    "envs_str": "slot_filling_env_v1"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": [
-        7,
-        12
+      "cerr": [
+        -5,
+        0
       ],
-      "masscart": [
-        0.5,
-        1.5
+      "ser": [
+        0.0,
+        0.6
       ],
-      "masspole": [
-        0.05,
-        0.15
+      "cstd": [
+        0.0,
+        0.6
       ],
-      "length": [
-        0.3,
-        1.5
+      "proba_hangup": [
+        0.0,
+        1.0
       ],
-      "force_mag": [
-        9,
-        11
-      ]
+      "max_turn": 2,
+      "size_constraints": 3,
+      "penalty_if_bye": 0.0,
+      "penalty_if_hangup": 0.0,
+      "penalty_if_summarize_fail": 0.0,
+      "penalty_by_turn": 0.0,
+      "penalty_if_max_turn": 0.0,
+      "reward_if_sucess": 100.0
     },
-    "number_random_env": 15,
-    "envs_str": "CartPoleConfig-v0"
+    "number_random_env": 2,
+    "envs_str": "slot_filling_env_v1"
   },
   "dqn_params": {
     "gamma": 0.999,
     "batch_size_experience_replay": 32,
-    "target_update": 10,
+    "target_update": 2,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "lr": 0.01,
@@ -132,18 +140,18 @@
     ]
   },
   "test_and_base": {
-    "N": 100
+    "N": 5
   },
   "generate_sources": {
-    "N": 100,
+    "N": 5,
     "decay": 0.05,
     "start_decay": 0.5,
-    "traj_max_size": 200
+    "traj_max_size": 10
   },
   "as_json": true,
   "transfer_dqn": {
-    "traj_max_size": 200,
-    "N": 100,
+    "traj_max_size": 3,
+    "N": 10,
     "start_decay": 0.5,
     "decay": 0.05,
     "configs": {
@@ -165,21 +173,55 @@
     }
   },
   "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_identity"
+    "feature_str": "feature_autoencoder_slot_filling",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
   },
   "feature_dqn_info": {
-    "feature_str": "feature_dqn_identity"
+    "feature_str": "feature_basic",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
   },
   "learn_autoencoders": {
     "weight_decay": 0.0,
     "learning_rate": 0.001,
     "autoencoder_size": [
-      8,
-      32
+      2,
+      4
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 500,
+    "n_epochs": 5,
     "loss_function_str": "l2"
   }
 }

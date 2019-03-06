@@ -23,7 +23,7 @@ def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_w
     # print(df.groupby(level=['env']).mean())
     # print(df.groupby(level=['is_greedy']).mean())
 
-    xx = df.mean(level=["config","is_greedy"])
+    xx = df.mean(level=["config", "is_greedy"])
 
     # print(xx)
     xx = xx.iloc[xx.index.get_level_values('is_greedy') == True]
@@ -31,13 +31,26 @@ def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_w
     print(xx)
 
     xx.plot()
-    plt.show()
+    plt.savefig(workspace / "results_greedy")
+
+
+
+
+    xx = df.mean(level=["config", "is_greedy"])
+
+    # print(xx)
+    xx = xx.iloc[xx.index.get_level_values('is_greedy') == False]
+    xx = xx.reset_index('is_greedy', drop=True).T
+    print(xx)
+
+    xx.plot()
+    plt.savefig(workspace / "results")
+
     # print(greedy)
 
     # sns.lmplot('config', '0', data=df, hue='config', fit_reg=False)
 
     # plt.show()
-
 
     # print("-------------")
     # print(df["config"])
@@ -54,11 +67,9 @@ def main(results_w_t=None, results_wo_t=None, results_w_t_greedy=None, results_w
     # print(grouped.sum())
     # print(grouped.mean(level=2))
 
-
     # l = ['379-H', '625-H']
     # g = df.index.get_level_values('CU').isin(l)
     # df.groupby(g).mean()
-
 
     # makedirs(workspace / "plots")
     # if results_w_t is None:

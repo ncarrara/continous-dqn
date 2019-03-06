@@ -60,34 +60,36 @@
         }
       }
     },
-    "workspace": "tmp/tests/main",
-    "seed": 0,
-    "id": "main"
+    "workspace": "tmp/cartpole_hard2",
+    "seed": 1,
+    "id": "cartpole_hard2"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": "[9.8]",
-      "masscart": "[1.0]",
-      "masspole": "[0.1]",
-      "length": "np.random.choice(np.linspace(0.3,1.5,500),2)",
-      "force_mag": "[10.0]"
+      "gravity": [7,12],
+      "masscart": [0.5,1.5],
+      "masspole": [0.05,0.15],
+      "length": [0.3,1.5],
+      "force_mag": [9,11]
     },
+    "number_random_env": 100,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": "[9.8]",
-      "masscart": "[1.0]",
-      "masspole": "[0.1]",
-      "length": "np.random.choice(np.linspace(0.3,1.5,500),2)",
-      "force_mag": "[10.0]"
+      "gravity": [7,12],
+      "masscart": [0.5,1.5],
+      "masspole": [0.05,0.15],
+      "length": [0.3,1.5],
+      "force_mag": [9,11]
     },
+    "number_random_env": 50 ,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
     "gamma": 0.999,
     "batch_size_experience_replay": 2048,
-    "target_update": 3,
+    "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "lr": 0.01,
@@ -100,38 +102,29 @@
     ]
   },
   "test_and_base": {
-    "N": 10,
-    "traj_max_size": 200
+    "N": 100
   },
   "generate_sources": {
-    "N": 10,
-    "decay": 0.01,
-    "start_decay": 1,
-    "traj_max_size": 5
-
+    "N": 100,
+    "decay": 0.05,
+    "start_decay": 0.5,
+    "traj_max_size": 200
   },
   "as_json": true,
   "transfer_dqn": {
-    "N": 10,
-    "traj_max_size": 5,
+    "traj_max_size": 200,
+    "N": 100,
     "start_decay": 0.5,
     "decay": 0.05,
     "configs": {
       "no_transfer": {
         "selection_method": "no_transfer"
       },
-      "transfer4": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn4"
-      },
-
-      "transfer2": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn2"
+      "transfer": {
+        "selection_method": "best_fit"
       },
       "random_transfer": {
-        "selection_method": "random",
-        "transfer_network_type": "tnn4"
+        "selection_method": "random"
       }
     }
   },
@@ -150,7 +143,7 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 5,
+    "n_epochs": 500,
     "loss_function_str": "l2"
   }
 }

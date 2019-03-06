@@ -1,4 +1,4 @@
-from ncarrara.continuous_dqn.dqn.tnn import TNN2
+from ncarrara.continuous_dqn.dqn.tnn import TNN2, transfer_network_factory
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
 import torch.nn.functional as F
 from ncarrara.continuous_dqn.tools import utils
@@ -22,7 +22,9 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
         tm.reset()
 
     if tm is not None and tm.is_q_transfering():
-        net = TNN2(n_in=size_state, n_out=env.action_space.n, **net_params)
+        net = transfer_network_factory(
+            type=transfer_params["transfer_network_type"],
+            params={**{"n_in": size_state, "n_out": env.action_space.n}, **net_params})
     else:
         net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
     dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, **dqn_params)
@@ -51,13 +53,14 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(s), action_mask)
+                    a = dqn.pi(feature_dqn(np.squeeze(s)), action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
+                    a = dqn.pi(feature_dqn(np.squeeze(s)), np.zeros(env.action_space.n))
 
             s_, r_, done, info = env.step(a)
             rr += r_
-            t_dqn = (feature_dqn(s), a, r_, feature_dqn(s_), done, info)
+            # print("s____________________________ ",s_)
+            t_dqn = (feature_dqn(np.squeeze(s)), a, r_, feature_dqn(np.squeeze(s_)), done, info)
             dqn.update(*t_dqn)
             s = s_
             nb_samples += 1
@@ -90,9 +93,9 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(s), action_mask)
+                    a = dqn.pi(feature_dqn(np.squeeze(s)), action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
+                    a = dqn.pi(feature_dqn(np.squeeze(s)), np.zeros(env.action_space.n))
 
                 s_, r_, done, info = env.step(a)
                 rr += r_

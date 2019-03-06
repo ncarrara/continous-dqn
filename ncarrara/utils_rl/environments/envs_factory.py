@@ -15,11 +15,25 @@ def generate_env_params_combination(env_params):
     grid = ParameterGrid(env_params)
     return grid
 
+def generate_env_params_random(env_params,number_random_env):
+    import numpy as np
+    grid=[]
+    for ienv in range(0,number_random_env):
+        params = {}
+        for k, v in env_params.items():
+            params[k] = np.random.choice(np.linspace(v[0],v[1],1000),1)[0]#.tolist()
+        grid.append(params)
+    return grid
 
-def generate_envs(envs_str, envs_params):
+
+
+def generate_envs(envs_str, envs_params,number_random_env =None):
     logger.info(
         "[generate_envs] params : \n\n{}".format("".join(["\t{} : {}\n".format(k, v) for k, v in envs_params.items()])))
-    grid = generate_env_params_combination(envs_params)
+    if number_random_env is None:
+        grid = generate_env_params_combination(envs_params)
+    else:
+        grid = generate_env_params_random(envs_params,number_random_env)
     logger.info("[generate_envs] number of envs : {}".format(len(grid)))
 
     envs = []

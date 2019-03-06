@@ -47,7 +47,8 @@ def main(
     # results_w_t = np.zeros((len(envs), N))
     # results_w_t_greedy = np.zeros((len(envs), N))
     datas = []
-
+    import collections
+    configs = collections.OrderedDict(configs)
     # data = pd.DataFrame()
     for i_env in range(len(envs)):
         logger.info("======================= ENV TARGET {} ======================".format(i_env))
@@ -57,8 +58,13 @@ def main(
 
         for key, config in configs.items():
             logger.info("=== config {} ====".format(key))
-            transfer_params["test_params"] = test_params
-            transfer_params["selection_method"] = config["selection_method"]
+            if config["selection_method"] != "no_transfer":
+                transfer_params_config = transfer_params
+                transfer_params_config["test_params"] = test_params
+                transfer_params_config["selection_method"] = config["selection_method"]
+                transfer_params_config["transfer_network_type"] = config["transfer_network_type"]
+            else:
+                transfer_params_config = None
             env = envs[i_env]
             ret, ret_greedy, _ = run_dqn(
                 env,
@@ -71,7 +77,7 @@ def main(
                 N=N,
                 decay=decay,
                 start_decay=start_decay,
-                transfer_params=transfer_params,
+                transfer_params=transfer_params_config,
                 traj_max_size=traj_max_size
             )
             # config_data = pd.DataFrame({"greedy": ret_greedy, "not_greedy": ret})

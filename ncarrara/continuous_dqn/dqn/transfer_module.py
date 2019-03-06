@@ -37,28 +37,19 @@ class TransferModule:
 
     def get_experience_replay_source(self):
         if self.experience_replays is not None:
-            if self.selection_method == "best_fit":
-                return self.experience_replays[self.best_fit]
-            elif self.selection_method == "random":
-                return self.experience_replays[np.random.randint(0, len(self.auto_encoders))]
-            else:
-                raise Exception("unkown selection methode : {}".format(self.selection_method))
+            return self.experience_replays[self.best_fit]
         else:
             raise Exception("Transfer module's experience_replays are None")
 
     def get_Q_source(self):
         if self.Q_sources is not None:
-            if self.selection_method == "best_fit":
-                return self.Q_sources[self.best_fit]
-            elif self.selection_method == "random":
-                return self.Q_sources[np.random.randint(0, len(self.auto_encoders))]
-            else:
-                raise Exception("unkown selection methode : {}".format(self.selection_method))
+            return self.Q_sources[self.best_fit]
         else:
             raise Exception("Transfer module's Q_sources are None")
 
     def get_error(self):
-        return self.errors[self.best_fit]
+        import torch
+        return torch.tensor([self.errors[self.best_fit]],device=self.device)
 
     def push(self, s, a, r_, s_, done, info):
         sample = (s, a, r_, s_, done, info)
@@ -86,17 +77,24 @@ class TransferModule:
         Evaluate the last unevaluated transitions
         :return:
         """
-        import torch
-        with torch.no_grad():
-            # toevaluate = torch.stack(self.memory[self.evaluation_index: -1])
-            toevaluate = self.memory[self.evaluation_index: len(self.memory)]
-            if type(toevaluate[0]) == type(torch.zeros(0)):
-                toevaluate = torch.stack(toevaluate)
-            else:
-                toevaluate = torch.tensor(toevaluate).to(self.device)
-            # TODO maybe parrale compute of this
-            losses = np.array([self.loss(ae(toevaluate), toevaluate).item() for ae in self.auto_encoders])
-        self.sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)
+        if self.selection_method == "best_fit":
+            import torch
+            with torch.no_grad():
+                # toevaluate = torch.stack(self.memory[self.evaluation_index: -1])
+                toevaluate = self.memory[self.evaluation_index: len(self.memory)]
+                if type(toevaluate[0]) == type(torch.zeros(0)):
+                    toevaluate = torch.stack(toevaluate)
+                else:
+                    toevaluate = torch.tensor(toevaluate).to(self.device)
+                # TODO maybe parrale compute of this
+                losses = np.array([self.loss(ae(toevaluate), toevaluate).item() for ae in self.auto_encoders])
+
+                self.sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)
+
+        elif self.selection_method == "random":
+            self.sum_errors = np.random.rand(len(self.auto_encoders))
+        else:
+            raise Exception("unkown selection methode : {}".format(self.selection_method))
         self.errors = self.sum_errors / len(self.memory)
         self.best_fit = np.argmin(self.errors)
         self.evaluation_index = len(self.memory) - 1

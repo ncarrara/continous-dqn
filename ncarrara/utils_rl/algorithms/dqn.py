@@ -84,7 +84,7 @@ class DQN:
             self.policy_net.reset()
 
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            self.policy_net.set_Q_source(self.tranfer_module.get_Q_source())
+            self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
 
         self.optimizer = optimizer_factory(self.optimizer_type,
                                            self.policy_net.parameters(),
@@ -98,7 +98,7 @@ class DQN:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            self.target_net.set_Q_source(self.policy_net.Q_source)
+            self.target_net.set_Q_source(self.policy_net.Q_source,self.tranfer_module.get_error())
 
     def _optimize_model(self):
 
@@ -121,12 +121,14 @@ class DQN:
 
             # transfer Q
             if self.tranfer_module.is_q_transfering():
-                self.policy_net.set_Q_source(self.tranfer_module.get_Q_source())
+                self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
 
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
                                       device=self.device,
                                       dtype=torch.uint8)
+        # print("baaaatch")
+        # print(batch.s_)
         non_final_next_states = [s for s in batch.s_ if s is not None]
 
         state_batch = torch.cat(batch.s)
@@ -146,6 +148,11 @@ class DQN:
         # print("ok")
         next_state_values = torch.zeros(len(transitions), device=self.device)
         if non_final_next_states:
+            # print("ioooo")
+            # print(non_final_mask)
+            # print(non_final_next_states)
+            # print(torch.cat(non_final_next_states))
+            # print(self.target_net(torch.cat(non_final_next_states)).max(1)[0].detach())
             next_state_values[non_final_mask] = self.target_net(torch.cat(non_final_next_states)).max(1)[0].detach()
         else:
             logger.warning("Pas d'état non terminaux")
@@ -177,6 +184,7 @@ class DQN:
             next_state = None
         action = torch.tensor([action], device=self.device, dtype=torch.long)
         reward = torch.tensor([float(reward)], device=self.device, dtype=torch.float)
+        # print("next_state !!!! ",next_state)
         t = state, action, reward, next_state, done, info
         self.memory.push(*t)
         if self.tranfer_module is not None:
@@ -188,7 +196,7 @@ class DQN:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.target_net.load_state_dict(self.policy_net.state_dict())
                 if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-                    self.target_net.set_Q_source(self.policy_net.Q_source)
+                    self.target_net.set_Q_source(self.policy_net.Q_source,self.tranfer_module.get_error())
 
                 # if self.i_episode % 100 == 0:
                 #     with torch.no_grad():

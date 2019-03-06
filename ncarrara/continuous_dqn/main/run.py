@@ -4,34 +4,35 @@ import sys
 
 
 def main(config):
-    C.load_pytorch().load(config)#.create_fresh_workspace(force=True)
+    C.load(config)  # .create_fresh_workspace(force=True)
+    if "generate_sources" in config:
+        generate_sources.main(
+            source_envs=C["source_envs"],
+            feature_dqn_info=C["feature_dqn_info"],
+            net_params=C["net_params"],
+            dqn_params=C["dqn_params"],
+            seed=C.seed,
+            device=C.device,
+            workspace=C.path_sources,
+            **C["generate_sources"]
+        )
+        learn_autoencoders.main(
+            feature_autoencoder_info=C["feature_autoencoder_info"],
+            workspace=C.path_sources,
+            device=C.device,
+            **C["learn_autoencoders"])
 
-    generate_sources.main(
-        source_envs=C["source_envs"],
-        feature_dqn_info=C["feature_dqn_info"],
-        net_params=C["net_params"],
-        dqn_params=C["dqn_params"],
-        seed=C.seed,
-        device=C.device,
-        workspace=C.path_sources,
-        **C["generate_sources"]
-    )
-    learn_autoencoders.main(
-        feature_autoencoder_info=C["feature_autoencoder_info"],
-        workspace=C.path_sources,
-        device=C.device,
-        **C["learn_autoencoders"])
+        test_and_base.main(
+            loss_autoencoders_str=C["learn_autoencoders"]["loss_function_str"],
+            feature_autoencoder_info=C["feature_autoencoder_info"],
+            target_envs=C["target_envs"],
+            N=C["test_and_base"]["N"],
+            path_models=C.path_sources / "ae",
+            path_samples=C.path_sources / "samples",
+            seed=C.seed,
+            source_params=C.load_sources_params(),
+            device=C.device)
 
-    test_and_base.main(
-        loss_autoencoders_str=C["learn_autoencoders"]["loss_function_str"],
-        feature_autoencoder_info=C["feature_autoencoder_info"],
-        target_envs=C["target_envs"],
-        N=C["test_and_base"]["N"],
-        path_models=C.path_sources / "ae",
-        path_samples=C.path_sources / "samples",
-        seed=C.seed,
-        source_params=C.load_sources_params(),
-        device=C.device)
     transfer_dqn.main(
         workspace=C.workspace,
         seed=C.seed,
@@ -49,6 +50,13 @@ def main(config):
 
 
 if __name__ == "__main__":
+
     config = sys.argv[1]
-    print(config)
-    main(config)
+    seed_min = int(sys.argv[2])
+    seed_max = int(sys.argv[3])
+    workspace = config["general"]["workspace"]
+    C.load_pytorch()
+    for seed in range(seed_min, seed_max):
+        config["general"]["seed"] = seed
+        config["general"]["workspace"] = workspace + "/" + str(seed)
+        main(config)

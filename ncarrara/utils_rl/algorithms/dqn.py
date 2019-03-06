@@ -4,7 +4,6 @@ import torch
 import copy
 import torch.nn.functional as F
 
-from ncarrara.continuous_dqn.dqn.tnn import TNN, TNN2
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -84,6 +83,7 @@ class DQN:
             self.policy_net.reset()
 
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+            print(self.policy_net)
             self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
 
         self.optimizer = optimizer_factory(self.optimizer_type,

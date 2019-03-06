@@ -21,7 +21,12 @@ def generate_env_params_random(env_params,number_random_env):
     for ienv in range(0,number_random_env):
         params = {}
         for k, v in env_params.items():
-            params[k] = np.random.choice(np.linspace(v[0],v[1],1000),1)[0]#.tolist()
+            if isinstance(v, list):
+                params[k] = np.random.choice(np.linspace(v[0],v[1],1000),1)[0]
+            elif isinstance(v,float) or isinstance(v,int):
+                params[k] = v
+            else:
+                raise Exception("This type can't be parsed : {}".format(type(v)))
         grid.append(params)
     return grid
 

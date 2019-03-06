@@ -1,7 +1,5 @@
-from ncarrara.continuous_dqn.dqn.tnn import TNN2, transfer_network_factory
+from ncarrara.continuous_dqn.dqn.tnn import transfer_network_factory
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
-import torch.nn.functional as F
-from ncarrara.continuous_dqn.tools import utils
 import random
 import numpy as np
 import logging
@@ -34,7 +32,6 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
     rrr_greedy = []
     epsilons = epsilon_decay(start=start_decay, decay=decay, N=N, savepath=workspace)
     nb_samples = 0
-    already_warn_for_no_need_transfer = False
     for n in range(N):
         s = env.reset()
         done = False
@@ -53,33 +50,20 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(np.squeeze(s)), action_mask)
+                    a = dqn.pi(feature_dqn(s), action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(np.squeeze(s)), np.zeros(env.action_space.n))
+                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
 
             s_, r_, done, info = env.step(a)
             rr += r_
-            # print("s____________________________ ",s_)
-            t_dqn = (feature_dqn(np.squeeze(s)), a, r_, feature_dqn(np.squeeze(s_)), done, info)
+            t_dqn = (feature_dqn(s), a, r_, feature_dqn(s_), done, info)
             dqn.update(*t_dqn)
             s = s_
             nb_samples += 1
             it += 1
-            if it % 100 == 0:
-                if it > 500:
-                    logger.warning("Number of transitions overflowing : {}".format(it))
-                # else:
-                #     logger.info("step={}".format(it))
             if traj_max_size is not None and it >= traj_max_size:
-                logger.warning("Max size trajectory reached")
                 break
-        if tm is not None and n % 50 == 0 and transfer_params["selection_method"] == "transfer":
-            logger.info("------------------------------------")
-            logger.info("[N_trajs={},N_samples={}] {}"
-                        .format(n, nb_samples, utils.format_errors(tm.errors,
-                                                                   transfer_params["sources_params"],
-                                                                   transfer_params["test_params"])))
-            logger.info("--------------------------------------")
+
         rrr.append(rr)
 
         if evaluate_greedy_policy:
@@ -93,21 +77,24 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(np.squeeze(s)), action_mask)
+                    a = dqn.pi(feature_dqn(s), action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(np.squeeze(s)), np.zeros(env.action_space.n))
+                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
 
                 s_, r_, done, info = env.step(a)
                 rr += r_
                 s = s_
                 it += 1
-                if it % 100 == 0:
-                    if it > 500:
-                        logger.warning("Number of trajectories overflowing : {}".format(it))
-                    # else:
-                    #     logger.info("step={}".format(it))
                 if traj_max_size is not None and it >= traj_max_size:
-                    logger.warning("Max size trajectory reached")
                     break
             rrr_greedy.append(rr)
     return rrr, rrr_greedy, dqn
+
+
+# if tm is not None and n % 50 == 0 and transfer_params["selection_method"] == "transfer":
+#     logger.info("------------------------------------")
+#     logger.info("[N_trajs={},N_samples={}] {}"
+#                 .format(n, nb_samples, utils.format_errors(tm.errors,
+#                                                            transfer_params["sources_params"],
+#                                                            transfer_params["test_params"])))
+#     logger.info("--------------------------------------")

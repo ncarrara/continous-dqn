@@ -167,4 +167,4 @@ if __name__ == "__main__":
     if seeds is not None:
         override_param_grid['general.seed'] = seeds
 
-    abstract_main.main(config_file, override_param_grid, override_device_str, main)
+    abstract_main.main(C,config_file, override_param_grid, override_device_str, main)

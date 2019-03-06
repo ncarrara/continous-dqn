@@ -23,7 +23,7 @@ def generate_env_params_random(env_params,number_random_env):
         for k, v in env_params.items():
             if isinstance(v, list):
                 params[k] = np.random.choice(np.linspace(v[0],v[1],1000),1)[0]
-            elif isinstance(v,float) or isinstance(v,int):
+            elif isinstance(v,float) or isinstance(v,int) or isinstance(v,str):
                 params[k] = v
             else:
                 raise Exception("This type can't be parsed : {}".format(type(v)))
@@ -58,7 +58,7 @@ def generate_envs(envs_str, envs_params,number_random_env =None):
             env = LunarLanderBudgetedConfigEnv(**param)
         elif envs_str == "gym_pydial":
             env_pydial = __import__("gym_pydial.env.env_pydial")
-            env = env_pydial.EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
+            env = env_pydial.EnvPydial(pydial_logging_level="ERROR", **param)
         elif envs_str == "slot_filling_env_v0":
             from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
             env = SlotFillingEnv(**param)

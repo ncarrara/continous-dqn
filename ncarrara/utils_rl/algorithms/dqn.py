@@ -83,7 +83,7 @@ class DQN:
             self.policy_net.reset()
 
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            print(self.policy_net)
+            # print(self.policy_net)
             self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(),self.tranfer_module.get_error())
 
         self.optimizer = optimizer_factory(self.optimizer_type,

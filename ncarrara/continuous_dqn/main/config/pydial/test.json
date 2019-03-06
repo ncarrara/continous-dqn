@@ -60,9 +60,9 @@
         }
       }
     },
-    "workspace": "tmp/pydial",
+    "workspace": "tmp/pydial/test",
     "seed": 0,
-    "id": "pydial"
+    "id": "pydial_test"
   },
   "source_envs": {
     "envs_params": {
@@ -72,7 +72,7 @@
         1.0
       ]
     },
-    "number_random_env": 30,
+    "number_random_env": 2,
     "envs_str": "gym_pydial"
   },
   "target_envs": {
@@ -83,13 +83,13 @@
         1.0
       ]
     },
-    "number_random_env": 15,
+    "number_random_env": 2,
     "envs_str": "gym_pydial"
   },
   "dqn_params": {
     "gamma": 0.999,
-    "batch_size_experience_replay": 32,
-    "target_update": 10,
+    "batch_size_experience_replay": 3,
+    "target_update": 5,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "lr": 0.001,
@@ -97,25 +97,22 @@
   },
   "net_params": {
     "intra_layers": [
-      256,
-      128,
-      64,
-      32
+      10
     ]
   },
   "test_and_base": {
-    "N": 100
+    "N": 10
   },
   "generate_sources": {
-    "N": 100,
+    "N": 10,
     "decay": 0.05,
     "start_decay": 0.5,
-    "traj_max_size": 200
+    "traj_max_size": 2
   },
   "as_json": true,
   "transfer_dqn": {
-    "traj_max_size": 200,
-    "N": 100,
+    "traj_max_size": 2,
+    "N": 10,
     "start_decay": 0.5,
     "decay": 0.05,
     "configs": {
@@ -184,12 +181,12 @@
     "weight_decay": 0.0,
     "learning_rate": 0.001,
     "autoencoder_size": [
-      8,
-      128
+      2,
+      4
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 1000,
+    "n_epochs": 10,
     "criterion": "l2"
   }
 }

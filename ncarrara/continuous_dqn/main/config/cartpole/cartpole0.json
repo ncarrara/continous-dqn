@@ -60,30 +60,28 @@
         }
       }
     },
-    "workspace": "tmp/cartpole_hard",
+    "workspace": "tmp/cartpole0",
     "seed": 0,
-    "id": "cartpole_hard"
+    "id": "cartpole"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+      "gravity": "[9.8]",
+      "masscart": "[1.0]",
+      "masspole": "[0.1]",
+      "length": "np.random.choice(np.linspace(0.3,1.5,500),30)",
+      "force_mag": "[10.0]"
     },
-    "number_random_env": 30,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+      "gravity": "[9.8]",
+      "masscart": "[1.0]",
+      "masspole": "[0.1]",
+      "length": "np.random.choice(np.linspace(0.3,1.5,500),20)",
+      "force_mag": "[10.0]"
     },
-    "number_random_env": 20 ,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
@@ -120,11 +118,9 @@
       "no_transfer": {
         "selection_method": "no_transfer"
       },
-      "transfer": {
-        "selection_method": "best_fit"
-      },
-      "random_transfer": {
-        "selection_method": "random"
+      "transfer4": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn4"
       }
     }
   },

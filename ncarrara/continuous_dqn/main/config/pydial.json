@@ -1,7 +1,6 @@
 {
   "general": {
-    "id": "0_pydial",
-     "dictConfig": {
+    "dictConfig": {
       "version": 1,
       "disable_existing_loggers": false,
       "formatters": {
@@ -61,57 +60,80 @@
         }
       }
     },
-    "workspace": "tmp/0_pydial",
-    "seed": 0
+    "workspace": "tmp/pydial",
+    "seed": 0,
+    "id": "pydial"
+  },
+  "source_envs": {
+    "envs_params": {
+      "config_file": "env1-hdc-CR.cfg",
+      "error_rate": [
+        0.0,
+        1.0
+      ]
+    },
+    "number_random_env": 30,
+    "envs_str": "gym_pydial"
+  },
+  "target_envs": {
+    "envs_params": {
+      "config_file": "env1-hdc-CR.cfg",
+      "error_rate": [
+        0.0,
+        1.0
+      ]
+    },
+    "number_random_env": 15,
+    "envs_str": "gym_pydial"
+  },
+  "dqn_params": {
+    "gamma": 0.999,
+    "batch_size_experience_replay": 32,
+    "target_update": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "lr": 0.001,
+    "weight_decay": 0.01
+  },
+  "net_params": {
+    "intra_layers": [
+      256,
+      128,
+      64,
+      32
+    ]
   },
   "test_and_base": {
-    "N": 250
+    "N": 100
   },
-  "no_transfer_dqn": {
-    "traj_max_size": null,
-    "env_str": "CartPole-v0",
-    "N": 1000,
-    "decay": 0.01,
-    "dqn_params": {
-      "gamma": 0.999,
-      "batch_size_experience_replay": 128,
-      "target_update": 10,
-      "optimizer": "ADAM",
-      "loss_function": "l2",
-      "lr": 0.001,
-      "weight_decay": 0.01,
-      "workspace": "dqn"
-    },
-    "net_params": {
-      "sizes": [
-        296,
-        128,
-        64,
-        32,
-        17
-      ]
-    }
-  },
-  "transfer_dqn": {
-    "traj_max_size": null,
-    "N": 250,
+  "generate_sources": {
+    "N": 100,
     "decay": 0.05,
-    "dqn_params": {
-      "gamma": 0.999,
-      "batch_size_experience_replay": 256,
-      "target_update": 10,
-      "optimizer": "ADAM",
-      "loss_function": "l2",
-      "lr": 0.001,
-      "weight_decay": 0.001,
-      "workspace": "dqn"
-    },
-    "net_params": {
-      "sizes": [
-        300,
-        100,
-        17
-      ]
+    "start_decay": 0.5,
+    "traj_max_size": 200
+  },
+  "as_json": true,
+  "transfer_dqn": {
+    "traj_max_size": 200,
+    "N": 100,
+    "start_decay": 0.5,
+    "decay": 0.05,
+    "configs": {
+      "no_transfer": {
+        "selection_method": "no_transfer"
+      },
+      "transfer2": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn2"
+      },
+      "random_transfer4": {
+        "selection_method": "random",
+        "transfer_network_type": "tnn4"
+      },
+      "transfer4": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn4"
+      }
     }
   },
   "feature_autoencoder_info": {
@@ -158,20 +180,6 @@
       "restart"
     ]
   },
-  "source_envs": {
-    "envs_params": {
-      "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "np.random.choice(np.linspace(0.0,1.0,500),10)"
-    },
-    "envs_str": "gym_pydial"
-  },
-  "target_envs": {
-    "envs_params": {
-      "config_file": "['env1-hdc-CR.cfg']",
-      "error_rate": "np.random.choice(np.linspace(0.0,1.0,500),10)"
-    },
-    "envs_str": "gym_pydial"
-  },
   "learn_autoencoders": {
     "weight_decay": 0.0,
     "learning_rate": 0.001,
@@ -182,7 +190,6 @@
     "optimizer_str": "ADAM",
     "normalize": true,
     "n_epochs": 1000,
-    "criterion": "l1"
-  },
-  "N_base_trajectories": 250
+    "criterion": "l2"
+  }
 }

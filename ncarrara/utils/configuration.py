@@ -70,6 +70,7 @@ class Configuration(object):
 
         self.id = self.dict["general"]["id"]
         self.workspace = Path(self.dict["general"]["workspace"])
+        print(self.dict["general"])
 
         import logging.config as config
         config.dictConfig(self.dict["general"]["dictConfig"])
@@ -82,6 +83,10 @@ class Configuration(object):
         import numpy as np
         np.set_printoptions(precision=2)
 
+        self.writer = None
+        self.is_tensorboardX = self["general"]["is_tensorboardX"]
+        if self.is_tensorboardX:
+            self.load_tensorboardX()
         return self
 
     def load_matplotlib(self, backend=None):
@@ -121,12 +126,20 @@ class Configuration(object):
                 _device = get_the_device_with_most_available_memory()
             self.device = _device
             self.logger.info("DEVICE : {}".format(self.device))
+
         return self
+    def load_tensorboardX(self):
+        from tensorboardX import SummaryWriter
+        makedirs(self.workspace / "tensorboard")
+        os.system("rm {}/*".format(str(self.workspace / "tensorboard")))
+        self.writer = SummaryWriter(str(self.workspace / "tensorboard"))
+        os.system("tensorboard --logdir {} --port 6008 &".format(str(self.workspace / "tensorboard")))
 
     def dump_to_workspace(self, filename="config.json"):
         """
         Dump the configuration a json file in the workspace.
         """
         makedirs(self.workspace)
+        print(self.dict)
         with open(self.workspace / filename, 'w') as f:
             json.dump(self.dict, f, indent=2)

@@ -10,6 +10,8 @@ def generate_env_params_combination(env_params):
         if type(v) is str:
             import numpy as np
             x = eval(v)
+            if isinstance(x,np.ndarray):
+                x=x.tolist()
             env_params[k] = x
             logger.info("[gepc] <{}> {} -> {}".format(k, v, x))
     grid = ParameterGrid(env_params)
@@ -23,7 +25,7 @@ def generate_env_params_random(env_params, number_random_env):
         params = {}
         for k, v in env_params.items():
             if isinstance(v, list):
-                params[k] = np.random.choice(np.linspace(v[0], v[1], 1000), 1)[0]
+                params[k] = np.random.choice(np.linspace(v[0], v[1], 1000), 1)[0].tolist()
             elif isinstance(v, float) or isinstance(v, int) or isinstance(v, str):
                 params[k] = v
             else:

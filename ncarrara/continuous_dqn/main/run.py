@@ -10,9 +10,11 @@ def main(config):
             feature_dqn_info=config["feature_dqn_info"],
             net_params=config["net_params"],
             dqn_params=config["dqn_params"],
+            gamma=config["dqn_params"]["gamma"],
             seed=config.seed,
             device=config.device,
             workspace=config.path_sources,
+            writer = config.writer,
             **config["generate_sources"]
         )
         learn_autoencoders.main(
@@ -38,36 +40,53 @@ def main(config):
         target_envs=config["target_envs"],
         net_params=config["net_params"],
         dqn_params=config["dqn_params"],
+        gamma=config["dqn_params"]["gamma"],
         source_params=config.load_sources_params(),
         device=config.device,
         feature_autoencoder_info=config["feature_autoencoder_info"],
         feature_dqn_info=config["feature_dqn_info"],
         loss_function_autoencoder_str=config["learn_autoencoders"]["loss_function_str"],
+        writer=config.writer,
         **config["transfer_dqn"]
     )
-    plot_data.main(workspace=config.workspace, show_all=True)
+    plot_data.main(workspace=config.workspace)
 
 
 if __name__ == "__main__":
     from ncarrara.continuous_dqn.tools.configuration import C
+
     seeds = None
     override_device_str = None
     print(sys.argv)
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         config_file = sys.argv[1]
-        if len(sys.argv) > 2:
-            seed_start = int(sys.argv[2])
-            seed_end = int(sys.argv[3])
-            seeds = range(seed_start, seed_end)
-            if len(sys.argv) > 4:
-                override_device_str = sys.argv[4]
+        seed_start = int(sys.argv[2])
+        seed_end = int(sys.argv[3])
+        seeds = range(seed_start, seed_end)
+        override_param_grid = {}
+        if seeds is not None:
+            override_param_grid['general.seed'] = seeds
+
+        abstract_main.main(C, config_file, override_param_grid, override_device_str, main)
     else:
-        config_file = "../config/test_egreedy.json"
-        C.load(config_file).create_fresh_workspace(force=True)
-        seeds = [0, 1]
+        # DEBUGGING
+        seed = 3
+        import os
 
-    override_param_grid = {}
-    if seeds is not None:
-        override_param_grid['general.seed'] = seeds
+        os.system("rm -rf tmp/cartpole/easy-debug/debug")
+        os.system("mkdir tmp/cartpole/easy-debug")
+        os.system("cp -r tmp/cartpole/easy/{} tmp/cartpole/easy-debug/{}".format(seed, seed))
+        config_file = "config/cartpole/easy-debug.json"
+        with open(config_file, 'r') as infile:
+            import json
 
-    abstract_main.main(C,config_file, override_param_grid, override_device_str, main)
+            dict = json.load(infile)
+        dict["general"]["workspace"] = dict["general"]["workspace"] + "/" + str(seed)
+        dict["general"]["seed"] = seed
+        if "matplotlib_backend" in dict["general"]:
+            backend = dict["general"]["matplotlib_backend"]
+        else:
+            backend = "Agg"
+        C.load(dict).load_pytorch(override_device_str).load_matplotlib(backend)
+        print(dict)
+        main(C)

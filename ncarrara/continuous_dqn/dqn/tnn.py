@@ -2,6 +2,7 @@ import torch
 from torch._jit_internal import weak_script_method
 from torch.nn import Module, init
 
+
 from ncarrara.utils.torch_utils import BaseModule
 import numpy as np
 import math
@@ -17,6 +18,8 @@ def transfer_network_factory(type,params):
         return TNN4(**params)
     elif type == "tnn2":
         return TNN2(**params)
+    elif type == "tnn5":
+        return TNN5(**params)
     # elif type == "tnn":
     #     return TNN(**params)
     else:
@@ -36,10 +39,18 @@ class TNN4(BaseModule):
 
         # self.concat_layer = torch.nn.Linear(n_out * 2 + 1, all_layers[-1])
         self.ae_layer = torch.nn.Linear(1, 1)
+        self.p = 1.
 
     def set_Q_source(self, Q_source, ae_score):
         self.Q_source = Q_source
         self.ae_score = ae_score
+
+    def get_biais_ae_layer(self):
+        return self.ae_layer.bias
+    def get_weight_ae_layer(self):
+        return self.ae_layer.weight
+    def get_p(self):
+        return self.p
 
     def reset(self):
         self.Q_source = None
@@ -55,9 +66,108 @@ class TNN4(BaseModule):
             input_Q = self.activation(layer(input_Q))
         out_Q = self.predict(input_Q)
         out_Q_transfer = self.Q_source(s)
+        self.p = torch.sigmoid(self.ae_layer(self.ae_score))
+        y = out_Q * (1 - self.p) + out_Q_transfer * self.p
+
+
+        return y.view(y.size(0), -1)
+
+class TNN5(BaseModule):
+    def __init__(self, n_in, n_out, intra_layers, activation_type="RELU", reset_type="XAVIER", normalize=None):
+        super(TNN5, self).__init__(activation_type, reset_type, normalize)
+        all_layers = [n_in] + intra_layers + [n_out]
+        self.layers = []
+        for i in range(0, len(all_layers) - 2):
+            module = torch.nn.Linear(all_layers[i], all_layers[i + 1])
+            self.layers.append(module)
+            self.add_module("h_" + str(i), module)
+        self.predict = torch.nn.Linear(all_layers[-2], all_layers[-1])
+
+        # self.ae_layer = torch.nn.Linear(1, 1)
+        self.biais = torch.nn.Parameter(torch.Tensor([0.]))
+        self.biais.requires_grad= True
+        self.p= 1.
+        # self.ae_layer.weight.requires_grad = False
+
+    def set_Q_source(self, Q_source, ae_score):
+        self.Q_source = Q_source
+        self.ae_score = ae_score
+
+    def get_biais_ae_layer(self):
+        return self.biais
+    def get_weight_ae_layer(self):
+        return -1
+    def get_p(self):
+        return self.p
+
+    def reset(self):
+        self.Q_source = None
+        self.ae_score = np.nan
+        super(TNN5, self).reset()
+
+    def forward(self, s):
+        input_Q = s
+        if self.normalize:
+            input_Q = (input_Q.float() - self.mean.float()) / self.std.float()
+
+        for layer in self.layers:
+            input_Q = self.activation(layer(input_Q))
+        out_Q = self.predict(input_Q)
+        out_Q_transfer = self.Q_source(s)
         # weight_ae = torch.tensor(torch.sigmoid(self.ae_layer(self.ae_score)),requires_grad=True)
-        weight_ae = torch.sigmoid(self.ae_layer(self.ae_score))
-        y = out_Q * (1 - weight_ae) + out_Q_transfer * weight_ae
+        self.p = torch.sigmoid(self.biais - self.ae_score)
+        y = out_Q * (1 - self.p) + out_Q_transfer * self.p
+        # y = out_Q  + out_Q_transfer
+
+
+        return y.view(y.size(0), -1)
+
+
+class TNN6(BaseModule):
+    def __init__(self, n_in, n_out, intra_layers, activation_type="RELU", reset_type="XAVIER", normalize=None):
+        super(TNN6, self).__init__(activation_type, reset_type, normalize)
+        all_layers = [n_in] + intra_layers + [n_out]
+        self.layers = []
+        for i in range(0, len(all_layers) - 2):
+            module = torch.nn.Linear(all_layers[i], all_layers[i + 1])
+            self.layers.append(module)
+            self.add_module("h_" + str(i), module)
+        self.predict = torch.nn.Linear(all_layers[-2], all_layers[-1])
+
+        # self.ae_layer = torch.nn.Linear(1, 1)
+        self.biais = torch.nn.Parameter(torch.Tensor([0.]))
+        self.biais.requires_grad= True
+        self.p= 1.
+        # self.ae_layer.weight.requires_grad = False
+
+    def set_Q_source(self, Q_source, ae_score):
+        self.Q_source = Q_source
+        self.ae_score = ae_score
+
+    def get_biais_ae_layer(self):
+        return self.biais
+    def get_weight_ae_layer(self):
+        return -1
+    def get_p(self):
+        return self.p
+
+    def reset(self):
+        self.Q_source = None
+        self.ae_score = np.nan
+        super(TNN6, self).reset()
+
+    def forward(self, s):
+        input_Q = s
+        if self.normalize:
+            input_Q = (input_Q.float() - self.mean.float()) / self.std.float()
+
+        for layer in self.layers:
+            input_Q = self.activation(layer(input_Q))
+        out_Q = self.predict(input_Q)
+        out_Q_transfer = self.Q_source(s)
+        # weight_ae = torch.tensor(torch.sigmoid(self.ae_layer(self.ae_score)),requires_grad=True)
+        self.p = torch.sigmoid(self.biais - self.ae_score)
+        y = out_Q * (1 - self.p) + out_Q_transfer * self.p
         # y = out_Q  + out_Q_transfer
 
 
@@ -139,6 +249,13 @@ class TNN2(BaseModule):
         y = torch.cat(actions_values, dim=1)
         y = y.view(y.size(0), -1)
         return y
+
+    def get_biais_ae_layer(self):
+        return torch.Tensor([0])
+    def get_weight_ae_layer(self):
+        return torch.Tensor([0])
+    def get_p(self):
+        return torch.Tensor([0])
 
 
 # class TNN(BaseModule):

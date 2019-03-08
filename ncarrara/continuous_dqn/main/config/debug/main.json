@@ -100,7 +100,8 @@
     "optimizer": "ADAM",
     "loss_function": "l2",
     "lr": 0.001,
-    "weight_decay": 0.0
+    "weight_decay": 0.0,
+    "transfer_param_init": {"w": -5,"b":-5}
   },
   "net_params": {
     "intra_layers": [
@@ -123,16 +124,13 @@
     "N": 250,
     "start_decay": 1.0,
     "decay": 0.025,
+    "path_sources": "tmp/cartpole/hard2/0/sources",
     "configs": {
 
-      "transfer4": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn4"
+      "transfer": {
+        "selection_method": "best_fit"
       },
-      "transfer5": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn5"
-      },
+
       "no_transfer": {
         "selection_method": "no_transfer"
       }

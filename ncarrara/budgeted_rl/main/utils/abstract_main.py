@@ -56,7 +56,7 @@ def main(C,config_file, override_param_grid, override_device_str=None, f=lambda 
                 tochange = tochange[keys[ik]]
             tochange[keys[-1]] = v
         dict["general"]["workspace"] = str(workspace / str(i_config))
-        C.load(dict).create_fresh_workspace(force=True)
+        C.load(dict).create_fresh_workspace(force=True).load_tensorboardX()
         C.dump_to_workspace()
 
         print("\n-------- i_config={} ----------\n".format(i_config))

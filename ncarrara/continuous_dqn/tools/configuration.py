@@ -7,15 +7,13 @@ from ncarrara.utils.os import makedirs
 
 logger = logging.getLogger(__name__)
 
+
 class ConfigurationContinuousDQN(Configuration):
 
-
     def load(self, config):
-        super(ConfigurationContinuousDQN,self).load(config)
+        super(ConfigurationContinuousDQN, self).load(config)
         self.path_sources = self.workspace / "sources"
-        self.path_sources_params = self.path_sources / "params.json"
         self.path_targets = self.workspace / "targets"
-        self.path_targets_params = self.path_targets / "params.json"
         return self
 
     def _load_params(self, path):
@@ -28,11 +26,10 @@ class ConfigurationContinuousDQN(Configuration):
         return params
 
     def load_targets_params(self):
-        return self._load_params(self.path_targets_params)
+        return self._load_params(self.path_targets / "params.json")
 
     def load_sources_params(self):
-        return self._load_params(self.path_sources_params)
+        return self._load_params(self.path_sources / "params.json")
 
 
 C = ConfigurationContinuousDQN()
-

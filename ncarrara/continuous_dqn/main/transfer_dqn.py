@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
@@ -16,18 +18,21 @@ import ncarrara.utils.torch_utils as tu
 def main(
         workspace, seed, target_envs, net_params, dqn_params,
         start_decay, decay, feature_autoencoder_info,
-        feature_dqn_info, N, source_params, device, loss_function_autoencoder_str, traj_max_size, configs,gamma,writer=None):
+        feature_dqn_info, N, source_params, device, loss_function_autoencoder_str, traj_max_size, configs,gamma,writer=None,path_sources=None):
     epsilon_decay(start_decay, decay, N, savepath=workspace)
 
 
     envs, tests_params = generate_envs(**target_envs)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
     feature_dqn = build_feature_dqn(feature_dqn_info)
-    autoencoders = utils.load_autoencoders(workspace / "sources" / "ae", device)
-    # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
-
-    Q_sources = utils.load_q_sources(workspace / "sources" / "dqn", device)
-
+    if path_sources is None:
+        autoencoders = utils.load_autoencoders(workspace / "sources" / "ae", device)
+        # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
+        Q_sources = utils.load_q_sources(workspace / "sources" / "dqn", device)
+    else:
+        autoencoders = utils.load_autoencoders(Path(path_sources) / "ae", device)
+        # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
+        Q_sources = utils.load_q_sources(Path(path_sources) / "dqn", device)
     # for er in ers:
     #     er.apply_feature_to_states(feature_dqn)
     #     er.to_tensors(C.device)
@@ -61,7 +66,7 @@ def main(
                 transfer_params_config = transfer_params
                 transfer_params_config["test_params"] = test_params
                 transfer_params_config["selection_method"] = config["selection_method"]
-                transfer_params_config["transfer_network_type"] = config["transfer_network_type"]
+                # transfer_params_config["transfer_network_type"] = config["transfer_network_type"]
             else:
                 transfer_params_config = None
             env = envs[i_env]

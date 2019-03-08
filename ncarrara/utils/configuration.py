@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from ncarrara.utils.os import makedirs
+from ncarrara.utils.os import makedirs, empty_directory
 
 
 class Configuration(object):
@@ -85,8 +85,7 @@ class Configuration(object):
 
         self.writer = None
         self.is_tensorboardX = self["general"]["is_tensorboardX"]
-        if self.is_tensorboardX:
-            self.load_tensorboardX()
+
         return self
 
     def load_matplotlib(self, backend=None):
@@ -106,8 +105,8 @@ class Configuration(object):
         return self
 
     def load_pytorch(self, override_device_str=None):
-        self.logger.warning("we are using: import torch.multiprocessing as multiprocessing")
-        self.logger.warning("we are using: multiprocessing.set_start_method('spawn')")
+        self.logger.warning("Using import torch.multiprocessing as multiprocessing")
+        self.logger.warning("Using multiprocessing.set_start_method('spawn')")
         import torch.multiprocessing as multiprocessing
         try:
             multiprocessing.set_start_method('spawn')
@@ -128,12 +127,18 @@ class Configuration(object):
             self.logger.info("DEVICE : {}".format(self.device))
 
         return self
+
     def load_tensorboardX(self):
-        from tensorboardX import SummaryWriter
-        makedirs(self.workspace / "tensorboard")
-        os.system("rm {}/*".format(str(self.workspace / "tensorboard")))
-        self.writer = SummaryWriter(str(self.workspace / "tensorboard"))
-        os.system("tensorboard --logdir {} --port 6008 &".format(str(self.workspace / "tensorboard")))
+        if self.is_tensorboardX:
+            from tensorboardX import SummaryWriter
+            empty_directory(self.workspace / "tensorboard")
+            makedirs(self.workspace / "tensorboard")
+            # exit()
+
+            self.writer = SummaryWriter(str(self.workspace / "tensorboard"))
+            command = "tensorboard --logdir {} --port 6008 &".format(str(self.workspace / "tensorboard"))
+            self.logger.info("running command \"{}\"".format(command))
+            os.system(command)
 
     def dump_to_workspace(self, filename="config.json"):
         """

@@ -6,6 +6,7 @@ import logging
 
 from ncarrara.utils.math_utils import epsilon_decay, set_seed
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
+from ncarrara.continuous_dqn.dqn.tdqn import TDQN
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +19,13 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
     else:
         tm = TransferModule(**transfer_params)
         tm.reset()
-
+    net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
     if tm is not None and tm.is_q_transfering():
-        net = transfer_network_factory(
-            type=transfer_params["transfer_network_type"],
-            params={**{"n_in": size_state, "n_out": env.action_space.n}, **net_params})
+        dqn = TDQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, writer=writer,
+                  **dqn_params)
     else:
-        net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
-    dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, writer=writer, **dqn_params)
+        dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, writer=writer,
+                   **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)
     rrr = []
@@ -93,13 +93,14 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
             # print("eps={} greedy={}".format(rr,rr_greedy))
     import matplotlib.pyplot as plt
     for param_stat in ["weights_over_time", "biais_over_time",
-                       "ae_errors_over_time", "probas_over_time",
+                       "ae_errors_over_time", "p_over_time",
                        "best_fit_over_time"]:
-        var = getattr(dqn, param_stat)
-        plt.plot(range(0,len(var)), var)
-        plt.title(param_stat)
-        plt.savefig(workspace / param_stat)
-        plt.close()
+        if hasattr(dqn,param_stat):
+            var = getattr(dqn, param_stat)
+            plt.plot(range(0, len(var)), var)
+            plt.title(param_stat)
+            plt.savefig(workspace / param_stat)
+            plt.close()
 
     return rrr, rrr_greedy, dqn
 

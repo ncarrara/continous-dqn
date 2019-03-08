@@ -143,6 +143,7 @@
   },
   "as_json": true,
   "transfer_dqn": {
+    "path_sources": null,
     "traj_max_size": 200,
     "N": 250,
     "start_decay": 1.0,

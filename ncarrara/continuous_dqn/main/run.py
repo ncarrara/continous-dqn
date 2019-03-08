@@ -1,6 +1,10 @@
+from pprint import pprint
+
 from ncarrara.budgeted_rl.main.utils import abstract_main
 from ncarrara.continuous_dqn.main import generate_sources, learn_autoencoders, test_and_base, transfer_dqn, plot_data
 import sys
+
+from ncarrara.utils.os import empty_directory, makedirs
 
 
 def main(config):
@@ -14,7 +18,7 @@ def main(config):
             seed=config.seed,
             device=config.device,
             workspace=config.path_sources,
-            writer = config.writer,
+            writer=config.writer,
             **config["generate_sources"]
         )
         learn_autoencoders.main(
@@ -70,23 +74,33 @@ if __name__ == "__main__":
         abstract_main.main(C, config_file, override_param_grid, override_device_str, main)
     else:
         # DEBUGGING
-        seed = 3
         import os
 
-        os.system("rm -rf tmp/cartpole/easy-debug/debug")
-        os.system("mkdir tmp/cartpole/easy-debug")
-        os.system("cp -r tmp/cartpole/easy/{} tmp/cartpole/easy-debug/{}".format(seed, seed))
-        config_file = "config/cartpole/easy-debug.json"
+        seed = 0
+        config_file = sys.argv[1]
+        config_file_sources = "config/cartpole/hard2.json"
+
         with open(config_file, 'r') as infile:
             import json
 
+            dict_debug = json.load(infile)
+
+
+        makedirs(dict_debug["general"]["workspace"])
+
+        with open(config_file_sources, 'r') as infile:
+            import json
+
             dict = json.load(infile)
-        dict["general"]["workspace"] = dict["general"]["workspace"] + "/" + str(seed)
-        dict["general"]["seed"] = seed
-        if "matplotlib_backend" in dict["general"]:
-            backend = dict["general"]["matplotlib_backend"]
+            os.system("cp -r {}/{} {}".format(dict["general"]["workspace"], seed, dict_debug["general"]["workspace"]))
+
+            dict_debug["general"]["workspace"] = dict_debug["general"]["workspace"] + "/" + str(seed)
+            dict_debug["general"]["seed"] = seed
+
+        if "matplotlib_backend" in dict_debug["general"]:
+            backend = dict_debug["general"]["matplotlib_backend"]
         else:
             backend = "Agg"
-        C.load(dict).load_pytorch(override_device_str).load_matplotlib(backend)
-        print(dict)
+        C.load(dict_debug).load_pytorch(override_device_str).load_matplotlib(backend)
+        pprint(dict_debug)
         main(C)

@@ -51,11 +51,11 @@ class DQN:
                  transfer_module=None,
                  writer=None,
                  **kwargs):
-        self.ws = []
-        self.bs = []
-        self.bfs = []
-        self.errs = []
-        self.ps = []
+        self.weights_over_time = []
+        self.biais_over_time = []
+        self.best_fit_over_time = []
+        self.ae_errors_over_time = []
+        self.probas_over_time = []
         self.writer = writer
         self.tranfer_module = transfer_module
         self.device = device
@@ -130,9 +130,9 @@ class DQN:
             if self.tranfer_module.is_q_transfering():
                 self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_error())
 
-                self.bfs.append(self.tranfer_module.best_fit)
+                self.best_fit_over_time.append(self.tranfer_module.best_fit)
 
-                self.errs.append(self.tranfer_module.get_error())
+                self.ae_errors_over_time.append(self.tranfer_module.get_error())
                 if self.writer is not None:
                     self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
                     self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
@@ -164,16 +164,16 @@ class DQN:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            w = self.policy_net.get_weight_ae_layer().item()
-            b = self.policy_net.get_biais_ae_layer().item()
-            p = self.policy_net.get_p().item()
-            self.ws.append(w)
-            self.bs.append(b)
-            self.ps.append(p)
+            weight = self.policy_net.get_weight_ae_layer().item()
+            biais = self.policy_net.get_biais_ae_layer().item()
+            proba = self.policy_net.get_p().item()
+            self.weights_over_time.append(weight)
+            self.biais_over_time.append(biais)
+            self.probas_over_time.append(proba)
             if self.writer is not None:
-                self.writer.add_scalar('ae_weight/episode', w, self.i_episode)
-                self.writer.add_scalar('ae_biais/episode', b, self.i_episode)
-                self.writer.add_scalar('p/episode', p, self.i_episode)
+                self.writer.add_scalar('ae_weight/episode', weight, self.i_episode)
+                self.writer.add_scalar('ae_biais/episode', biais, self.i_episode)
+                self.writer.add_scalar('p/episode', proba, self.i_episode)
 
 
     def pi(self, state, action_mask):

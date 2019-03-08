@@ -137,16 +137,16 @@
   },
   "generate_sources": {
     "N": 250,
-    "decay": 0.05,
-    "start_decay": 0.5,
+    "decay": 0.025,
+    "start_decay": 1.0,
     "traj_max_size": 200
   },
   "as_json": true,
   "transfer_dqn": {
     "traj_max_size": 200,
     "N": 250,
-    "start_decay": 0.5,
-    "decay": 0.0025,
+    "start_decay": 1.0,
+    "decay": 0.025,
     "configs": {
       "transfer2": {
         "selection_method": "best_fit",

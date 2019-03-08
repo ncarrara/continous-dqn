@@ -10,7 +10,7 @@ from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 logger = logging.getLogger(__name__)
 
 
-def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay,gamma=None,
+def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay, gamma=None,
             transfer_params=None, evaluate_greedy_policy=True, traj_max_size=None, writer=None):
     size_state = len(feature_dqn(env.reset()))
     if transfer_params is None or transfer_params["selection_method"] == "no_transfer":
@@ -57,7 +57,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
 
             s_, r_, done, info = env.step(a)
             done = done or (traj_max_size is not None and it >= traj_max_size - 1)
-            rr += r_ * (gamma**it)
+            rr += r_ * (gamma ** it)
             t_dqn = (feature_dqn(s), a, r_, feature_dqn(s_), done, info)
             dqn.update(*t_dqn)
             s = s_
@@ -92,26 +92,14 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                 writer.add_scalar('return_greedy/episode', rr_greedy, n)
             # print("eps={} greedy={}".format(rr,rr_greedy))
     import matplotlib.pyplot as plt
-    plt.plot(range(len(dqn.ws)),dqn.ws)
-    plt.title("ws")
-    plt.savefig(workspace / "ws")
-    plt.close()
-    plt.plot(range(len(dqn.bs)), dqn.bs)
-    plt.title("bs")
-    plt.savefig(workspace / "bs")
-    plt.close()
-    plt.plot(range(len(dqn.bs)), dqn.bs)
-    plt.title("ps")
-    plt.savefig(workspace / "ps")
-    plt.close()
-    plt.plot(range(len(dqn.bs)), dqn.bs)
-    plt.title("errs")
-    plt.savefig(workspace / "errs")
-    plt.close()
-    plt.plot(range(len(dqn.bs)), dqn.bs)
-    plt.title("bfs")
-    plt.savefig(workspace / "bfs")
-    plt.close()
+    for param_stat in ["weights_over_time", "biais_over_time",
+                       "ae_errors_over_time", "probas_over_time",
+                       "best_fit_over_time"]:
+        var = getattr(dqn, param_stat)
+        plt.plot(range(0,len(var)), var)
+        plt.title(param_stat)
+        plt.savefig(workspace / param_stat)
+        plt.close()
 
     return rrr, rrr_greedy, dqn
 

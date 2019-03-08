@@ -101,7 +101,7 @@
     "loss_function": "l2",
     "lr": 0.001,
     "weight_decay": 0.0,
-    "transfer_param_init": {"w": -5,"b":-5}
+    "transfer_param_init": null
   },
   "net_params": {
     "intra_layers": [
@@ -124,7 +124,7 @@
     "N": 250,
     "start_decay": 1.0,
     "decay": 0.025,
-    "path_sources": "tmp/cartpole/hard2/0/sources",
+    "path_sources": "tmp/cartpole/easy2/0/sources",
     "configs": {
 
       "transfer": {

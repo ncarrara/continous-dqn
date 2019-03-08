@@ -45,7 +45,7 @@ class TDQN:
         self.tranfer_module = transfer_module
         self.device = device
         self.size_mini_batch = batch_size_experience_replay
-        self.GAMMA = gamma
+        self.gamma = gamma
         self.TARGET_UPDATE = target_update
         self.workspace = workspace
         self.policy_net = policy_network.to(self.device)
@@ -145,13 +145,27 @@ class TDQN:
             logger.warning("Pas d'état non terminaux")
 
         ae_error = self.tranfer_module.get_error()
-        p = torch.sigmoid(self.weight_transfer * ae_error + self.biais_transfer)
-        self.bootstrap = (ns_values * self.GAMMA) + r_batch
-        self.bootstrap_t = (((1 - p) * ns_values + p * ns_values_t) * self.GAMMA) + r_batch
+        # plt.show()
+        p = torch.sigmoid(100*(self.weight_transfer * ae_error + self.biais_transfer))
+        bootstrap = r_batch + self.gamma * ns_values
+        bootstrap_t = r_batch + self.gamma * ((1 - p) * ns_values + p * ns_values_t)
+        bootstrap_tt = r_batch + self.gamma * ns_values_t
+        # self.loss_function = torch.nn.functional.l1_loss
+        loss_classic = self.loss_function(sa_values, bootstrap.unsqueeze(1))
+        loss_transfer = self.loss_function(sa_values * (1 - p) + p * sa_values_t, bootstrap_t.unsqueeze(1))
 
-        loss_classic = self.loss_function(sa_values, self.bootstrap.unsqueeze(1))
-        loss_transfer = self.loss_function(sa_values * (1 - p) + p * sa_values_t, self.bootstrap_t.unsqueeze(1))
-        loss = loss_classic + loss_transfer
+
+        # if self.i_episode == 10:
+        #     for i in range(len(sa_values_t)):
+        #         print("{:.2f}|{:.2f} -- {:.2f}|{:.2f}".format(sa_values_t[i].item(), bootstrap_tt[i].item(),
+        #                                                       sa_values[i].item(), bootstrap[i].item()))
+        #     exit()
+        l = self.loss_function(sa_values, bootstrap.unsqueeze(1))
+        l_t = self.loss_function(sa_values_t, bootstrap_tt.unsqueeze(1))
+        self.writer.add_scalar('error_bootstrap/episode', l,self.i_episode)
+        self.writer.add_scalar('error_bootstrap_transfer/episode',l_t, self.i_episode)
+        self.writer.add_scalar('diff/episode',l-l_t, self.i_episode)
+        loss = loss_transfer  + loss_classic
         if self.writer is not None:
             self.writer.add_scalar('loss/episode', loss.item(), self.i_episode)
         self.optimizer.zero_grad()

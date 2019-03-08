@@ -13,6 +13,72 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class TranferNetwork(BaseModule):
+    def __init__(self, Q, reset_type="XAVIER"):
+        super(TranferNetwork, self).__init__("SIGMOID", reset_type, normalize=False)
+        self.Q = Q
+
+        self.n_actions = Q.predict.out_features
+        self.predict_Q = torch.nn.Linear(self.n_actions + 1, self.n_actions)
+        self.predict_Q_s = torch.nn.Linear(self.n_actions + 1, self.n_actions)
+        self.actions = []
+        for i in range(self.n_actions):
+            module = torch.nn.Linear(2, 1)
+            self.actions.append(module)
+            self.add_module("a_" + str(i), module)
+        # print(self)
+        # exit()
+
+    def set_Q_source(self, Q_source, ae_score):
+        self.Q_source = Q_source
+        self.ae_score = ae_score
+
+    def reset(self):
+        self.Q_source = None
+        self.ae_score = np.nan
+        super(TranferNetwork, self).reset()
+
+    def forward(self, s):
+        # print("s.shape",s.shape)
+        Q = self.Q(s)
+        Q_s = self.Q_source(s)
+        # print(Q.shape)
+        # print(self.ae_score.unsqueeze(0).shape)
+        # print(Q_source.shape)
+        ae_score = self.ae_score.repeat(len(s)).unsqueeze(1)
+        # print("ae_score.shape",ae_score.shape)
+        Q_and_ae = torch.cat((Q, ae_score), 1)
+        # print("Q",Q)
+        # print("ae_score",ae_score)
+        # print("Q_and_ae",Q_and_ae)
+        out_Q_and_ae = self.activation(self.predict_Q(Q_and_ae))
+        # print("out_Q_and_ae",out_Q_and_ae)
+        Q_s_and_ae = torch.cat((Q_s, ae_score), 1)
+        out_Q_s_and_ae = self.activation(self.predict_Q_s(Q_s_and_ae))
+        rez = []
+        for i in range(self.n_actions):
+            # print("out_Q_and_ae.shape",out_Q_and_ae.shape)
+            # print(out_Q_source_ae)
+            v_act_s = out_Q_s_and_ae[:, i].unsqueeze(1)
+            v_act = out_Q_and_ae[:, i].unsqueeze(1)
+
+            # print(v_act_source)
+            # print("v_act_s.shape",v_act_s.shape)
+            Q_a = torch.cat((v_act, v_act_s), dim=1)
+            # print("Q_a.shape",Q_a.shape)
+            v_Q_a = self.activation(self.actions[i](Q_a))
+            # print("v_Q_a.shape",v_Q_a.shape)
+            rez.append(v_Q_a)
+            # exit()
+
+        rez = torch.cat(rez, dim=1)
+
+        # print(rez)
+        rez = rez.view(rez.size(0), -1)
+        # exit()
+        return rez
+
+
 class TDQN:
     ALL_BATCH = "ALL_BATCH"
     ADAPTATIVE = "ADAPTATIVE"
@@ -49,7 +115,7 @@ class TDQN:
         self.TARGET_UPDATE = target_update
         self.workspace = workspace
         self.policy_net = policy_network.to(self.device)
-
+        self.transfer_net = TranferNetwork(self.policy_net).to(self.device)
         self.memory = Memory()
         self.i_episode = 0
         self.n_actions = self.policy_net.predict.out_features
@@ -74,16 +140,21 @@ class TDQN:
         if reset_weight:
             self.policy_net.reset()
 
-        if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            self.transfer_net = self.tranfer_module.get_Q_source()
-        self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
-        self.weight_transfer.requires_grad_()
-        self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
-        self.biais_transfer.requires_grad_()
-        self.parameters = list(self.policy_net.parameters()) + [self.weight_transfer, self.biais_transfer]
+        # if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+        #     self.transfer_net = self.tranfer_module.get_Q_source()
+        # self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
+        # self.weight_transfer.requires_grad_()
+        # self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
+        # self.biais_transfer.requires_grad_()
+        # self.parameters = list(self.policy_net.parameters()) + list(
+        #     self.transfer_net.parameters())  # + [self.weight_transfer, self.biais_transfer]
 
-        self.optimizer = optimizer_factory(self.optimizer_type,
-                                           self.parameters,
+        self.optimizer_transfer = optimizer_factory(self.optimizer_type,
+                                           self.transfer_net.parameters(),
+                                           self.lr,
+                                           self.weight_decay)
+        self.optimizer_classic = optimizer_factory(self.optimizer_type,
+                                           self.policy_net.parameters(),
                                            self.lr,
                                            self.weight_decay)
 
@@ -113,7 +184,7 @@ class TDQN:
 
             # transfer Q
             if self.tranfer_module.is_q_transfering():
-                # self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_error())
+                self.transfer_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_error())
                 self.best_fit_over_time.append(self.tranfer_module.best_fit)
                 self.ae_errors_over_time.append(self.tranfer_module.get_error())
                 if self.writer is not None:
@@ -144,46 +215,36 @@ class TDQN:
         else:
             logger.warning("Pas d'état non terminaux")
 
-        ae_error = self.tranfer_module.get_error()
-        # plt.show()
-        p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
         bootstrap = r_batch + self.gamma * ns_values
-        bootstrap_t = r_batch + self.gamma * ((1 - p) * ns_values + p * ns_values_t)
-        bootstrap_tt = r_batch + self.gamma * ns_values_t
-        # self.loss_function = torch.nn.functional.l1_loss
+        bootstrap_t = r_batch + self.gamma * ns_values_t
         loss_classic = self.loss_function(sa_values, bootstrap.unsqueeze(1))
-        loss_transfer = self.loss_function(sa_values * (1 - p) + p * sa_values_t, bootstrap_t.unsqueeze(1))
+        loss_transfer = self.loss_function(sa_values_t, bootstrap_t.unsqueeze(1))
 
 
-        # if self.i_episode == 10:
-        #     for i in range(len(sa_values_t)):
-        #         print("{:.2f}|{:.2f} -- {:.2f}|{:.2f}".format(sa_values_t[i].item(), bootstrap_tt[i].item(),
-        #                                                       sa_values[i].item(), bootstrap[i].item()))
-        #     exit()
-        l = self.loss_function(sa_values, bootstrap.unsqueeze(1))
-        l_t = self.loss_function(sa_values_t, bootstrap_tt.unsqueeze(1))
-        self.writer.add_scalar('error_bootstrap/episode', l,self.i_episode)
-        self.writer.add_scalar('error_bootstrap_transfer/episode',l_t, self.i_episode)
-        self.writer.add_scalar('diff/episode',l-l_t, self.i_episode)
-        loss = loss_transfer  + loss_classic
-        if self.writer is not None:
-            self.writer.add_scalar('loss/episode', loss.item(), self.i_episode)
-        self.optimizer.zero_grad()
-        loss.backward()
+        for param in self.transfer_net.Q.parameters():
+            param.requires_grad = False
+        for param in self.transfer_net.Q_source.parameters():
+            param.requires_grad = False
+        # print(self.transfer_net)
 
-        for param in self.parameters:
-            param.grad.data.clamp_(-1, 1)
+        self.optimizer_transfer.zero_grad()
+        loss_transfer.backward(retain_graph=True)
+        for param in self.transfer_net.parameters():
+            if param.requires_grad:
+                param.grad.data.clamp_(-1, 1)
+        self.optimizer_transfer.step()
 
-        self.optimizer.step()
+        for param in self.transfer_net.Q.parameters():
+            param.requires_grad = True
 
-        if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            self.weights_over_time.append(self.weight_transfer)
-            self.biais_over_time.append(self.biais_transfer)
-            self.p_over_time.append(p)
-            if self.writer is not None:
-                self.writer.add_scalar('ae_weight/episode', self.weight_transfer, self.i_episode)
-                self.writer.add_scalar('ae_biais/episode', self.biais_transfer, self.i_episode)
-                self.writer.add_scalar('p/episode', p, self.i_episode)
+        self.optimizer_classic.zero_grad()
+        loss_classic.backward()
+        for param in self.policy_net.parameters():
+            if param.requires_grad:
+                param.grad.data.clamp_(-1, 1)
+        self.optimizer_classic.step()
+
+
 
     def pi(self, state, action_mask):
 
@@ -193,9 +254,7 @@ class TDQN:
             action_mask[action_mask == 1.] = np.infty
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([state], device=self.device, dtype=torch.float)
-            ae_error = self.tranfer_module.get_error()
-            p = torch.sigmoid(self.weight_transfer * ae_error + self.biais_transfer)
-            v = self.policy_net(s) * (1 - p) + p * self.transfer_net(s)
+            v = self.transfer_net(s)
             # v = self.policy_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
             return a

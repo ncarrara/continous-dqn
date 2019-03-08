@@ -110,6 +110,8 @@ class BaseModule(torch.nn.Module):
             return F.relu
         elif activation_type == "TANH":
             return torch.tanh
+        elif activation_type == "SIGMOID":
+            return torch.sigmoid
         else:
             raise Exception("Unknown activation_type: {}".format(activation_type))
 

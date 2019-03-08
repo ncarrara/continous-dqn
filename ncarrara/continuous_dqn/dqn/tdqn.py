@@ -146,7 +146,7 @@ class TDQN:
 
         ae_error = self.tranfer_module.get_error()
         # plt.show()
-        p = torch.sigmoid(100*(self.weight_transfer * ae_error + self.biais_transfer))
+        p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
         bootstrap = r_batch + self.gamma * ns_values
         bootstrap_t = r_batch + self.gamma * ((1 - p) * ns_values + p * ns_values_t)
         bootstrap_tt = r_batch + self.gamma * ns_values_t

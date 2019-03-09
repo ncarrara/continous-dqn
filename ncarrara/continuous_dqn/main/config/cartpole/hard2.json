@@ -118,13 +118,16 @@
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
-    "gamma": 0.999,
+    "gamma": 0.99,
     "batch_size_experience_replay": 128,
     "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
+    "loss_function_gate": "l1",
     "lr": 0.001,
-    "weight_decay": 0.0
+    "weight_decay": 0.0,
+    "transfer_param_init": null,
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [
@@ -149,24 +152,11 @@
     "start_decay": 1.0,
     "decay": 0.025,
     "configs": {
-      "transfer2": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn2"
-      },
-      "transfer4": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn4"
-      },
-      "transfer5": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn5"
+      "transfer": {
+        "selection_method": "best_fit"
       },
       "no_transfer": {
         "selection_method": "no_transfer"
-      },
-      "random_transfer4": {
-        "selection_method": "random",
-        "transfer_network_type": "tnn4"
       }
     }
   },

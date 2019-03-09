@@ -153,7 +153,7 @@ class TDQN:
         ae_error = self.tranfer_module.get_error()
         p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
         bootstrap_t = r_batch + self.gamma * ((1 - p) * (ns_values) + p * (ns_values_t))
-        loss_transfer = self.loss_function(
+        loss_transfer = torch.nn.functional.l1_loss(
             (sa_values) * (1 - p) + p * (sa_values_t),
             (bootstrap_t).unsqueeze(1))
 
@@ -171,6 +171,23 @@ class TDQN:
         for param in self.parameters_policy:
             param.grad.data.clamp_(-1, 1)
         self.optimizer_policy.step()
+        print("--------------------------------")
+        for i in range(len(bootstrap)):
+            print("L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f}) ||| L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f})"
+                .format(
+                sa_values[i].item(),
+                r_batch[i].item(),
+                self.gamma * ns_values[i].item(),
+                self.loss_function(sa_values[i], (r_batch[i] + self.gamma * ns_values[i])).item(),
+                torch.nn.functional.l1_loss(sa_values[i], (r_batch[i] + self.gamma * ns_values[i])).item(),
+                sa_values_t[i].item(),
+                r_batch[i].item(),
+                self.gamma * ns_values_t[i].item(),
+                self.loss_function(sa_values_t[i], (r_batch[i] + self.gamma * ns_values_t[i])).item(),
+                torch.nn.functional.l1_loss(sa_values_t[i], (r_batch[i] + self.gamma * ns_values_t[i])).item(),
+            )
+            )
+        # exit()
 
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
             self.weights_over_time.append(self.weight_transfer)
@@ -189,6 +206,7 @@ class TDQN:
             # self.writer.add_scalar('ae_weight/episode', self.weight_transfer, self.i_episode)
             # self.writer.add_scalar('ae_biais/episode', self.biais_transfer, self.i_episode)
             self.writer.add_scalar('p/episode', p, self.i_episode)
+        # exit()
 
     def pi(self, state, action_mask):
 

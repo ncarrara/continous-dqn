@@ -106,7 +106,7 @@
       "w": 0,
       "b": -2
     },
-    "ratio_learn_test": 0.75
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [

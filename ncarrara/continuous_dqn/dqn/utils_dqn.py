@@ -102,7 +102,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                        "best_fit_over_time"]:
         if hasattr(dqn, param_stat):
             var = getattr(dqn, param_stat)
-            plt.plot(range(0, len(var)), var)
+            plt.plot(range(len(var)), var)
             plt.title(param_stat)
             plt.savefig(workspace / param_stat)
             plt.close()

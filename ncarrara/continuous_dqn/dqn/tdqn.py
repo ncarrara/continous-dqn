@@ -94,24 +94,26 @@ class TDQN:
             self.weight_decay)
 
         if self.tranfer_module is not None:
-            self.memory_partial_learn = Memory()
-            self.memory_partial_test = Memory()
+
             # net from source tasks
             self.source_net = self.tranfer_module.get_Q_source()
 
-            # net in order to eval bellman residu on test batch
-            self.partial_net = copy.deepcopy(self.full_net)
-            self.partial_net.load_state_dict(self.full_net.state_dict())
-            self.partial_net.eval()
-            self.partial_target_net = copy.deepcopy(self.partial_net)
-            self.partial_net.load_state_dict(self.partial_net.state_dict())
-            self.partial_net.eval()
-            self.parameters_partial_net = self.partial_net.parameters()
-            self.optimizer_partial_net = optimizer_factory(
-                self.optimizer_type,
-                self.parameters_partial_net,
-                self.lr,
-                self.weight_decay)
+            if self.ratio_learn_test > 0:
+                # net in order to eval bellman residu on test batch
+                self.memory_partial_learn = Memory()
+                self.memory_partial_test = Memory()
+                self.partial_net = copy.deepcopy(self.full_net)
+                self.partial_net.load_state_dict(self.full_net.state_dict())
+                self.partial_net.eval()
+                self.partial_target_net = copy.deepcopy(self.partial_net)
+                self.partial_net.load_state_dict(self.partial_net.state_dict())
+                self.partial_net.eval()
+                self.parameters_partial_net = self.partial_net.parameters()
+                self.optimizer_partial_net = optimizer_factory(
+                    self.optimizer_type,
+                    self.parameters_partial_net,
+                    self.lr,
+                    self.weight_decay)
 
             # gate to discriminate the choice betwen the source net and the full net
             # this gate compares the partial net and the source net on a test batch (10% of all the transitions)
@@ -188,20 +190,25 @@ class TDQN:
             ########################################
             ######### optimize partial net #########
             ########################################
-
-            if len(self.memory_partial_learn) > 0:
-                self._optimize(
-                    self.memory_partial_learn,
-                    self.partial_net,
-                    self.partial_target_net,
-                    self.optimizer_partial_net,
-                    self.parameters_partial_net)
+            if self.ratio_learn_test > 0:
+                if len(self.memory_partial_learn) > 0:
+                    self._optimize(
+                        self.memory_partial_learn,
+                        self.partial_net,
+                        self.partial_target_net,
+                        self.optimizer_partial_net,
+                        self.parameters_partial_net)
+            else:
+                self.partial_net = self.full_net
+                self.partial_target_net = self.full_target_net
 
             ########################################
             ######### optimize  GATE ###############
             ########################################
-
-            test_batch = self._construct_batch(self.memory_partial_test)
+            if self.ratio_learn_test > 0:
+                test_batch = self._construct_batch(self.memory_partial_test)
+            else:
+                test_batch = self._construct_batch(self.memory)
 
             # reeavalute errors
             self.tranfer_module.evaluate()
@@ -226,12 +233,12 @@ class TDQN:
             ae_error = self.tranfer_module.get_error()
             p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
             bootstrap_t = test_batch.reward + self.gamma * ((1 - p) * (ns_values_p) + p * (ns_values_s))
-            loss_transfer = self.loss_function_gate(
+            loss_gate = self.loss_function_gate(
                 (sa_values_p) * (1 - p) + p * (sa_values_s),
                 (bootstrap_t).unsqueeze(1))
 
             self.optimizer_gate.zero_grad()
-            loss_transfer.backward(retain_graph=True)
+            loss_gate.backward()
             for param in self.parameters_gate:
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_gate.step()
@@ -256,13 +263,13 @@ class TDQN:
             #         )
             #     )
             # exit()
-
-            if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
+            if self.tranfer_module is not None:
                 self.weights_over_time.append(self.weight_transfer)
                 self.biais_over_time.append(self.biais_transfer)
                 self.p_over_time.append(p)
 
             if self.writer is not None:
+
                 self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
                 self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
                 bootstrap_s = test_batch.reward + self.gamma * ns_values_s
@@ -274,8 +281,8 @@ class TDQN:
                 # self.writer.add_scalar('diff/episode', l - l_t, self.i_episode)
                 # self.writer.add_scalar('loss_transfer/episode', loss_transfer.item(), self.i_episode)
                 # self.writer.add_scalar('loss_classic/episode', loss_classic.item(), self.i_episode)
-                # self.writer.add_scalar('ae_weight/episode', self.weight_transfer, self.i_episode)
-                # self.writer.add_scalar('ae_biais/episode', self.biais_transfer, self.i_episode)
+                self.writer.add_scalar('ae_weight/episode', self.weight_transfer, self.i_episode)
+                self.writer.add_scalar('ae_biais/episode', self.biais_transfer, self.i_episode)
                 self.writer.add_scalar('p/episode', p, self.i_episode)
             # exit()
 
@@ -313,11 +320,12 @@ class TDQN:
         self.memory.push(*t)
 
         if self.tranfer_module is not None:
-            rdm = np.random.random_sample(1)[0]
-            if len(self.memory_partial_test.memory) == 0 or (rdm < self.ratio_learn_test):
-                self.memory_partial_test.push(*t)
-            else:
-                self.memory_partial_learn.push(*t)
+            if self.ratio_learn_test > 0:
+                rdm = np.random.random_sample(1)[0]
+                if len(self.memory_partial_test.memory) == 0 or (rdm < self.ratio_learn_test):
+                    self.memory_partial_test.push(*t)
+                else:
+                    self.memory_partial_learn.push(*t)
 
         self._optimize_model()
         if done:

@@ -131,6 +131,8 @@ class TDQN:
                 self.lr,
                 self.weight_decay)
 
+            self.use_source_policy = True
+
     def _construct_batch(self, memory):
         transitions = memory.sample(
             len(memory) if self.size_mini_batch > len(memory) else self.size_mini_batch)
@@ -235,34 +237,66 @@ class TDQN:
 
             ae_error = self.tranfer_module.get_error()
             p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
-            bootstrap_t = test_batch.reward + self.gamma * ((1 - p) * (ns_values_p) + p * (ns_values_s))
-            loss_gate = self.loss_function_gate(
-                (sa_values_p) * (1 - p) + p * (sa_values_s),
-                (bootstrap_t).unsqueeze(1))
+            # bootstrap_t = test_batch.reward + self.gamma * ((1 - p) * (ns_values_p) + p * (ns_values_s))
+            # loss_gate = self.loss_function_gate(
+            #     (sa_values_p) * (1 - p) + p * (sa_values_s),
+            #     (bootstrap_t).unsqueeze(1))
+            #
+            # self.optimizer_gate.zero_grad()
+            # loss_gate.backward()
+            # for param in self.parameters_gate:
+            #     param.grad.data.clamp_(-1, 1)
+            # self.optimizer_gate.step()
 
-            self.optimizer_gate.zero_grad()
-            loss_gate.backward()
-            for param in self.parameters_gate:
-                param.grad.data.clamp_(-1, 1)
-            self.optimizer_gate.step()
+            bootstrap_s = (test_batch.reward + self.gamma * ns_values_s).unsqueeze(1)
+            bootstrap_p = (test_batch.reward + self.gamma * ns_values_p).unsqueeze(1)
+            # print(bootstrap_p.shape)
+            # print(bootstrap_s)
+            # print(ns_values_s)
+
+            error_s = torch.abs(sa_values_s - bootstrap_s)
+            error_p = torch.abs(sa_values_p - bootstrap_p)
+
+            div = torch.cat((sa_values_s, bootstrap_s), dim=1)
+            max = torch.max(div, dim=1)[0].unsqueeze(1)
+            where = max != 0
+            error_s[where] = error_s[where] / max[where]
+
+            div = torch.cat((sa_values_p, bootstrap_p), dim=1)
+            max = torch.max(div, dim=1)[0].unsqueeze(1)
+            where = max != 0
+            error_p[where] = error_p[where] / max[where]
+            # print("where",where.shape)
+
+            # print(error_p.shape)
+            # print(error_s)
+            # print("-----------------")
+
+            # x = torch.zeros((len(bootstrap_p),1),device=self.device)
+            # print(bootstrap_p.shape)
+            # print(x.shape)
+            # exit()
+            # l_p = self.loss_function(x, (bootstrap_p).unsqueeze(1))
+            # l_s = self.loss_function(x, (bootstrap_s).unsqueeze(1))
+            error_s = torch.mean(error_s)
+            error_p = torch.mean(error_p)
+            self.use_source_policy = ((error_s) - (error_p)) < 0
+            self.writer.add_scalar('use_source_policy/episode', 1 if self.use_source_policy else 0, self.i_episode)
 
             # print("--------------------------------")
             # for i in range(len(Q_source)):
+            #     # print(error_p)
             #     print(
-            #         "L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f}) ||| L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f})"
+            #         "L({:.2f} , [{:.2f} + {:.2f}]) = {:.3f}  ||| L({:.2f} , [{:.2f} + {:.2f}]) = {:.3f} "
             #             .format(
             #             sa_values_p[i].item(),
             #             test_batch.reward[i].item(),
             #             self.gamma * ns_values_p[i].item(),
-            #             self.loss_function(sa_values_p[i], (test_batch.reward[i] + self.gamma * ns_values_p[i])).item(),
-            #             torch.nn.functional.l1_loss(sa_values_p[i],
-            #                                         (test_batch.reward[i] + self.gamma * ns_values_p[i])).item(),
+            #             error_p[i].item(),
             #             sa_values_s[i].item(),
             #             test_batch.reward[i].item(),
             #             self.gamma * ns_values_s[i].item(),
-            #             self.loss_function(sa_values_s[i], (test_batch.reward[i] + self.gamma * ns_values_s[i])).item(),
-            #             torch.nn.functional.l1_loss(sa_values_s[i],
-            #                                         (test_batch.reward[i] + self.gamma * ns_values_s[i])).item(),
+            #             error_s[i].item(),
             #         )
             #     )
             # exit()
@@ -278,13 +312,12 @@ class TDQN:
                 self.error_bootstrap_partial.append(l_s)
 
             if self.writer is not None:
-
                 self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
                 self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
 
-                self.writer.add_scalar('error_bootstrap_source/episode', l_s, self.i_episode)
-                self.writer.add_scalar('error_bootstrap_partial/episode', l_p, self.i_episode)
-                # self.writer.add_scalar('diff/episode', l - l_t, self.i_episode)
+                self.writer.add_scalar('error_bootstrap_source/episode', error_s, self.i_episode)
+                self.writer.add_scalar('error_bootstrap_partial/episode', error_p, self.i_episode)
+                self.writer.add_scalar('diff_error_bootstrap/episode', error_s - error_p, self.i_episode)
                 # self.writer.add_scalar('loss_transfer/episode', loss_transfer.item(), self.i_episode)
                 # self.writer.add_scalar('loss_classic/episode', loss_classic.item(), self.i_episode)
                 self.writer.add_scalar('ae_weight/episode', self.w_gate, self.i_episode)
@@ -301,9 +334,13 @@ class TDQN:
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([state], device=self.device, dtype=torch.float)
             if self.tranfer_module is not None:
-                ae_error = self.tranfer_module.get_error()
-                p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
-                v = (self.full_net(s)) * (1 - p) + p * (self.source_net(s))
+                # ae_error = self.tranfer_module.get_error()
+                # p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
+                # v = (self.full_net(s)) * (1 - p) + p * (self.source_net(s))
+                if self.use_source_policy:
+                    v = self.source_net(s)
+                else:
+                    v = self.full_net(s)
             else:
                 v = self.full_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()

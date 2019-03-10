@@ -135,7 +135,7 @@
     "lr": 0.001,
     "weight_decay": 0.0005,
     "transfer_param_init": null,
-    "ratio_learn_test": 0.5
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [

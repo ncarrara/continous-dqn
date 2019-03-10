@@ -2,7 +2,6 @@
 import numpy as np
 import torch
 import copy
-import torch.nn.functional as F
 
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
@@ -50,6 +49,8 @@ class TDQN:
         self.biais_over_time = []
         self.best_fit_over_time = []
         self.ae_errors_over_time = []
+        self.error_bootstrap_source = []
+        self.error_bootstrap_partial = []
         self.p_over_time = []
         self.writer = writer
         self.tranfer_module = transfer_module
@@ -117,11 +118,13 @@ class TDQN:
 
             # gate to discriminate the choice betwen the source net and the full net
             # this gate compares the partial net and the source net on a test batch (10% of all the transitions)
-            self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
-            self.weight_transfer.requires_grad_()
-            self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
-            self.biais_transfer.requires_grad_()
-            self.parameters_gate = [self.weight_transfer, self.biais_transfer]
+            # self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
+            self.w_gate = torch.Tensor([0]).to(self.device)
+            self.w_gate.requires_grad_()
+            # self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
+            self.b_gate = torch.Tensor([0]).to(self.device)
+            self.b_gate.requires_grad_()
+            self.parameters_gate = [self.w_gate, self.b_gate]
             self.optimizer_gate = optimizer_factory(
                 self.optimizer_type,
                 self.parameters_gate,
@@ -231,7 +234,7 @@ class TDQN:
                 logger.warning("Pas d'état non terminaux")
 
             ae_error = self.tranfer_module.get_error()
-            p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
+            p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
             bootstrap_t = test_batch.reward + self.gamma * ((1 - p) * (ns_values_p) + p * (ns_values_s))
             loss_gate = self.loss_function_gate(
                 (sa_values_p) * (1 - p) + p * (sa_values_s),
@@ -264,25 +267,28 @@ class TDQN:
             #     )
             # exit()
             if self.tranfer_module is not None:
-                self.weights_over_time.append(self.weight_transfer)
-                self.biais_over_time.append(self.biais_transfer)
-                self.p_over_time.append(p)
+                self.weights_over_time.append(self.w_gate.item())
+                self.biais_over_time.append(self.b_gate.item())
+                self.p_over_time.append(p.item())
+                bootstrap_s = test_batch.reward + self.gamma * ns_values_s
+                bootstrap_p = test_batch.reward + self.gamma * ns_values_p
+                l_p = self.loss_function((sa_values_p), (bootstrap_p).unsqueeze(1))
+                l_s = self.loss_function((sa_values_s), (bootstrap_s).unsqueeze(1))
+                self.error_bootstrap_source.append(l_p)
+                self.error_bootstrap_partial.append(l_s)
 
             if self.writer is not None:
 
                 self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
                 self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
-                bootstrap_s = test_batch.reward + self.gamma * ns_values_s
-                bootstrap_p = test_batch.reward + self.gamma * ns_values_p
-                l_p = self.loss_function((sa_values_p), (bootstrap_p).unsqueeze(1))
-                l_s = self.loss_function((sa_values_s), (bootstrap_s).unsqueeze(1))
+
                 self.writer.add_scalar('error_bootstrap_source/episode', l_s, self.i_episode)
                 self.writer.add_scalar('error_bootstrap_partial/episode', l_p, self.i_episode)
                 # self.writer.add_scalar('diff/episode', l - l_t, self.i_episode)
                 # self.writer.add_scalar('loss_transfer/episode', loss_transfer.item(), self.i_episode)
                 # self.writer.add_scalar('loss_classic/episode', loss_classic.item(), self.i_episode)
-                self.writer.add_scalar('ae_weight/episode', self.weight_transfer, self.i_episode)
-                self.writer.add_scalar('ae_biais/episode', self.biais_transfer, self.i_episode)
+                self.writer.add_scalar('ae_weight/episode', self.w_gate, self.i_episode)
+                self.writer.add_scalar('ae_biais/episode', self.b_gate, self.i_episode)
                 self.writer.add_scalar('p/episode', p, self.i_episode)
             # exit()
 
@@ -296,7 +302,7 @@ class TDQN:
             s = torch.tensor([state], device=self.device, dtype=torch.float)
             if self.tranfer_module is not None:
                 ae_error = self.tranfer_module.get_error()
-                p = torch.sigmoid((self.weight_transfer * ae_error + self.biais_transfer))
+                p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
                 v = (self.full_net(s)) * (1 - p) + p * (self.source_net(s))
             else:
                 v = self.full_net(s)

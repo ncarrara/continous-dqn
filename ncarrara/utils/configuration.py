@@ -136,7 +136,7 @@ class Configuration(object):
             # exit()
 
             self.writer = SummaryWriter(str(self.workspace / "tensorboard"))
-            command = "tensorboard --logdir {} --port 6008 &".format(str(self.workspace / "tensorboard"))
+            command = "tensorboard --logdir {} --port 6009 &".format(str(self.workspace / "tensorboard"))
             self.logger.info("running command \"{}\"".format(command))
             os.system(command)
 

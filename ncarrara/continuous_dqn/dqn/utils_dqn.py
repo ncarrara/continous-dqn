@@ -99,7 +99,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
     import matplotlib.pyplot as plt
     for param_stat in ["weights_over_time", "biais_over_time",
                        "ae_errors_over_time", "p_over_time",
-                       "best_fit_over_time"]:
+                       "best_fit_over_time","error_bootstrap_source","error_bootstrap_partial"]:
         if hasattr(dqn, param_stat):
             var = getattr(dqn, param_stat)
             plt.plot(range(len(var)), var)

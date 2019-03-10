@@ -11,19 +11,21 @@ from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 logger = logging.getLogger(__name__)
 
 
-def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N,path_models,path_samples,seed,source_params,device):
+def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_models, path_samples, seed,
+         source_params, device):
     loss_autoencoders = loss_fonction_factory(loss_autoencoders_str)
-    autoencoders = utils.load_autoencoders(path_models,device)
+    autoencoders = utils.load_autoencoders(path_models, device)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
     tm = TransferModule(
         autoencoders=autoencoders,
         loss_autoencoders=loss_autoencoders,
         feature_autoencoders=feature_autoencoder,
-        device=device)
+        device=device,
+        sources_params=source_params)
     errors_base = []
     # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
-    memories = load_memories(path_samples)
-    for memory in  memories:
+    memories = load_memories(path_samples,as_json=False)
+    for memory in memories:
         tm.reset()
         tm.push_memory(memory.memory)
         tm.evaluate()
@@ -56,7 +58,6 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N,path_mo
 
     print("================================================ test ================================================")
     print(utils.array_to_cross_comparaison(errors_test, source_params, test_params))
-
 
 # if __name__ == "__main__":
 #     # execute only if run as a script

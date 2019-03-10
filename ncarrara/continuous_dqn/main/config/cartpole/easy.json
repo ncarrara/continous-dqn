@@ -60,35 +60,41 @@
         }
       }
     },
-    "workspace": "tmp/cartpole_hard",
+    "workspace": "tmp/cartpole/easy",
     "seed": 0,
-    "id": "cartpole_hard"
+    "id": "cartpole_easy"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+      "gravity": 9.8,
+      "masscart": 1.0,
+      "masspole": 0.1,
+      "length": [
+        0.3,
+        1.5
+      ],
+      "force_mag": 10.0
     },
     "number_random_env": 30,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+      "gravity": 9.8,
+      "masscart": 1.0,
+      "masspole": 0.1,
+      "length": [
+        0.3,
+        1.5
+      ],
+      "force_mag": 10.0
     },
-    "number_random_env": 20 ,
+    "number_random_env": 15,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
     "gamma": 0.999,
-    "batch_size_experience_replay": 2048,
+    "batch_size_experience_replay": 32,
     "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
@@ -110,7 +116,6 @@
     "start_decay": 0.5,
     "traj_max_size": 200
   },
-  "as_json": true,
   "transfer_dqn": {
     "traj_max_size": 200,
     "N": 100,
@@ -120,11 +125,17 @@
       "no_transfer": {
         "selection_method": "no_transfer"
       },
-      "transfer": {
-        "selection_method": "best_fit"
+      "transfer2": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn2"
       },
-      "random_transfer": {
-        "selection_method": "random"
+      "random_transfer4": {
+        "selection_method": "random",
+        "transfer_network_type": "tnn4"
+      },
+      "transfer4": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn4"
       }
     }
   },

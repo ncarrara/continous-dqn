@@ -20,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "DEBUG",
+          "level": "WARN",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -60,88 +60,132 @@
         }
       }
     },
-    "workspace": "tmp/cartpole0",
+    "workspace": "tmp/pydial/test",
     "seed": 0,
-    "id": "cartpole"
+    "id": "pydial_test"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": "[9.8]",
-      "masscart": "[1.0]",
-      "masspole": "[0.1]",
-      "length": "np.random.choice(np.linspace(0.3,1.5,500),30)",
-      "force_mag": "[10.0]"
+      "config_file": "env1-hdc-CR.cfg",
+      "error_rate": [
+        0.0,
+        1.0
+      ]
     },
-    "envs_str": "CartPoleConfig-v0"
+    "number_random_env": 2,
+    "envs_str": "gym_pydial"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": "[9.8]",
-      "masscart": "[1.0]",
-      "masspole": "[0.1]",
-      "length": "np.random.choice(np.linspace(0.3,1.5,500),20)",
-      "force_mag": "[10.0]"
+      "config_file": "env1-hdc-CR.cfg",
+      "error_rate": [
+        0.0,
+        1.0
+      ]
     },
-    "envs_str": "CartPoleConfig-v0"
+    "number_random_env": 2,
+    "envs_str": "gym_pydial"
   },
   "dqn_params": {
     "gamma": 0.999,
-    "batch_size_experience_replay": 2048,
-    "target_update": 10,
+    "batch_size_experience_replay": 3,
+    "target_update": 5,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "lr": 0.01,
+    "lr": 0.001,
     "weight_decay": 0.01
   },
   "net_params": {
     "intra_layers": [
-      16,
-      8
+      10
     ]
   },
   "test_and_base": {
-    "N": 100
+    "N": 10
   },
   "generate_sources": {
-    "N": 100,
+    "N": 10,
     "decay": 0.05,
     "start_decay": 0.5,
-    "traj_max_size": 200
+    "traj_max_size": 2
   },
-  "as_json": true,
   "transfer_dqn": {
-    "traj_max_size": 200,
-    "N": 100,
+    "traj_max_size": 2,
+    "N": 10,
     "start_decay": 0.5,
     "decay": 0.05,
     "configs": {
       "no_transfer": {
         "selection_method": "no_transfer"
       },
-      "transfer": {
-        "selection_method": "best_fit"
+      "transfer2": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn2"
       },
-      "random_transfer": {
-        "selection_method": "random"
+      "random_transfer4": {
+        "selection_method": "random",
+        "transfer_network_type": "tnn4"
+      },
+      "transfer4": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn4"
       }
     }
   },
   "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_identity"
+    "feature_str": "feature_autoencoder_pydial",
+    "action_str": [
+      "hello",
+      "request_area",
+      "confirm_area",
+      "select_area",
+      "request_food",
+      "confirm_food",
+      "select_food",
+      "request_pricerange",
+      "confirm_pricerange",
+      "select_pricerange",
+      "inform",
+      "inform_byname",
+      "inform_alternatives",
+      "bye",
+      "repeat",
+      "reqmore",
+      "restart"
+    ]
   },
   "feature_dqn_info": {
-    "feature_str": "feature_dqn_identity"
+    "feature_str": "feature_dqn_pydial",
+    "action_str": [
+      "hello",
+      "request_area",
+      "confirm_area",
+      "select_area",
+      "request_food",
+      "confirm_food",
+      "select_food",
+      "request_pricerange",
+      "confirm_pricerange",
+      "select_pricerange",
+      "inform",
+      "inform_byname",
+      "inform_alternatives",
+      "bye",
+      "repeat",
+      "reqmore",
+      "restart"
+    ]
   },
   "learn_autoencoders": {
     "weight_decay": 0.0,
     "learning_rate": 0.001,
     "autoencoder_size": [
-      8,
-      32
+      2,
+      4
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 500,
-    "loss_function_str": "l2"
+    "n_epochs": 10,
+    "criterion": "l2"
   }
 }

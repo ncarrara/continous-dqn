@@ -2,7 +2,7 @@ from pathlib import Path
 
 from sklearn.model_selection import ParameterGrid
 import os
-from ncarrara.budgeted_rl.tools.configuration_bftq import C
+# from ncarrara.budgeted_rl.tools.configuration_bftq import C
 import re
 
 from ncarrara.utils.os import makedirs
@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def main(config_file, override_param_grid, override_device_str=None, f=lambda x: print("Hello")):
+def main(C,config_file, override_param_grid, override_device_str=None, f=lambda x: print("Hello")):
     with open(config_file, 'r') as infile:
         import json
 
@@ -56,7 +56,7 @@ def main(config_file, override_param_grid, override_device_str=None, f=lambda x:
                 tochange = tochange[keys[ik]]
             tochange[keys[-1]] = v
         dict["general"]["workspace"] = str(workspace / str(i_config))
-        C.load(dict).create_fresh_workspace(force=True)
+        C.load(dict).create_fresh_workspace(force=True).load_tensorboardX()
         C.dump_to_workspace()
 
         print("\n-------- i_config={} ----------\n".format(i_config))

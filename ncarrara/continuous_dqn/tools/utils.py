@@ -28,7 +28,7 @@ def load_q_sources(path_q_sources, device):
     logger.info("reading q sources at {}".format(path_q_sources))
     return load_models(path_q_sources, device)
 
-def load_memories(path_data, as_json=True):
+def load_memories(path_data, as_json=False):
     logger.info("reading samples ...")
     files = os.listdir(path_data)
     logger.info("reading : {}".format(files))
@@ -40,17 +40,17 @@ def load_memories(path_data, as_json=True):
         path_file = path_data / file
         logger.info("reading {}".format(path_file))
         m = Memory()
-        m.load_memory(path_file, as_json=as_json)
+        m.load_memory(path_file, as_json=False)
         memories[id_env] = m
     return memories
 
 
-def read_samples_for_autoencoders(path_data, feature, device,as_json=True):
+def read_samples_for_autoencoders(path_data, feature):
     from ncarrara.continuous_dqn.tools.configuration import C
-    memories = load_memories(path_data, as_json=as_json)
+    memories = load_memories(path_data, as_json=False)
     all_transitions = [None] * len(memories)
     for id_env, rm in enumerate(memories):
-        data = np.array([feature(transition,device) for transition in rm.memory])
+        data = np.array([feature(transition) for transition in rm.memory])
         all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
     return all_transitions
 
@@ -79,7 +79,7 @@ def array_to_cross_comparaison(tab, params_source, params_test):
 def format_errors(errors, params_source, param_test, show_params=False):
     toprint = "" if not show_params else "".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in param_test.values()]) + "| "
     min_idx = np.argmin(errors)
-
+    print(errors)
     for isource in range(len(errors)):
         same_env = params_source[isource] == param_test
 

@@ -49,7 +49,7 @@ class Memory(object):
             with open(path , 'wb') as f:
                 pickle.dump(memory, f)
 
-    def load_memory(self, path, as_json=True):
+    def load_memory(self, path, as_json=False):
         self.logger.info("loading memory at {}".format(path))
         if as_json:
             with open(path, 'r') as infile:

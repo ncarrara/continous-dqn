@@ -66,6 +66,8 @@ def loss_fonction_factory(loss_function):
         return F.mse_loss
     elif loss_function == "l1":
         return  F.l1_loss
+    elif loss_function == "bce":
+        return  F.binary_cross_entropy
     else:
         raise Exception("Unknown loss function : {}".format(loss_function))
 

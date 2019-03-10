@@ -5,10 +5,11 @@ logger = logging.getLogger(__name__)
 
 
 class TransferModule:
-    def __init__(self, autoencoders, loss_autoencoders, feature_autoencoders, experience_replays=None, Q_sources=None,
+    def __init__(self, autoencoders, loss_autoencoders, feature_autoencoders,sources_params=None, experience_replays=None, Q_sources=None,
                  evaluate_continuously=False, device=None, selection_method="best_fit", **kwargs):
         self.selection_method = selection_method  # best fit or random
         self.loss = loss_autoencoders
+        self.sources_params = sources_params
         self.device = device
         self.Q_sources = Q_sources
         self.auto_encoders = autoencoders
@@ -24,9 +25,8 @@ class TransferModule:
 
     def reset(self):
         self.memory = []
-        self.errors = np.zeros(len(self.auto_encoders))
-        self.sum_errors = np.zeros(len(self.auto_encoders))
-        self.best_fit = np.random.randint(0, len(self.auto_encoders))
+        self.last_best_fit = None
+        self._update_sum_errors(np.random.random_sample((1, len(self.auto_encoders)))[0])
         self.evaluation_index = 0
 
     def is_q_transfering(self):
@@ -53,21 +53,27 @@ class TransferModule:
 
     def push(self, s, a, r_, s_, done, info):
         sample = (s, a, r_, s_, done, info)
-        vector = self.feature(sample, self.device)
+        vector = self.feature(sample)
         self.memory.append(vector)
         if self.evaluate_continuously:
             import torch
             with torch.no_grad():
                 vector = torch.tensor(vector)
                 loss = np.array([self.loss(ae(vector), vector).item() for ae in self.auto_encoders]).cpu().item()
-            self.sum_errors += loss
-            self.errors = self.sum_errors / len(self.memory)
-            self.best_fit = np.argmin(self.errors)
+            self._update_sum_errors(self.sum_errors + loss)
             self.evaluation_index += 1
+
+    def _update_sum_errors(self, sum_errors):
+        self.sum_errors = sum_errors
+        self.errors = self.sum_errors / (1 if len(self.memory) ==0 else len(self.memory))
+        self.best_fit = np.argmin(self.errors)
+        if self.last_best_fit is None or self.best_fit != self.last_best_fit:
+            logger.info("Best fit changed [{}]: {}".format(self.best_fit, self.sources_params[self.best_fit]))
+        self.last_best_fit = self.best_fit
 
     def push_memory(self, memory):
         for sample in memory:
-            vector = self.feature(sample, self.device)
+            vector = self.feature(sample)
             self.memory.append(vector)
         if self.evaluate_continuously:
             self.evaluate()
@@ -89,12 +95,13 @@ class TransferModule:
                 # TODO maybe parrale compute of this
                 losses = np.array([self.loss(ae(toevaluate), toevaluate).item() for ae in self.auto_encoders])
 
-                self.sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)
+                sum_errors = self.sum_errors + losses * (len(self.memory) - self.evaluation_index)
 
         elif self.selection_method == "random":
-            self.sum_errors = np.random.rand(len(self.auto_encoders))
+            sum_errors = np.random.rand(len(self.auto_encoders))
         else:
             raise Exception("unkown selection methode : {}".format(self.selection_method))
-        self.errors = self.sum_errors / len(self.memory)
-        self.best_fit = np.argmin(self.errors)
+
+        self._update_sum_errors(sum_errors)
+
         self.evaluation_index = len(self.memory) - 1

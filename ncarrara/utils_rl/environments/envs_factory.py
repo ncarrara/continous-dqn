@@ -10,20 +10,23 @@ def generate_env_params_combination(env_params):
         if type(v) is str:
             import numpy as np
             x = eval(v)
+            if isinstance(x,np.ndarray):
+                x=x.tolist()
             env_params[k] = x
             logger.info("[gepc] <{}> {} -> {}".format(k, v, x))
     grid = ParameterGrid(env_params)
     return grid
 
-def generate_env_params_random(env_params,number_random_env):
+
+def generate_env_params_random(env_params, number_random_env):
     import numpy as np
-    grid=[]
-    for ienv in range(0,number_random_env):
+    grid = []
+    for ienv in range(0, number_random_env):
         params = {}
         for k, v in env_params.items():
             if isinstance(v, list):
-                params[k] = np.random.choice(np.linspace(v[0],v[1],1000),1)[0]
-            elif isinstance(v,float) or isinstance(v,int):
+                params[k] = np.random.choice(np.linspace(v[0], v[1], 1000), 1)[0].tolist()
+            elif isinstance(v, float) or isinstance(v, int) or isinstance(v, str):
                 params[k] = v
             else:
                 raise Exception("This type can't be parsed : {}".format(type(v)))
@@ -31,14 +34,13 @@ def generate_env_params_random(env_params,number_random_env):
     return grid
 
 
-
-def generate_envs(envs_str, envs_params,number_random_env =None):
+def generate_envs(envs_str, envs_params, number_random_env=None):
     logger.info(
         "[generate_envs] params : \n\n{}".format("".join(["\t{} : {}\n".format(k, v) for k, v in envs_params.items()])))
     if number_random_env is None:
         grid = generate_env_params_combination(envs_params)
     else:
-        grid = generate_env_params_random(envs_params,number_random_env)
+        grid = generate_env_params_random(envs_params, number_random_env)
     logger.info("[generate_envs] number of envs : {}".format(len(grid)))
 
     envs = []
@@ -58,10 +60,22 @@ def generate_envs(envs_str, envs_params,number_random_env =None):
             env = LunarLanderBudgetedConfigEnv(**param)
         elif envs_str == "gym_pydial":
             env_pydial = __import__("gym_pydial.env.env_pydial")
-            env = env_pydial.EnvPydial(seed=C.seed, pydial_logging_level="ERROR", **param)
+            env = env_pydial.EnvPydial(pydial_logging_level="ERROR", **param)
         elif envs_str == "slot_filling_env_v0":
             from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
             env = SlotFillingEnv(**param)
+        elif envs_str == "slot_filling_env_v1":
+            from ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env import SlotFillingEnv
+            user_params = {
+                "cerr": param["cerr"],
+                "cok": -param["cerr"],
+                "ser": param["ser"],
+                "cstd": param["cstd"],
+                "proba_hangup": param["proba_hangup"]
+            }
+            param_bis = {**param}
+            del param_bis["cerr"],param_bis["ser"], param_bis["cstd"], param_bis["proba_hangup"]
+            env = SlotFillingEnv(user_params=user_params, **param_bis)
         elif envs_str == "highway-v0":
             __import__("highway_env")
             env = gym.make(envs_str)

@@ -60,35 +60,50 @@
         }
       }
     },
-    "workspace": "tmp/cartpole_hard2",
-    "seed": 1,
-    "id": "cartpole_hard2"
+    "workspace": "tmp/cartpole/easy-debug",
+    "seed": 0,
+    "id": "cartpole-easy-debug"
   },
   "source_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+      "gravity": [
+        7,
+        12
+      ],
+      "masscart": [
+        0.5,
+        1.5
+      ],
+      "masspole": [
+        0.05,
+        0.15
+      ],
+      "length": [
+        0.3,
+        1.5
+      ],
+      "force_mag": [
+        9,
+        11
+      ]
     },
-    "number_random_env": 100,
+    "number_random_env": 30,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
     "envs_params": {
-      "gravity": [7,12],
-      "masscart": [0.5,1.5],
-      "masspole": [0.05,0.15],
-      "length": [0.3,1.5],
-      "force_mag": [9,11]
+
+      "length": [
+        0.3,
+        1.5
+      ]
     },
-    "number_random_env": 50 ,
+    "number_random_env": 1,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
     "gamma": 0.999,
-    "batch_size_experience_replay": 2048,
+    "batch_size_experience_replay": 128,
     "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
@@ -104,27 +119,25 @@
   "test_and_base": {
     "N": 100
   },
-  "generate_sources": {
+  "-generate_sources": {
     "N": 100,
     "decay": 0.05,
     "start_decay": 0.5,
     "traj_max_size": 200
   },
-  "as_json": true,
   "transfer_dqn": {
     "traj_max_size": 200,
-    "N": 100,
-    "start_decay": 0.5,
-    "decay": 0.05,
+    "N": 250,
+    "start_decay": 1.0,
+    "decay": 0.025,
     "configs": {
-      "no_transfer": {
-        "selection_method": "no_transfer"
+      "transfer5": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn5"
       },
-      "transfer": {
-        "selection_method": "best_fit"
-      },
-      "random_transfer": {
-        "selection_method": "random"
+      "transfer4": {
+        "selection_method": "best_fit",
+        "transfer_network_type": "tnn4"
       }
     }
   },

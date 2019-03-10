@@ -53,7 +53,7 @@ class TransferModule:
 
     def push(self, s, a, r_, s_, done, info):
         sample = (s, a, r_, s_, done, info)
-        vector = self.feature(sample, self.device)
+        vector = self.feature(sample)
         self.memory.append(vector)
         if self.evaluate_continuously:
             import torch
@@ -73,7 +73,7 @@ class TransferModule:
 
     def push_memory(self, memory):
         for sample in memory:
-            vector = self.feature(sample, self.device)
+            vector = self.feature(sample)
             self.memory.append(vector)
         if self.evaluate_continuously:
             self.evaluate()

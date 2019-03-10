@@ -10,7 +10,7 @@ def build_feature_autoencoder(info):
         max_turn = info["max_turn"]
         user_actions = info["user_actions"]
         system_actions = info["system_actions"]
-        return lambda transition, device: feature_autoencoder_slot_filling(transition, device, size_constraints,
+        return lambda transition: feature_autoencoder_slot_filling(transition,  size_constraints,
                                                                            max_turn,
                                                                            user_actions,
                                                                            system_actions)
@@ -23,30 +23,25 @@ def build_feature_dqn(info):
     feature_str = info["feature_str"]
     if feature_str == "feature_dqn_identity":
         return feature_dqn_identity
-    elif feature_str == "feature_basic":
+    elif feature_str == "feature_slot_filling":
         size_constraints = info["size_constraints"]
         max_turn = info["max_turn"]
         user_actions = info["user_actions"]
         system_actions = info["system_actions"]
-        return lambda transition: feature_basic(transition, size_constraints, max_turn, user_actions, system_actions)
+        return lambda transition: feature_slot_filling(transition, size_constraints, max_turn, user_actions,
+                                                       system_actions)
     else:
         raise Exception("Unknown feature : {}".format(feature_str))
 
 
-def feature_autoencoder_identity(transition, device):
+def feature_autoencoder_identity(transition):
     s, a, r, s_, done, info = transition
-    import torch
-    if type(s) == type(torch.zeros(0)):
-        if s_ is None:
-            s_ = torch.zeros(s.shape).to(device)
-        rez = torch.cat([s, a.unsqueeze(0).float(), r.unsqueeze(0), s_], dim=len(s.shape) - 1)
-    else:
-        if type(s) == type(np.zeros(0)):
-            s = s.tolist()
-            s_ = s_.tolist()
-        if s_ is None:
-            s_ = [0.] * len(s)
-        rez = s + [a] + [r] + s_
+    if type(s) == type(np.zeros(0)):
+        s = s.tolist()
+        s_ = s_.tolist()
+    if s_ is None:
+        s_ = [0.] * len(s)
+    rez = s + [a] + [r] + s_
     return rez
 
 
@@ -59,33 +54,17 @@ def feature_dqn_identity(s):
 
 ############################ SLOT FILLING ###############################"
 
-def feature_autoencoder_slot_filling(transition, device, size_constraints, max_turn, user_actions, system_actions):
+def feature_autoencoder_slot_filling(transition, size_constraints, max_turn, user_actions, system_actions):
     s, a, r, s_, done, info = transition
-    import torch
-    if type(s) == type(torch.zeros(0)):
-        if s_ is None:
-            s_ = torch.zeros(s.shape).to(device)
-        else:
-            s_ = feature_basic(s_.cpu().numpy().tolist(), size_constraints, max_turn, user_actions, system_actions)
-            s_ = torch.tensor(s_, device=device)
-
-        s = feature_basic(s.cpu().numpy().tolist(), size_constraints, max_turn, user_actions, system_actions)
-        s = torch.tensor(s, device=device)
-
-        rez = torch.cat([s, a.unsqueeze(0).float(), r.unsqueeze(0), s_], dim=len(s.shape) - 1)
-    else:
-        if type(s) == type(np.zeros(0)):
-            s = s.tolist()
-            s_ = s_.tolist()
-        s = feature_basic(s, size_constraints, max_turn, user_actions, system_actions)
-        s_ = feature_basic(s_, size_constraints, max_turn, user_actions, system_actions)
-        if s_ is None:
-            s_ = [0.] * len(s)
-        rez = s + [a] + [r] + s_
+    s = feature_slot_filling(s, size_constraints, max_turn, user_actions, system_actions)
+    s_ = feature_slot_filling(s_, size_constraints, max_turn, user_actions, system_actions)
+    if s_ is None:
+        s_ = [0.] * len(s)
+    rez = s + [a] + [r] + s_
     return rez
 
 
-def feature_basic(s, size_constraints, max_turn, user_actions, system_actions):
+def feature_slot_filling(s, size_constraints, max_turn, user_actions, system_actions):
     if s is None:
         return None
     else:

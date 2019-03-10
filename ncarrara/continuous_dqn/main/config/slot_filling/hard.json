@@ -20,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "WARN",
+          "level": "DEBUG",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -62,7 +62,8 @@
     },
     "workspace": "tmp/slot_filling/hard",
     "seed": 0,
-    "id": "slot_filling_hard"
+    "id": "slot_filling_hard",
+    "is_tensorboardX": false
   },
   "source_envs": {
     "envs_params": {
@@ -125,13 +126,16 @@
     "envs_str": "slot_filling_env_v1"
   },
   "dqn_params": {
-    "gamma": 0.999,
-    "batch_size_experience_replay": 32,
+    "gamma": 1.0,
+    "batch_size_experience_replay": 128,
     "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "lr": 0.01,
-    "weight_decay": 0.01
+    "loss_function_gate": "l2",
+    "lr": 0.001,
+    "weight_decay": 0.0005,
+    "transfer_param_init": null,
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [
@@ -140,43 +144,68 @@
     ]
   },
   "test_and_base": {
-    "N": 100
+    "N": 250
   },
   "generate_sources": {
-    "N": 100,
-    "decay": 0.05,
-    "start_decay": 0.5,
+    "N": 250,
+    "decay": 0.025,
+    "start_decay": 1.0,
     "traj_max_size": 10
   },
-  "as_json": true,
   "transfer_dqn": {
+    "path_sources": null,
     "traj_max_size": 10,
-    "N": 100,
-    "start_decay": 0.5,
-    "decay": 0.05,
+    "N": 250,
+    "start_decay": 1.0,
+    "decay": 0.025,
     "configs": {
+      "transfer": {
+        "selection_method": "best_fit"
+      },
       "no_transfer": {
         "selection_method": "no_transfer"
-      },
-      "transfer2": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn2"
-      },
-      "random_transfer4": {
-        "selection_method": "random",
-        "transfer_network_type": "tnn4"
-      },
-      "transfer4": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn4"
       }
     }
   },
   "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_slot_filling"
+    "feature_str": "feature_autoencoder_slot_filling",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
   },
   "feature_dqn_info": {
-    "feature_str": "feature_basic"
+    "feature_str": "feature_slot_filling",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
   },
   "learn_autoencoders": {
     "weight_decay": 0.0,
@@ -187,7 +216,7 @@
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 500,
+    "n_epochs": 750,
     "loss_function_str": "l2"
   }
 }

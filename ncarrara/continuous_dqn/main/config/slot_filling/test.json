@@ -62,7 +62,8 @@
     },
     "workspace": "tmp/slot_filling/test",
     "seed": 0,
-    "id": "slot_filling_test"
+    "id": "slot_filling_test",
+    "is_tensorboardX": false
   },
   "source_envs": {
     "envs_params": {
@@ -125,13 +126,16 @@
     "envs_str": "slot_filling_env_v1"
   },
   "dqn_params": {
-    "gamma": 0.999,
-    "batch_size_experience_replay": 32,
+    "gamma": 1.0,
+    "batch_size_experience_replay": 128,
     "target_update": 2,
     "optimizer": "ADAM",
     "loss_function": "l2",
+    "loss_function_gate": "l2",
     "lr": 0.01,
-    "weight_decay": 0.01
+    "weight_decay": 0.01,
+    "transfer_param_init": null,
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [
@@ -148,27 +152,18 @@
     "start_decay": 0.5,
     "traj_max_size": 10
   },
-  "as_json": true,
   "transfer_dqn": {
+    "path_sources": null,
     "traj_max_size": 3,
     "N": 10,
     "start_decay": 0.5,
     "decay": 0.05,
     "configs": {
+      "transfer": {
+        "selection_method": "best_fit"
+      },
       "no_transfer": {
         "selection_method": "no_transfer"
-      },
-      "transfer2": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn2"
-      },
-      "random_transfer4": {
-        "selection_method": "random",
-        "transfer_network_type": "tnn4"
-      },
-      "transfer4": {
-        "selection_method": "best_fit",
-        "transfer_network_type": "tnn4"
       }
     }
   },
@@ -193,7 +188,7 @@
     ]
   },
   "feature_dqn_info": {
-    "feature_str": "feature_basic",
+    "feature_str": "feature_slot_filling",
     "size_constraints": 3,
     "max_turn": 10,
     "user_actions": [

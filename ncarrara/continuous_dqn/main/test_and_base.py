@@ -24,7 +24,7 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
         sources_params=source_params)
     errors_base = []
     # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
-    memories = load_memories(path_samples)
+    memories = load_memories(path_samples,as_json=False)
     for memory in memories:
         tm.reset()
         tm.push_memory(memory.memory)

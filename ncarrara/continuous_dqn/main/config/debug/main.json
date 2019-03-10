@@ -123,7 +123,6 @@
     "start_decay": 1.0,
     "traj_max_size": 200
   },
-  "as_json": true,
   "transfer_dqn": {
     "path_sources": "tmp/debug/main/152/sources",
     "traj_max_size": 200,

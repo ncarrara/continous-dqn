@@ -144,7 +144,6 @@
     "start_decay": 1.0,
     "traj_max_size": 200
   },
-  "as_json": true,
   "transfer_dqn": {
     "path_sources": null,
     "traj_max_size": 200,

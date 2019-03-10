@@ -18,9 +18,9 @@ import ncarrara.utils.torch_utils as tu
 def main(
         workspace, seed, target_envs, net_params, dqn_params,
         start_decay, decay, feature_autoencoder_info,
-        feature_dqn_info, N, source_params, device, loss_function_autoencoder_str, traj_max_size, configs,gamma,writer=None,path_sources=None):
+        feature_dqn_info, N, source_params, device, loss_function_autoencoder_str, traj_max_size, configs, gamma,
+        writer=None, path_sources=None):
     epsilon_decay(start_decay, decay, N, savepath=workspace)
-
 
     envs, tests_params = generate_envs(**target_envs)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
@@ -70,7 +70,7 @@ def main(
             else:
                 transfer_params_config = None
             env = envs[i_env]
-            ret, ret_greedy, _ = run_dqn(
+            ret, ret_greedy, _, _ = run_dqn(
                 env,
                 workspace=workspace / key,
                 seed=seed,
@@ -89,11 +89,9 @@ def main(
             datas.append(ret_greedy)
             datas.append(ret)
 
-
     midx = pd.MultiIndex.from_product([
         [i_env for i_env in range(len(envs))],
         [key for key, config in configs.items()],
         [True, False]], names=["env", "config", "is_greedy"])
     xaxa = pd.DataFrame(datas, index=midx)
     xaxa.to_pickle(workspace / "data.pd")
-

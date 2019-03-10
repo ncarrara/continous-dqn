@@ -7,6 +7,7 @@ import logging
 from ncarrara.utils.math_utils import epsilon_decay, set_seed
 from ncarrara.utils_rl.algorithms.dqn import NetDQN, DQN
 from ncarrara.continuous_dqn.dqn.tdqn import TDQN
+from ncarrara.utils_rl.transition.replay_memory import Memory
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +21,21 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
         tm = TransferModule(**transfer_params)
         tm.reset()
     net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
-    if tm is not None and tm.is_q_transfering():
-        dqn = TDQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, writer=writer,
-                  **dqn_params)
-    else:
-        dqn = DQN(policy_network=net, device=device, transfer_module=tm, workspace=workspace, writer=writer,
-                   **dqn_params)
+    dqn = TDQN(
+        policy_network=net,
+        device=device,
+        transfer_module=tm,
+        workspace=workspace,
+        writer=writer,
+        feature=feature_dqn,
+        **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)
     rrr = []
     rrr_greedy = []
     epsilons = epsilon_decay(start=start_decay, decay=decay, N=N, savepath=workspace)
     nb_samples = 0
+    memory = Memory()
     for n in range(N):
         # print("-------------------------- "+str(n)+ "----------------------")
         s = env.reset()
@@ -51,14 +55,15 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(s), action_mask)
+                    a = dqn.pi(s, action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
+                    a = dqn.pi(s, np.zeros(env.action_space.n))
 
             s_, r_, done, info = env.step(a)
             done = done or (traj_max_size is not None and it >= traj_max_size - 1)
             rr += r_ * (gamma ** it)
-            t_dqn = (feature_dqn(s), a, r_, feature_dqn(s_), done, info)
+            t_dqn = (s, a, r_, s_, done, info)
+            memory.push(s, a, r_, s_, done, info)
             dqn.update(*t_dqn)
             s = s_
             nb_samples += 1
@@ -78,9 +83,9 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     action_mask = np.ones(env.action_space.n)
                     for ex in exec:
                         action_mask[ex] = 0.
-                    a = dqn.pi(feature_dqn(s), action_mask)
+                    a = dqn.pi(s, action_mask)
                 else:
-                    a = dqn.pi(feature_dqn(s), np.zeros(env.action_space.n))
+                    a = dqn.pi(s, np.zeros(env.action_space.n))
 
                 s_, r_, done, info = env.step(a)
                 done = done or (traj_max_size is not None and it >= traj_max_size - 1)
@@ -95,14 +100,14 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
     for param_stat in ["weights_over_time", "biais_over_time",
                        "ae_errors_over_time", "p_over_time",
                        "best_fit_over_time"]:
-        if hasattr(dqn,param_stat):
+        if hasattr(dqn, param_stat):
             var = getattr(dqn, param_stat)
             plt.plot(range(0, len(var)), var)
             plt.title(param_stat)
             plt.savefig(workspace / param_stat)
             plt.close()
 
-    return rrr, rrr_greedy, dqn
+    return rrr, rrr_greedy, memory, dqn
 
 # if tm is not None and n % 50 == 0 and transfer_params["selection_method"] == "transfer":
 #     logger.info("------------------------------------")

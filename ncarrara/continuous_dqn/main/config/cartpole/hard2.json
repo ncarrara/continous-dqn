@@ -68,8 +68,8 @@
   "source_envs": {
     "envs_params": {
       "gravity": [
-        7,
-        12
+        5,
+        15
       ],
       "masscart": [
         0.5,
@@ -80,22 +80,22 @@
         0.15
       ],
       "length": [
-        0.3,
+        0.5,
         1.5
       ],
       "force_mag": [
         9,
-        11
+        13
       ]
     },
-    "number_random_env": 30,
+    "number_random_env": 50,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
     "envs_params": {
       "gravity": [
-        7,
-        12
+        5,
+        15
       ],
       "masscart": [
         0.5,
@@ -106,15 +106,15 @@
         0.15
       ],
       "length": [
-        0.3,
+        0.5,
         1.5
       ],
       "force_mag": [
         9,
-        11
+        13
       ]
     },
-    "number_random_env": 15,
+    "number_random_env": 25,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {

@@ -18,9 +18,7 @@ import seaborn as sns
 
 def main(workspace=None):
     df = pd.read_pickle(workspace / "data.pd")
-    print(df)
     xx = df.mean(level=["config", "is_greedy"])
-    print(df.T.mean())
     xx = xx.iloc[xx.index.get_level_values('is_greedy') == True]
     xx = xx.reset_index('is_greedy', drop=True).T
     xx.plot()

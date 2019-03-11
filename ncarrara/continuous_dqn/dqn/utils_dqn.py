@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay, gamma=None,
             transfer_params=None, evaluate_greedy_policy=True, traj_max_size=None, writer=None):
     size_state = len(feature_dqn(env.reset()))
+    stats= {}
     if transfer_params is None or transfer_params["selection_method"] == "no_transfer":
         tm = None
     else:
@@ -95,17 +96,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
             rrr_greedy.append(rr_greedy)
             if writer is not None:
                 writer.add_scalar('return_greedy/episode', rr_greedy, n)
-            # print("eps={} greedy={}".format(rr,rr_greedy))
-    import matplotlib.pyplot as plt
-    for param_stat in ["weights_over_time", "biais_over_time",
-                       "ae_errors_over_time", "p_over_time",
-                       "best_fit_over_time","error_bootstrap_source","error_bootstrap_partial"]:
-        if hasattr(dqn, param_stat):
-            var = getattr(dqn, param_stat)
-            plt.plot(range(len(var)), var)
-            plt.title(param_stat)
-            plt.savefig(workspace / param_stat)
-            plt.close()
+
 
     return rrr, rrr_greedy, memory, dqn
 

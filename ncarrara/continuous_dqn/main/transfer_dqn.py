@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
+from ncarrara.continuous_dqn.main import plot_data, plot_all_data
+from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
 import pandas as pd
@@ -53,26 +55,27 @@ def main(
     datas = []
     import collections
     configs = collections.OrderedDict(configs)
-    # data = pd.DataFrame()
     for i_env in range(len(envs)):
         logger.info("===================    ==== ENV TARGET {} ======================".format(i_env))
         test_params = tests_params[i_env]
         logger.info(test_params)
-        # env_data = pd.DataFrame()
-
+        name_folder = "target_env_{}".format(i_env)
+        ws_env = workspace / name_folder
         for key, config in configs.items():
+
+            ws = ws_env / key
+            makedirs(ws)
             logger.info("=== config {} ====".format(key))
             if config["selection_method"] != "no_transfer":
                 transfer_params_config = transfer_params
                 transfer_params_config["test_params"] = test_params
                 transfer_params_config["selection_method"] = config["selection_method"]
-                # transfer_params_config["transfer_network_type"] = config["transfer_network_type"]
             else:
                 transfer_params_config = None
             env = envs[i_env]
-            ret, ret_greedy, _, _ = run_dqn(
+            ret, ret_greedy, _, dqn = run_dqn(
                 env,
-                workspace=workspace / key,
+                workspace=ws,
                 seed=seed,
                 device=device,
                 feature_dqn=feature_dqn,
@@ -86,12 +89,24 @@ def main(
                 writer=writer,
                 gamma=gamma
             )
+            with open(ws / "stats.bin", 'w') as f:
+                import json
+                json.dump(dqn.stats, f)
+            for key_stats, values in dqn.stats.items():
+                import matplotlib.pyplot as plt
+                if values:
+                    plt.plot(range(len(values)), values)
+                    plt.title(key_stats)
+                    plt.savefig(ws / key_stats)
+                    plt.close()
             datas.append(ret_greedy)
             datas.append(ret)
 
-    midx = pd.MultiIndex.from_product([
-        [i_env for i_env in range(len(envs))],
-        [key for key, config in configs.items()],
-        [True, False]], names=["env", "config", "is_greedy"])
-    xaxa = pd.DataFrame(datas, index=midx)
-    xaxa.to_pickle(workspace / "data.pd")
+        # partial saving
+        midx = pd.MultiIndex.from_product([
+            [i_e for i_e in range(i_env + 1)],
+            [key for key, config in configs.items()],
+            [True, False]], names=["env", "config", "is_greedy"])
+        xaxa = pd.DataFrame(datas, index=midx)
+        xaxa.to_pickle(workspace / "data.pd")
+        plot_data.main(workspace)

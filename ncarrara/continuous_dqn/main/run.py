@@ -37,6 +37,7 @@ def main(config):
             path_models=config.path_sources / "ae",
             path_samples=config.path_sources / "samples",
             seed=config.seed,
+            workspace=config.workspace / "test_and_base",
             source_params=config.load_sources_params(),
             device=config.device)
     if "transfer_dqn" in config:

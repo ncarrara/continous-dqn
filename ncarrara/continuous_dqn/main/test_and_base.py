@@ -1,5 +1,6 @@
 from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
 from ncarrara.continuous_dqn.tools.utils import load_memories
+from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import loss_fonction_factory
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
@@ -12,7 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_models, path_samples, seed,
-         source_params, device):
+         source_params, device, workspace):
+    makedirs(workspace)
     loss_autoencoders = loss_fonction_factory(loss_autoencoders_str)
     autoencoders = utils.load_autoencoders(path_models, device)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
@@ -24,7 +26,7 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
         sources_params=source_params)
     errors_base = []
     # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
-    memories = load_memories(path_samples,as_json=False)
+    memories = load_memories(path_samples, as_json=False)
     for memory in memories:
         tm.reset()
         tm.push_memory(memory.memory)
@@ -58,6 +60,20 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
 
     print("================================================ test ================================================")
     print(utils.array_to_cross_comparaison(errors_test, source_params, test_params))
+
+    import pickle
+
+    with open(workspace / "errors_base.bin", 'wb') as f:
+        pickle.dump(errors_base, f)
+
+    with open(workspace / "errors_test.bin", 'wb') as f:
+        pickle.dump(errors_test, f)
+
+    with open(workspace / "source_params.bin", 'wb') as f:
+        pickle.dump(source_params, f)
+
+    with open(workspace / "test_params.bin", 'wb') as f:
+        pickle.dump(test_params, f)
 
 # if __name__ == "__main__":
 #     # execute only if run as a script

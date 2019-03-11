@@ -45,16 +45,22 @@ class TDQN:
             self.transfer_param_init = transfer_param_init
         self.ratio_learn_test = ratio_learn_test
         self.loss_function_gate = loss_fonction_factory(loss_function_gate)
-        self.weights_over_time = []
-        self.biais_over_time = []
-        self.best_fit_over_time = []
-        self.ae_errors_over_time = []
-        self.error_bootstrap_source = []
-        self.error_bootstrap_partial = []
-        self.p_over_time = []
+
+        self.stats = {
+            "weights_over_time": [],
+            "biais_over_time": [],
+            "best_fit_over_time": [],
+            "ae_errors_over_time": [],
+            "error_bootstrap_source": [],
+            "error_bootstrap_partial": [],
+            "p_over_time": [],
+            "loss_classic": []
+        }
         self.writer = writer
         self.tranfer_module = transfer_module
         self.device = device
+        self.tensors_type = type(torch.tensor(0., device=self.device))
+
         self.size_mini_batch = batch_size_experience_replay
         self.gamma = gamma
         self.target_update = target_update
@@ -177,13 +183,22 @@ class TDQN:
             param.grad.data.clamp_(-1, 1)
         optimizer.step()
 
+        return loss_classic.item()
+
+    def add_stats(self, key, value):
+        if type(value) == np.int64:
+            value = int(value)
+        if type(value) == self.tensors_type:
+            value = float(value.item())
+        self.stats[key].append(value)
+
     def _optimize_model(self):
 
         #####################################
         ######### optimize full net #########
         #####################################
 
-        self._optimize(
+        loss_classic = self._optimize(
             self.memory,
             self.full_net,
             self.full_target_net,
@@ -217,8 +232,6 @@ class TDQN:
 
             # reeavalute errors
             self.tranfer_module.evaluate()
-            self.best_fit_over_time.append(self.tranfer_module.best_fit)
-            self.ae_errors_over_time.append(self.tranfer_module.get_error())
 
             Q_source = self.source_net(test_batch.state)
             Q_partial = self.partial_net(test_batch.state)
@@ -254,14 +267,14 @@ class TDQN:
             # error_s = torch.mean(error_s)
             # error_p = torch.mean(error_p)
 
-            raise Exception("essayer sans le %test")
-            voir avec cartpole si p finit par descendre
+            # raise Exception("essayer sans le %test")
+            # voir avec cartpole si p finit par descendre
 
             sa_values_s = Q_source.gather(1, test_batch.action)
             sa_values_p = Q_partial.gather(1, test_batch.action)
 
-            nf_ns_values_s = self.source_net(torch.cat(test_batch.non_final_next_state))
-            nf_ns_values_p = self.partial_target_net(torch.cat(test_batch.non_final_next_state))
+
+
 
             ae_error = self.tranfer_module.get_error()
             p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
@@ -272,14 +285,14 @@ class TDQN:
                 (len(test_batch.transitions), self.partial_target_net.predict.out_features),
                 device=self.device
             )
-            Q_[test_batch.non_final_mask] = ((1 - p) * nf_ns_values_p + p * nf_ns_values_s)
 
-            # print("Q_.shape", Q_.shape)
+            if test_batch.non_final_next_state:
+                nf_ns_values_s = self.source_net(torch.cat(test_batch.non_final_next_state))
+                nf_ns_values_p = self.partial_target_net(torch.cat(test_batch.non_final_next_state))
+                Q_[test_batch.non_final_mask] = ((1 - p) * nf_ns_values_p + p * nf_ns_values_s)
+
             Qmax = Q_.max(1)[0].detach()
-            # print("Qmax.shape", Qmax.shape)
-            # print(" test_batch.reward", test_batch.reward.shape)
             Y = test_batch.reward.unsqueeze(1) + self.gamma * Qmax.unsqueeze(1)
-            # print("Y.shape", Y.shape)
 
             max = torch.max(torch.cat((X, Y), dim=1), dim=1)[0].unsqueeze(1)
             # print("max.shape", max.shape)
@@ -316,30 +329,19 @@ class TDQN:
             #         )
             #     )
             # exit()
-            if self.tranfer_module is not None:
-                self.weights_over_time.append(self.w_gate.item())
-                self.biais_over_time.append(self.b_gate.item())
-                self.p_over_time.append(p.item())
-                # bootstrap_s = test_batch.reward + self.gamma * ns_values_s
-                # bootstrap_p = test_batch.reward + self.gamma * ns_values_p
-                # l_p = self.loss_function((sa_values_p), (bootstrap_p).unsqueeze(1))
-                # l_s = self.loss_function((sa_values_s), (bootstrap_s).unsqueeze(1))
-                # self.error_bootstrap_source.append(l_p)
-                # self.error_bootstrap_partial.append(l_s)
+            self.add_stats("best_fit_over_time", self.tranfer_module.best_fit)
+            self.add_stats("ae_errors_over_time", self.tranfer_module.get_error())
+            self.add_stats("weights_over_time", self.w_gate)
+            self.add_stats("biais_over_time", self.b_gate)
+            self.add_stats("p_over_time", p)
+            self.add_stats("loss_classic", loss_classic)
 
             if self.writer is not None:
                 self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
                 self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
-
-                # self.writer.add_scalar('error_bootstrap_source/episode', error_s, self.i_episode)
-                # self.writer.add_scalar('error_bootstrap_partial/episode', error_p, self.i_episode)
-                # self.writer.add_scalar('diff_error_bootstrap/episode', error_s - error_p, self.i_episode)
-                # self.writer.add_scalar('loss_transfer/episode', loss_transfer.item(), self.i_episode)
-                # self.writer.add_scalar('loss_classic/episode', loss_classic.item(), self.i_episode)
                 self.writer.add_scalar('ae_weight/episode', self.w_gate, self.i_episode)
                 self.writer.add_scalar('ae_biais/episode', self.b_gate, self.i_episode)
                 self.writer.add_scalar('p/episode', p, self.i_episode)
-            # exit()
 
     def pi(self, state, action_mask):
         state = self.feature(state)

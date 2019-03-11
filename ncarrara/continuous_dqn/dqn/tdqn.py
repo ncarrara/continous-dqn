@@ -32,7 +32,9 @@ class TDQN:
                  ratio_learn_test=None,
                  workspace=None,
                  lr=None,
+                 lr_gate=None,
                  weight_decay=None,
+                 weight_decay_gate=None,
                  transfer_module=None,
                  writer=None,
                  transfer_param_init=None,
@@ -69,7 +71,9 @@ class TDQN:
         self.n_actions = self.full_net.predict.out_features
         self.loss_function = loss_fonction_factory(loss_function)
         self.lr = lr
+        self.lr_gate = lr_gate
         self.weight_decay = weight_decay
+        self.weight_decay_gate = weight_decay_gate
         self.optimizer_type = optimizer
         self.reset()
 
@@ -134,8 +138,8 @@ class TDQN:
             self.optimizer_gate = optimizer_factory(
                 self.optimizer_type,
                 self.parameters_gate,
-                self.lr,
-                self.weight_decay)
+                self.lr_gate,
+                self.weight_decay_gate)
 
             self.use_source_policy = True
 

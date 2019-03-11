@@ -1,0 +1,225 @@
+{
+  "general": {
+    "dictConfig": {
+      "version": 1,
+      "disable_existing_loggers": false,
+      "formatters": {
+        "standard": {
+          "format": "[%(levelname)s] %(message)s"
+        }
+      },
+      "handlers": {
+        "default": {
+          "level": "INFO",
+          "formatter": "standard",
+          "class": "logging.StreamHandler"
+        }
+      },
+      "loggers": {
+        "": {
+          "handlers": [
+            "default"
+          ],
+          "level": "DEBUG",
+          "propagate": true
+        },
+        "ncarrara.bftq_pydial.tools.features": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.algorithms.pytorch_fittedq": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.utils_rl.environments.slot_filling_env.slot_filling_env": {
+          "handlers": [
+            "default"
+          ],
+          "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.utils.os": {
+          "handlers": [
+            "default"
+          ],
+          "level": "ERROR",
+          "propagate": false
+        }
+      }
+    },
+    "workspace": "tmp/slot_filling/easy3",
+    "seed": 1, 
+    "id": "slot_filling_easy3",
+    "is_tensorboardX": false
+  },
+  "source_envs": {
+    "envs_params": {
+      "cerr": [
+        -5,
+        0
+      ],
+      "ser": [
+        0.0,
+        0.6
+      ],
+      "cstd": [
+        0.0,
+        0.6
+      ],
+      "proba_hangup": [
+        0.0,
+        1.0
+      ],
+      "max_turn": 10,
+      "size_constraints": 3,
+      "penalty_if_bye": 0.0,
+      "penalty_if_hangup": 0.0,
+      "penalty_if_summarize_fail": 0.0,
+      "penalty_by_turn": 0.0,
+      "penalty_if_max_turn": 0.0,
+      "reward_if_sucess": 100.0
+    },
+    "number_random_env": 50,
+    "envs_str": "slot_filling_env_v1"
+  },
+  "target_envs": {
+    "envs_params": {
+      "cerr": [
+        -5,
+        0
+      ],
+      "ser": [
+        0.0,
+        0.75
+      ],
+      "cstd": [
+        0.0,
+        0.75
+      ],
+      "proba_hangup": [
+        0.0,
+        1.0
+      ],
+      "max_turn": 10,
+      "size_constraints": 3,
+      "penalty_if_bye": 0.0,
+      "penalty_if_hangup": 0.0,
+      "penalty_if_summarize_fail": 0.0,
+      "penalty_by_turn": 0.0,
+      "penalty_if_max_turn": 0.0,
+      "reward_if_sucess": 100.0
+    },
+    "number_random_env": 25,
+    "envs_str": "slot_filling_env_v1"
+  },
+  "dqn_params": {
+    "gamma": 1.0,
+    "batch_size_experience_replay": 128,
+    "target_update": 10,
+    "optimizer": "ADAM",
+    "loss_function": "l2",
+    "loss_function_gate": "l2",
+    "lr": 0.001,
+    "lr_gate": 0.01,
+    "weight_decay_gate": 0.0,
+    "weight_decay": 0.0005,
+    "transfer_param_init": {"w": 0,"b": 5},
+    "ratio_learn_test": 0.25
+  },
+  "net_params": {
+    "intra_layers": [
+      128,
+      64,
+      32
+    ]
+  },
+  "test_and_base": {
+    "N": 500
+  },
+  "generate_sources": {
+    "N": 500,
+    "decay": 0.01,
+    "start_decay": 1.0,
+    "traj_max_size": 10
+  },
+  "transfer_dqn": {
+    "path_sources": null,
+    "traj_max_size": 10,
+    "N": 500,
+    "start_decay": 1.0,
+    "decay": 0.01,
+    "configs": {
+      "transfer": {
+        "selection_method": "best_fit"
+      },
+      "no_transfer": {
+        "selection_method": "no_transfer"
+      }
+    }
+  },
+  "feature_autoencoder_info": {
+    "feature_str": "feature_autoencoder_slot_filling",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
+  },
+  "feature_dqn_info": {
+    "feature_str": "feature_slot_filling",
+    "size_constraints": 3,
+    "max_turn": 10,
+    "user_actions": [
+      "INFORM",
+      "HANGUP",
+      "DENY_SUMMARIZE"
+    ],
+    "system_actions": [
+      "SUMMARIZE_AND_INFORM",
+      "BYE",
+      "ASK_ORAL(0)",
+      "ASK_ORAL(1)",
+      "ASK_ORAL(2)",
+      "ASK_NUM_PAD(0)",
+      "ASK_NUM_PAD(1)",
+      "ASK_NUM_PAD(2)"
+    ]
+  },
+  "learn_autoencoders": {
+    "weight_decay": 0.0,
+    "learning_rate": 0.001,
+    "autoencoder_size": [
+      8,
+      32
+    ],
+    "optimizer_str": "ADAM",
+    "normalize": true,
+    "n_epochs": 2000,
+    "loss_function_str": "l2"
+  }
+}

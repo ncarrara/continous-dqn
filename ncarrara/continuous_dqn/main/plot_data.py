@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
 from ncarrara.utils.os import makedirs
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
@@ -19,8 +21,10 @@ import seaborn as sns
 def main(workspace=None):
     df = pd.read_pickle(workspace / "data.pd")
     xx = df.mean(level=["config", "is_greedy"])
+
     xx = xx.iloc[xx.index.get_level_values('is_greedy') == True]
     xx = xx.reset_index('is_greedy', drop=True).T
+    print(xx.mean())
     xx.plot()
     plt.savefig(workspace / "results_greedy")
     xx = df.mean(level=["config", "is_greedy"])
@@ -30,4 +34,5 @@ def main(workspace=None):
     plt.savefig(workspace / "results")
 # from pathlib import Path
 
-# main(Path("tmp/cartpole/easy-debug/3"))
+if __name__=="__main__":
+    main(Path("tmp/slot_filling/hard/0"))

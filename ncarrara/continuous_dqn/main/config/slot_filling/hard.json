@@ -60,9 +60,9 @@
         }
       }
     },
-    "workspace": "tmp/slot_filling/easy2",
+    "workspace": "tmp/slot_filling/hard",
     "seed": 1,
-    "id": "slot_filling_easy2",
+    "id": "slot_filling_hard",
     "is_tensorboardX": false
   },
   "source_envs": {

@@ -79,7 +79,7 @@ def array_to_cross_comparaison(tab, params_source, params_test):
 def format_errors(errors, params_source, param_test, show_params=False):
     toprint = "" if not show_params else "".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in param_test.values()]) + "| "
     min_idx = np.argmin(errors)
-    print(errors)
+    # print(errors)
     for isource in range(len(errors)):
         same_env = params_source[isource] == param_test
 
@@ -95,6 +95,7 @@ def format_errors(errors, params_source, param_test, show_params=False):
 
     diff = ""
     if param_test != params_source[min_idx]:
+        # relative_diff = 0
         for k in param_test.keys():
             va = param_test[k]
             vb = params_source[min_idx][k]
@@ -102,4 +103,7 @@ def format_errors(errors, params_source, param_test, show_params=False):
                 value_env = Color.PURPLE + "{:.2f}".format(va) + Color.END
                 value_better = Color.UNDERLINE + Color.BOLD + "{:.2f}".format(vb) + Color.END + Color.END
                 diff += k + ":" + value_env + "/" + value_better + " "
+                # relative_diff += np.abs(va - vb) / va
+            # else:
+            #     relative_diff+=0
     return toprint + "\t" + diff

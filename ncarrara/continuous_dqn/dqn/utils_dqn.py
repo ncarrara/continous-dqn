@@ -38,7 +38,6 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
     nb_samples = 0
     memory = Memory()
     for n in range(N):
-        # print("-------------------------- "+str(n)+ "----------------------")
         s = env.reset()
         done = False
         rr = 0

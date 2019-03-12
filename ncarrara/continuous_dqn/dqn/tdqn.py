@@ -37,10 +37,12 @@ class TDQN:
                  weight_decay_gate=None,
                  transfer_module=None,
                  writer=None,
+                 use_ae_error_for_learn=True,
                  transfer_param_init=None,
                  feature=None,
                  **kwargs):
         self.feature = feature
+        self.use_ae_error_for_learn = use_ae_error_for_learn
         if transfer_param_init is None:
             self.transfer_param_init = {"w": np.random.random_sample(1)[0], "b": np.random.random_sample(1)[0]}
         else:
@@ -126,15 +128,16 @@ class TDQN:
                     self.lr,
                     self.weight_decay)
 
-            # gate to discriminate the choice betwen the source net and the full net
-            # this gate compares the partial net and the source net on a test batch (10% of all the transitions)
-            # self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
             self.w_gate = torch.Tensor([0]).to(self.device)
             self.w_gate.requires_grad_()
-            # self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
             self.b_gate = torch.Tensor([0]).to(self.device)
             self.b_gate.requires_grad_()
-            self.parameters_gate = [self.w_gate, self.b_gate]
+
+            if self.use_ae_error_for_learn:
+                self.parameters_gate = [self.w_gate, self.b_gate]
+            else:
+                self.parameters_gate = [self.b_gate]
+
             self.optimizer_gate = optimizer_factory(
                 self.optimizer_type,
                 self.parameters_gate,
@@ -229,59 +232,27 @@ class TDQN:
             ########################################
             ######### optimize  GATE ###############
             ########################################
+
+            # reeavalute errors
+            self.tranfer_module.evaluate()
+            self.source_net = self.tranfer_module.get_Q_source()
+
             if self.ratio_learn_test > 0:
                 test_batch = self._construct_batch(self.memory_partial_test)
             else:
                 test_batch = self._construct_batch(self.memory)
 
-            # reeavalute errors
-            self.tranfer_module.evaluate()
-
             Q_source = self.source_net(test_batch.state)
             Q_partial = self.partial_net(test_batch.state)
-
-            # sa_values_s = Q_source.gather(1, test_batch.action)
-            # ns_values_s = torch.zeros(len(test_batch.transitions), device=self.device)
-            # sa_values_p = Q_partial.gather(1, test_batch.action)
-            # ns_values_p = torch.zeros(len(test_batch.transitions), device=self.device)
-            # if test_batch.non_final_next_state:
-            #     ns_values_s[test_batch.non_final_mask] = \
-            #         self.source_net(torch.cat(test_batch.non_final_next_state)).max(1)[0].detach()
-            #     ns_values_p[test_batch.non_final_mask] = \
-            #         self.partial_target_net(torch.cat(test_batch.non_final_next_state)).max(1)[0].detach()
-            # else:
-            #     logger.warning("Pas d'état non terminaux")
-
-            # bootstrap_s = (test_batch.reward + self.gamma * ns_values_s).unsqueeze(1)
-            # bootstrap_p = (test_batch.reward + self.gamma * ns_values_p).unsqueeze(1)
-            #
-            # error_s = torch.abs(sa_values_s - bootstrap_s)
-            # error_p = torch.abs(sa_values_p - bootstrap_p)
-            #
-            # div = torch.cat((sa_values_s, bootstrap_s), dim=1)
-            # max = torch.max(div, dim=1)[0].unsqueeze(1)
-            # where = max != 0
-            # error_s[where] = error_s[where] / max[where]
-            #
-            # div = torch.cat((sa_values_p, bootstrap_p), dim=1)
-            # max = torch.max(div, dim=1)[0].unsqueeze(1)
-            # where = max != 0
-            # error_p[where] = error_p[where] / max[where]
-            #
-            # error_s = torch.mean(error_s)
-            # error_p = torch.mean(error_p)
-
-            # raise Exception("essayer sans le %test")
-            # voir avec cartpole si p finit par descendre
 
             sa_values_s = Q_source.gather(1, test_batch.action)
             sa_values_p = Q_partial.gather(1, test_batch.action)
 
-
-
-
-            ae_error = self.tranfer_module.get_error()
-            p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
+            if self.use_ae_error_for_learn:
+                ae_error = self.tranfer_module.get_error()
+                p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
+            else:
+                p = torch.sigmoid((self.b_gate))
 
             X = (1 - p) * sa_values_p + p * sa_values_s
 
@@ -312,27 +283,6 @@ class TDQN:
                 param.grad.data.clamp_(-1, 1)
             self.optimizer_gate.step()
 
-            # self.use_source_policy = ((error_s) - (error_p)) < 0
-            # self.writer.add_scalar('use_source_policy/episode', 1 if self.use_source_policy else 0, self.i_episode)
-            # raise Exception("Todo balance with error")
-
-            # print("--------------------------------")
-            # for i in range(len(Q_source)):
-            #     # print(error_p)
-            #     print(
-            #         "L({:.2f} , [{:.2f} + {:.2f}]) = {:.3f}  ||| L({:.2f} , [{:.2f} + {:.2f}]) = {:.3f} "
-            #             .format(
-            #             sa_values_p[i].item(),
-            #             test_batch.reward[i].item(),
-            #             self.gamma * ns_values_p[i].item(),
-            #             error_p[i].item(),
-            #             sa_values_s[i].item(),
-            #             test_batch.reward[i].item(),
-            #             self.gamma * ns_values_s[i].item(),
-            #             error_s[i].item(),
-            #         )
-            #     )
-            # exit()
             self.add_stats("best_fit_over_time", self.tranfer_module.best_fit)
             self.add_stats("ae_errors_over_time", self.tranfer_module.get_error())
             self.add_stats("weights_over_time", self.w_gate)
@@ -356,13 +306,12 @@ class TDQN:
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([state], device=self.device, dtype=torch.float)
             if self.tranfer_module is not None:
-                ae_error = self.tranfer_module.get_error()
-                p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
+                if self.use_ae_error_for_learn:
+                    ae_error = self.tranfer_module.get_error()
+                    p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
+                else:
+                    p = torch.sigmoid((self.b_gate))
                 v = (self.full_net(s)) * (1 - p) + p * (self.source_net(s))
-                # if self.use_source_policy:
-                #     v = self.source_net(s)
-                # else:
-                #     v = self.full_net(s)
             else:
                 v = self.full_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
@@ -397,6 +346,10 @@ class TDQN:
             self.i_episode += 1
             if self.i_episode % self.target_update == 0:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
+
                 self.full_target_net.load_state_dict(self.full_net.state_dict())
                 if self.tranfer_module is not None:
+                    # print(self.tranfer_module.sum_errors)
+                    # print(self.tranfer_module.errors)
+                    # print(len(self.tranfer_module.memory))
                     self.partial_target_net.load_state_dict(self.partial_net.state_dict())

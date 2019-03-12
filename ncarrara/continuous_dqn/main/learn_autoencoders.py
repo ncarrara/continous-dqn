@@ -18,7 +18,9 @@ def main(loss_function_str, optimizer_str, weight_decay, learning_rate, normaliz
     makedirs(workspace)
     feature = build_feature_autoencoder(feature_autoencoder_info)
 
-    all_transitions = utils.read_samples_for_autoencoders(workspace / "samples", feature)
+    all_transitions = utils.read_samples_for_autoencoders(workspace / "samples_random", feature)
+
+
     min_n, max_n = autoencoder_size
     print(all_transitions[0].shape)
     autoencoders = [Autoencoder(transitions.shape[1], min_n, max_n, device=device) for transitions in all_transitions]

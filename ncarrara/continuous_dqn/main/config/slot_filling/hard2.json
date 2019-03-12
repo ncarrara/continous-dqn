@@ -60,9 +60,9 @@
         }
       }
     },
-    "workspace": "tmp/slot_filling/easy2",
+    "workspace": "tmp/slot_filling/hard2",
     "seed": 1,
-    "id": "slot_filling_easy2",
+    "id": "slot_filling_hard2",
     "is_tensorboardX": false
   },
   "source_envs": {
@@ -140,6 +140,7 @@
       "w": 0,
       "b": 5
     },
+    "use_ae_error_for_learn": false,
     "ratio_learn_test": 0.0
   },
   "net_params": {
@@ -152,7 +153,7 @@
   "test_and_base": {
     "N": 500
   },
-  "generate_sources": {
+  "-generate_sources": {
     "N_dqn": 500,
     "N_random": 500,
     "decay": 0.01,
@@ -160,9 +161,9 @@
     "traj_max_size": 10
   },
   "transfer_dqn": {
-    "path_sources": null,
+    "path_sources": "tmp/slot_filling/hard/0/sources",
     "traj_max_size": 10,
-    "N": 500,
+    "N": 5000,
     "start_decay": 1.0,
     "decay": 0.01,
     "configs": {

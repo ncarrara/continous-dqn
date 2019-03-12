@@ -41,7 +41,7 @@ class Autoencoder(nn.Module):
         self.std = None
         self.mean = None
         self.to(device)
-        print(self)
+        # print(self)
 
     def set_normalization_params(self, mean, std):
         std[std == 0.] = 1.
@@ -68,12 +68,12 @@ class Autoencoder(nn.Module):
         # exit()
         if normalize:
             self.set_normalization_params(means, stds)
-        if size_minibatch is None:
-            size_minibatch = datas.shape[0]
-        if optimizer is None:
-            optimizer = torch.optim.Adam(self.parameters(), lr=0.001, weight_decay=weight_decay)
-        if loss_function is None:
-            loss_function = F.mse_loss
+        # if size_minibatch is None:
+        #     size_minibatch = datas.shape[0]
+        # if optimizer is None:
+        #     optimizer = torch.optim.Adam(self.parameters(), lr=0.001, weight_decay=weight_decay)
+        # if loss_function is None:
+        #     loss_function = F.mse_loss
         logger.info("[fit] fitting ...")
         for epoch in range(n_epochs):
             random_indexes = torch.LongTensor(np.random.choice(range(datas.shape[0]), size_minibatch)).to(C.device)
@@ -81,6 +81,8 @@ class Autoencoder(nn.Module):
             loss = loss_function(self(mini_batch), mini_batch)
             optimizer.zero_grad()
             loss.backward()
+            for param in self.parameters():
+                param.grad.data.clamp_(-1, 1)
             optimizer.step()
             if epoch % (n_epochs / 10) == 0:
                 logger.info('[fit] epoch [{}/{}], loss:{:.4f}'.format(epoch, n_epochs - 1, loss.data))

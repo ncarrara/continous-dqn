@@ -30,11 +30,11 @@ def main(
     if path_sources is None:
         autoencoders = utils.load_autoencoders(workspace / "sources" / "ae", device)
         # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
-        Q_sources = utils.load_q_sources(workspace / "sources" / "dqn", device)
+        Q_sources = utils.load_q_sources(workspace / "sources" / "models_dqn", device)
     else:
         autoencoders = utils.load_autoencoders(Path(path_sources) / "ae", device)
         # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
-        Q_sources = utils.load_q_sources(Path(path_sources) / "dqn", device)
+        Q_sources = utils.load_q_sources(Path(path_sources) / "models_dqn", device)
     # for er in ers:
     #     er.apply_feature_to_states(feature_dqn)
     #     er.to_tensors(C.device)

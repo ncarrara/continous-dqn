@@ -9,7 +9,6 @@ from ncarrara.utils.os import empty_directory, makedirs
 
 
 def main(config):
-
     if "generate_sources" in config:
         generate_sources.main(
             source_envs=config["source_envs"],
@@ -23,26 +22,30 @@ def main(config):
             writer=config.writer,
             **config["generate_sources"]
         )
+
+    if "learn_autoencoders" in config:
         learn_autoencoders.main(
             feature_autoencoder_info=config["feature_autoencoder_info"],
             workspace=config.path_sources,
             device=config.device,
             **config["learn_autoencoders"])
 
+    if "test_and_base" in config:
         test_and_base.main(
             loss_autoencoders_str=config["learn_autoencoders"]["loss_function_str"],
             feature_autoencoder_info=config["feature_autoencoder_info"],
             target_envs=config["target_envs"],
             N=config["test_and_base"]["N"],
             path_models=config.path_sources / "ae",
-            path_samples=config.path_sources / "samples",
+            path_samples=config.path_sources / "samples_random",
             seed=config.seed,
             workspace=config.workspace / "test_and_base",
             source_params=config.load_sources_params(),
             device=config.device)
+
     if "transfer_dqn" in config:
         if config["transfer_dqn"]["path_sources"] is not None:
-            config.path_sources =  Path(config["transfer_dqn"]["path_sources"])
+            config.path_sources = Path(config["transfer_dqn"]["path_sources"])
         transfer_dqn.main(
             workspace=config.workspace,
             seed=config.seed,

@@ -71,8 +71,8 @@
       "masscart": 1.0,
       "masspole": 0.1,
       "length": [
-        0.3,
-        1.5
+        0.1,
+       2.0
       ],
       "force_mag": 10.0
     },
@@ -117,11 +117,11 @@
     ]
   },
   "test_and_base": {
-    "N": 1000
+    "N": 100
   },
   "generate_sources": {
     "N_dqn": null,
-    "N_random": 1000,
+    "N_random": 100,
     "decay": 0.025,
     "start_decay": 1.0,
     "traj_max_size": 200
@@ -151,14 +151,14 @@
     "feature_str": "feature_dqn_identity"
   },
   "learn_autoencoders": {
-    "weight_decay": 0.01,
+    "weight_decay": 0.0,
     "learning_rate": 0.001,
     "autoencoder_size": [
       4,4
     ],
     "optimizer_str": "ADAM",
     "normalize": true,
-    "n_epochs": 5000,
-    "loss_function_str": "l2"
+    "n_epochs": 1000,
+    "loss_function_str": "l1"
   }
 }

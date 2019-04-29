@@ -81,7 +81,7 @@ class Configuration(object):
             set_seed(self.seed)
 
         import numpy as np
-        np.set_printoptions(precision=2)
+        np.set_printoptions(precision=2,suppress=True)
 
         self.writer = None
         self.is_tensorboardX = self["general"]["is_tensorboardX"]
@@ -105,6 +105,7 @@ class Configuration(object):
         return self
 
     def load_pytorch(self, override_device_str=None):
+
         self.logger.warning("Using import torch.multiprocessing as multiprocessing")
         self.logger.warning("Using multiprocessing.set_start_method('spawn')")
         import torch.multiprocessing as multiprocessing

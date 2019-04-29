@@ -9,7 +9,6 @@ from ncarrara.utils.os import empty_directory, makedirs
 
 
 def main(config):
-
     if "generate_sources" in config:
         generate_sources.main(
             source_envs=config["source_envs"],
@@ -23,12 +22,16 @@ def main(config):
             writer=config.writer,
             **config["generate_sources"]
         )
+    if "learn_autoencoders" in config:
         learn_autoencoders.main(
             feature_autoencoder_info=config["feature_autoencoder_info"],
             workspace=config.path_sources,
             device=config.device,
+            N_actions=config["N_actions"],
+            type_ae = config["feature_autoencoder_info"]["type_ae"],
+            writer=config.writer,
             **config["learn_autoencoders"])
-
+    if "test_and_base" in config:
         test_and_base.main(
             loss_autoencoders_str=config["learn_autoencoders"]["loss_function_str"],
             feature_autoencoder_info=config["feature_autoencoder_info"],
@@ -37,11 +40,12 @@ def main(config):
             path_models=config.path_sources / "ae",
             path_samples=config.path_sources / "samples",
             seed=config.seed,
+            N_actions=config["N_actions"],
             source_params=config.load_sources_params(),
             device=config.device)
     if "transfer_dqn" in config:
-        if config["transfer_dqn"]["path_sources"] is not None:
-            config.path_sources =  Path(config["transfer_dqn"]["path_sources"])
+        # if config["transfer_dqn"]["path_sources"] is not None:
+        #     config.path_sources =  Path(config["transfer_dqn"]["path_sources"])
         transfer_dqn.main(
             workspace=config.workspace,
             seed=config.seed,
@@ -51,9 +55,8 @@ def main(config):
             gamma=config["dqn_params"]["gamma"],
             source_params=config.load_sources_params(),
             device=config.device,
-            feature_autoencoder_info=config["feature_autoencoder_info"],
+            path_sources=config.path_sources,
             feature_dqn_info=config["feature_dqn_info"],
-            loss_function_autoencoder_str=config["learn_autoencoders"]["loss_function_str"],
             writer=config.writer,
             **config["transfer_dqn"]
         )

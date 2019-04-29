@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
 from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
 from ncarrara.continuous_dqn.tools import utils
@@ -17,37 +18,20 @@ import ncarrara.utils.torch_utils as tu
 
 def main(
         workspace, seed, target_envs, net_params, dqn_params,
-        start_decay, decay, feature_autoencoder_info,
-        feature_dqn_info, N, source_params, device, loss_function_autoencoder_str, traj_max_size, configs, gamma,
-        writer=None, path_sources=None):
+        start_decay, decay, feature_dqn_info, N,
+        source_params, device,
+        traj_max_size, configs, gamma,
+        writer=None, path_sources=None, **kwargs):
     epsilon_decay(start_decay, decay, N, savepath=workspace)
 
     envs, tests_params = generate_envs(**target_envs)
-    feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
+
     feature_dqn = build_feature_dqn(feature_dqn_info)
-    if path_sources is None:
-        autoencoders = utils.load_autoencoders(workspace / "sources" / "ae", device)
-        # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
-        Q_sources = utils.load_q_sources(workspace / "sources" / "dqn", device)
-    else:
-        autoencoders = utils.load_autoencoders(Path(path_sources) / "ae", device)
-        # ers = utils.load_memories(workspace, C["generate_samples"]["as_json"])
-        Q_sources = utils.load_q_sources(Path(path_sources) / "dqn", device)
-    # for er in ers:
-    #     er.apply_feature_to_states(feature_dqn)
-    #     er.to_tensors(C.device)
 
     transfer_params = {
-
-        "autoencoders": autoencoders,
-        "loss_autoencoders": tu.loss_fonction_factory(loss_function_autoencoder_str),
-        "experience_replays": None,
-        "feature_autoencoders": feature_autoencoder,
-        "Q_sources": Q_sources,
         "device": device,
         "evaluate_continuously": False,
         "sources_params": source_params,
-
     }
 
     datas = []
@@ -62,16 +46,28 @@ def main(
 
         for key, config in configs.items():
             logger.info("=== config {} ====".format(key))
+            logger.info("config : {}".format(config))
             if config["selection_method"] != "no_transfer":
-                transfer_params_config = transfer_params
+                transfer_params_config = {**transfer_params, **config}
                 transfer_params_config["test_params"] = test_params
-                transfer_params_config["selection_method"] = config["selection_method"]
-                # transfer_params_config["transfer_network_type"] = config["transfer_network_type"]
+                if config["type_transfer_module"] == "BellmanTransferModule":
+                    transfer_params_config["Q_sources"] = utils.load_q_sources(Path(path_sources) / "dqn", device)
+                    transfer_module = BellmanTransferModule(**transfer_params_config)
+
+                elif config["type_transfer_module"] == "AutoencoderTransferModule":
+                    # feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
+                    # autoencoders = utils.load_autoencoders(Path(path_sources) / "ae", device)
+                    # "loss_autoencoders": tu.loss_fonction_factory(loss_function_autoencoder_str),
+                    raise NotImplementedError()
+                else:
+                    raise Exception(
+                        "Unknow type_transfer_module={}".format(transfer_params_config["type_transfer_module"]))
             else:
-                transfer_params_config = None
+                transfer_module = None
             env = envs[i_env]
             ret, ret_greedy, _, _ = run_dqn(
                 env,
+                id=key,
                 workspace=workspace / key,
                 seed=seed,
                 device=device,
@@ -81,7 +77,7 @@ def main(
                 N=N,
                 decay=decay,
                 start_decay=start_decay,
-                transfer_params=transfer_params_config,
+                transfer_module=transfer_module,
                 traj_max_size=traj_max_size,
                 writer=writer,
                 gamma=gamma

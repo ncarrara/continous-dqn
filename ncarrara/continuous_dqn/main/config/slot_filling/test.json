@@ -171,6 +171,7 @@
     "feature_str": "feature_autoencoder_slot_filling",
     "size_constraints": 3,
     "max_turn": 10,
+    "type_ae": "AEA",
     "user_actions": [
       "INFORM",
       "HANGUP",

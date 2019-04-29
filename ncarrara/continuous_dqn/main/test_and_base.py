@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_models, path_samples, seed,
-         source_params, device):
+         source_params, device,N_actions):
     loss_autoencoders = loss_fonction_factory(loss_autoencoders_str)
     autoencoders = utils.load_autoencoders(path_models, device)
     feature_autoencoder = build_feature_autoencoder(feature_autoencoder_info)
@@ -21,6 +21,7 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
         loss_autoencoders=loss_autoencoders,
         feature_autoencoders=feature_autoencoder,
         device=device,
+        N_actions=N_actions,
         sources_params=source_params)
     errors_base = []
     # all_transitions = utils.read_samples_for_autoencoders(path_samples, feature_autoencoder)
@@ -28,7 +29,7 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
     for memory in memories:
         tm.reset()
         tm.push_memory(memory.memory)
-        tm.evaluate()
+        tm.update()
         errors_base.append(tm.errors)
 
     print("================================================ base ================================================")
@@ -53,7 +54,7 @@ def main(loss_autoencoders_str, feature_autoencoder_info, target_envs, N, path_m
                 s_, r_, done, info = test_env.step(a)
                 tm.push(s, a, r_, s_, done, info)
                 s = s_
-        tm.evaluate()
+        tm.update()
         errors_test.append(tm.errors)
 
     print("================================================ test ================================================")

@@ -3,6 +3,8 @@ import numpy as np
 import torch
 import copy
 
+from ncarrara.continuous_dqn.dqn.ae_transfer_module import AutoencoderTransferModule
+from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -38,6 +40,10 @@ class TDQN:
                  transfer_param_init=None,
                  feature=None,
                  **kwargs):
+        self.tm = transfer_module
+        # self.type_transfer_module = type(transfer_module)
+        # print(self.type_transfer_module)
+        # exit()
         self.feature = feature
         if transfer_param_init is None:
             self.transfer_param_init = {"w": np.random.random_sample(1)[0], "b": np.random.random_sample(1)[0]}
@@ -45,15 +51,12 @@ class TDQN:
             self.transfer_param_init = transfer_param_init
         self.ratio_learn_test = ratio_learn_test
         self.loss_function_gate = loss_fonction_factory(loss_function_gate)
-        self.weights_over_time = []
-        self.biais_over_time = []
         self.best_fit_over_time = []
         self.ae_errors_over_time = []
         self.error_bootstrap_source = []
         self.error_bootstrap_partial = []
         self.p_over_time = []
         self.writer = writer
-        self.tranfer_module = transfer_module
         self.device = device
         self.size_mini_batch = batch_size_experience_replay
         self.gamma = gamma
@@ -94,11 +97,9 @@ class TDQN:
             self.lr,
             self.weight_decay)
 
-        if self.tranfer_module is not None:
-
-            # net from source tasks
-            self.source_net = self.tranfer_module.get_Q_source()
-
+        if self.tm is not None:
+            self.tm.reset()
+            self.best_net = self.tm.get_best_Q_source()
             if self.ratio_learn_test > 0:
                 # net in order to eval bellman residu on test batch
                 self.memory_partial_learn = Memory()
@@ -115,21 +116,8 @@ class TDQN:
                     self.parameters_partial_net,
                     self.lr,
                     self.weight_decay)
-
-            # gate to discriminate the choice betwen the source net and the full net
-            # this gate compares the partial net and the source net on a test batch (10% of all the transitions)
-            # self.weight_transfer = torch.Tensor([self.transfer_param_init["w"]]).to(self.device)
-            self.w_gate = torch.Tensor([0]).to(self.device)
-            self.w_gate.requires_grad_()
-            # self.biais_transfer = torch.Tensor([self.transfer_param_init["b"]]).to(self.device)
-            self.b_gate = torch.Tensor([0]).to(self.device)
-            self.b_gate.requires_grad_()
-            self.parameters_gate = [self.w_gate, self.b_gate]
-            self.optimizer_gate = optimizer_factory(
-                self.optimizer_type,
-                self.parameters_gate,
-                self.lr,
-                self.weight_decay)
+        else:
+            self.best_net = self.full_net
 
     def _construct_batch(self, memory):
         transitions = memory.sample(
@@ -188,7 +176,7 @@ class TDQN:
             self.optimizer_full_net,
             self.parameters_full_net)
 
-        if self.tranfer_module is not None:
+        if self.tm is not None:
 
             ########################################
             ######### optimize partial net #########
@@ -205,93 +193,6 @@ class TDQN:
                 self.partial_net = self.full_net
                 self.partial_target_net = self.full_target_net
 
-            ########################################
-            ######### optimize  GATE ###############
-            ########################################
-            if self.ratio_learn_test > 0:
-                test_batch = self._construct_batch(self.memory_partial_test)
-            else:
-                test_batch = self._construct_batch(self.memory)
-
-            # reeavalute errors
-            self.tranfer_module.evaluate()
-            self.best_fit_over_time.append(self.tranfer_module.best_fit)
-            self.ae_errors_over_time.append(self.tranfer_module.get_error())
-
-            Q_source = self.source_net(test_batch.state)
-            Q_partial = self.partial_net(test_batch.state)
-
-            sa_values_s = Q_source.gather(1, test_batch.action)
-            ns_values_s = torch.zeros(len(test_batch.transitions), device=self.device)
-            sa_values_p = Q_partial.gather(1, test_batch.action)
-            ns_values_p = torch.zeros(len(test_batch.transitions), device=self.device)
-            if test_batch.non_final_next_state:
-                ns_values_s[test_batch.non_final_mask] = \
-                    self.source_net(torch.cat(test_batch.non_final_next_state)).max(1)[0].detach()
-                ns_values_p[test_batch.non_final_mask] = \
-                    self.partial_target_net(torch.cat(test_batch.non_final_next_state)).max(1)[0].detach()
-            else:
-                logger.warning("Pas d'état non terminaux")
-
-            ae_error = self.tranfer_module.get_error()
-            p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
-            bootstrap_t = test_batch.reward + self.gamma * ((1 - p) * (ns_values_p) + p * (ns_values_s))
-            loss_gate = self.loss_function_gate(
-                (sa_values_p) * (1 - p) + p * (sa_values_s),
-                (bootstrap_t).unsqueeze(1))
-
-            self.optimizer_gate.zero_grad()
-            loss_gate.backward()
-            for param in self.parameters_gate:
-                param.grad.data.clamp_(-1, 1)
-            self.optimizer_gate.step()
-
-            # print("--------------------------------")
-            # for i in range(len(Q_source)):
-            #     print(
-            #         "L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f}) ||| L({:.2f} , [{:.2f} + {:.2f}]) = {:.2f} (diff={:.2f})"
-            #             .format(
-            #             sa_values_p[i].item(),
-            #             test_batch.reward[i].item(),
-            #             self.gamma * ns_values_p[i].item(),
-            #             self.loss_function(sa_values_p[i], (test_batch.reward[i] + self.gamma * ns_values_p[i])).item(),
-            #             torch.nn.functional.l1_loss(sa_values_p[i],
-            #                                         (test_batch.reward[i] + self.gamma * ns_values_p[i])).item(),
-            #             sa_values_s[i].item(),
-            #             test_batch.reward[i].item(),
-            #             self.gamma * ns_values_s[i].item(),
-            #             self.loss_function(sa_values_s[i], (test_batch.reward[i] + self.gamma * ns_values_s[i])).item(),
-            #             torch.nn.functional.l1_loss(sa_values_s[i],
-            #                                         (test_batch.reward[i] + self.gamma * ns_values_s[i])).item(),
-            #         )
-            #     )
-            # exit()
-            if self.tranfer_module is not None:
-                self.weights_over_time.append(self.w_gate.item())
-                self.biais_over_time.append(self.b_gate.item())
-                self.p_over_time.append(p.item())
-                bootstrap_s = test_batch.reward + self.gamma * ns_values_s
-                bootstrap_p = test_batch.reward + self.gamma * ns_values_p
-                l_p = self.loss_function((sa_values_p), (bootstrap_p).unsqueeze(1))
-                l_s = self.loss_function((sa_values_s), (bootstrap_s).unsqueeze(1))
-                self.error_bootstrap_source.append(l_p)
-                self.error_bootstrap_partial.append(l_s)
-
-            if self.writer is not None:
-
-                self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
-                self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
-
-                self.writer.add_scalar('error_bootstrap_source/episode', l_s, self.i_episode)
-                self.writer.add_scalar('error_bootstrap_partial/episode', l_p, self.i_episode)
-                # self.writer.add_scalar('diff/episode', l - l_t, self.i_episode)
-                # self.writer.add_scalar('loss_transfer/episode', loss_transfer.item(), self.i_episode)
-                # self.writer.add_scalar('loss_classic/episode', loss_classic.item(), self.i_episode)
-                self.writer.add_scalar('ae_weight/episode', self.w_gate, self.i_episode)
-                self.writer.add_scalar('ae_biais/episode', self.b_gate, self.i_episode)
-                self.writer.add_scalar('p/episode', p, self.i_episode)
-            # exit()
-
     def pi(self, state, action_mask):
         state = self.feature(state)
         with torch.no_grad():
@@ -300,10 +201,8 @@ class TDQN:
             action_mask[action_mask == 1.] = np.infty
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([state], device=self.device, dtype=torch.float)
-            if self.tranfer_module is not None:
-                ae_error = self.tranfer_module.get_error()
-                p = torch.sigmoid((self.w_gate * ae_error + self.b_gate))
-                v = (self.full_net(s)) * (1 - p) + p * (self.source_net(s))
+            if self.tm is not None:
+                v = self.best_net(s)
             else:
                 v = self.full_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
@@ -311,8 +210,6 @@ class TDQN:
 
     def update(self, *sample):
         state, action, reward, next_state, done, info = sample
-        if self.tranfer_module is not None:
-            self.tranfer_module.push(*sample)
         state = self.feature(state)
         next_state = self.feature(next_state)
         state = torch.tensor([state], device=self.device, dtype=torch.float)
@@ -325,11 +222,13 @@ class TDQN:
         t = state, action, reward, next_state, done, info
         self.memory.push(*t)
 
-        if self.tranfer_module is not None:
+        if self.tm is not None:
+
             if self.ratio_learn_test > 0:
                 rdm = np.random.random_sample(1)[0]
                 if len(self.memory_partial_test.memory) == 0 or (rdm < self.ratio_learn_test):
                     self.memory_partial_test.push(*t)
+                    self.tm.push(*t)
                 else:
                     self.memory_partial_learn.push(*t)
 
@@ -339,5 +238,57 @@ class TDQN:
             if self.i_episode % self.target_update == 0:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.full_target_net.load_state_dict(self.full_net.state_dict())
-                if self.tranfer_module is not None:
+                if self.tm is not None:
                     self.partial_target_net.load_state_dict(self.partial_net.state_dict())
+
+                    self.tm.update()
+
+                    with torch.no_grad():
+                        # evaluation_net = self.partial_target_net
+                        evaluation_net = self.full_net
+
+                        batch = TransitionGym(*zip(*self.memory_partial_test.memory))
+                        nf_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
+                                                      device=self.device,
+                                                      dtype=torch.uint8)
+                        nf_ns = [s for s in batch.s_ if s is not None]
+
+                        state_batch = torch.cat(batch.s)
+                        action_batch = torch.cat(batch.a)
+                        reward_batch = torch.cat(batch.r_)
+
+                        action_batch = action_batch.unsqueeze(1)
+
+                        next_state_values = torch.zeros(len(self.memory_partial_test.memory), device=self.device)
+
+                        Q = evaluation_net(state_batch)
+                        state_action_values = Q.gather(1, action_batch)
+                        if nf_ns:
+                            next_state_values[nf_mask] = evaluation_net(torch.cat(nf_ns)).max(1)[0].detach()
+                        else:
+                            logger.warning("Pas d'état non terminaux")
+                        self.expected_state_action_values = (next_state_values * self.gamma) + reward_batch
+                        loss = self.loss_function(state_action_values,
+                                                  self.expected_state_action_values.unsqueeze(1)).item()
+
+                    if loss < self.tm.get_best_error():
+                        print(">>> partial_target_net > Q_source <<<")
+                        if self.best_net != self.full_net:
+                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
+                                                                                                         self.tm.get_best_error(),
+                                                                                                         self.tm.best_source_params()))
+                        self.best_net = self.full_net
+
+                    else:
+                        if self.best_net != self.full_net:
+                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
+                                                                                                         self.tm.get_best_error(),
+                                                                                                         self.tm.best_source_params()[
+                                                                                                             "proba_hangup"]))
+                        self.best_net = self.tm.get_best_Q_source()
+                    if self.writer is not None:
+                        self.writer.add_scalar('loss/episode', loss, self.i_episode)
+
+                        for param, err in zip(self.tm.sources_params, self.tm.errors):
+                            self.writer.add_scalar('loss_tm_{}/episode'.format(param["proba_hangup"]), err,
+                                                   self.i_episode)

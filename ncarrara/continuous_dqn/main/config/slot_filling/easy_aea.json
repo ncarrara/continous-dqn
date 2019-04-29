@@ -20,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "DEBUG",
+          "level": "INFO",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -28,6 +28,20 @@
             "default"
           ],
           "level": "WARN",
+          "propagate": false
+        },
+        "ncarrara.continuous_dqn.ae.autoencoders": {
+          "handlers": [
+            "default"
+          ],
+          "level": "INFO",
+          "propagate": false
+        },
+        "ncarrara.continuous_dqn.utils_rl.envs_factory": {
+          "handlers": [
+            "default"
+          ],
+          "level": "ERROR",
           "propagate": false
         },
         "ncarrara.bftq_pydial.bftq.pytorch_budgeted_fittedq": {
@@ -60,69 +74,54 @@
         }
       }
     },
-    "workspace": "tmp/slot_filling/easy",
-    "seed": 1,
-    "id": "slot_filling_easy",
-    "is_tensorboardX": true
+    "workspace": "tmp/slot_filling/easy_aea",
+    "seed": 2,
+    "id": "slot_filling_easy_aea",
+    "is_tensorboardX": true,
+    "-path_sources": "tmp/slot_filling/easy_aea/157/sources",
+    "path_sources": null
   },
+   "generate_sources": {
+    "N": 250,
+    "decay": 0.01,
+    "start_decay": 1.0,
+    "traj_max_size": 20
+  },
+  "N_actions": 8,
   "source_envs": {
     "envs_params": {
-      "cerr": [
-        -5,
-        0
-      ],
-      "ser": [
-        0.0,
-        0.6
-      ],
-      "cstd": [
-        0.0,
-        0.6
-      ],
-      "proba_hangup": [
-        0.0,
-        1.0
-      ],
-      "max_turn": 10,
-      "size_constraints": 3,
-      "penalty_if_bye": 0.0,
-      "penalty_if_hangup": 0.0,
-      "penalty_if_summarize_fail": 0.0,
-      "penalty_by_turn": 0.0,
-      "penalty_if_max_turn": 0.0,
-      "reward_if_sucess": 100.0
+      "cerr": "[-1]",
+      "ser": "[0.0,0.25,0.5,0.75]",
+      "cstd": "[0.25]",
+      "proba_hangup":"[0.0]",
+      "max_turn": "[20]",
+      "size_constraints": "[5]",
+      "penalty_if_bye": "[0.0]",
+      "penalty_if_hangup": "[0.0]",
+      "penalty_if_summarize_fail": "[0.0]",
+      "penalty_by_turn": "[0.0]",
+      "penalty_if_max_turn": "[0.0]",
+      "reward_if_sucess": "[100.0]"
     },
-    "number_random_env": 15,
+    "number_random_env": null,
     "envs_str": "slot_filling_env_v1"
   },
   "target_envs": {
     "envs_params": {
-      "cerr": [
-        -5,
-        0
-      ],
-      "ser": [
-        0.0,
-        0.6
-      ],
-      "cstd": [
-        0.0,
-        0.6
-      ],
-      "proba_hangup": [
-        0.0,
-        1.0
-      ],
-      "max_turn": 10,
-      "size_constraints": 3,
-      "penalty_if_bye": 0.0,
-      "penalty_if_hangup": 0.0,
-      "penalty_if_summarize_fail": 0.0,
-      "penalty_by_turn": 0.0,
-      "penalty_if_max_turn": 0.0,
-      "reward_if_sucess": 100.0
+      "cerr": "[-1]",
+      "ser": "[0.0,0.25,0.5,0.75]",
+      "cstd": "[0.25]",
+      "proba_hangup":"[0.5]",
+      "max_turn": "[20]",
+      "size_constraints": "[5]",
+      "penalty_if_bye": "[0.0]",
+      "penalty_if_hangup": "[0.0]",
+      "penalty_if_summarize_fail": "[0.0]",
+      "penalty_by_turn": "[0.0]",
+      "penalty_if_max_turn": "[0.0]",
+      "reward_if_sucess": "[100.0]"
     },
-    "number_random_env": 15,
+    "number_random_env": null,
     "envs_str": "slot_filling_env_v1"
   },
   "dqn_params": {
@@ -144,58 +143,34 @@
       32
     ]
   },
-  "test_and_base": {
-    "N": 500
+  "-test_and_base": {
+    "N": 250
   },
-  "generate_sources": {
-    "N": 500,
-    "decay": 0.01,
-    "start_decay": 1.0,
-    "traj_max_size": 10
-  },
+
   "transfer_dqn": {
-    "path_sources": "tmp/slot_filling/easy/2/sources",
     "traj_max_size": 10,
     "N": 500,
     "start_decay": 1.0,
     "decay": 0.01,
     "configs": {
       "transfer": {
-        "selection_method": "best_fit"
+        "selection_method": "best_fit",
+        "type_transfer_module": "BellmanTransferModule",
+        "gamma": 1.0,
+        "loss_function": "l2"
       },
       "no_transfer": {
         "selection_method": "no_transfer"
       }
     }
   },
-  "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_slot_filling",
-    "size_constraints": 3,
-    "max_turn": 10,
-    "type_ae": "AEA",
-    "user_actions": [
-      "INFORM",
-      "HANGUP",
-      "DENY_SUMMARIZE"
-    ],
-    "system_actions": [
-      "SUMMARIZE_AND_INFORM",
-      "BYE",
-      "ASK_ORAL(0)",
-      "ASK_ORAL(1)",
-      "ASK_ORAL(2)",
-      "ASK_NUM_PAD(0)",
-      "ASK_NUM_PAD(1)",
-      "ASK_NUM_PAD(2)"
-    ]
-  },
+
   "feature_dqn_info": {
     "feature_str": "feature_slot_filling",
-    "size_constraints": 3,
-    "max_turn": 10,
+    "size_constraints": 5,
+    "max_turn": 20,
     "user_actions": [
       "INFORM",
-      "HANGUP",
       "DENY_SUMMARIZE"
     ],
     "system_actions": [
@@ -204,21 +179,8 @@
       "ASK_ORAL(0)",
       "ASK_ORAL(1)",
       "ASK_ORAL(2)",
-      "ASK_NUM_PAD(0)",
-      "ASK_NUM_PAD(1)",
-      "ASK_NUM_PAD(2)"
+      "ASK_ORAL(3)",
+      "ASK_ORAL(4)"
     ]
-  },
-  "learn_autoencoders": {
-    "weight_decay": 0.0,
-    "learning_rate": 0.001,
-    "autoencoder_size": [
-      8,
-      32
-    ],
-    "optimizer_str": "ADAM",
-    "normalize": true,
-    "n_epochs": 2000,
-    "loss_function_str": "l2"
   }
 }

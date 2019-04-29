@@ -19,6 +19,7 @@ def main(source_envs, feature_dqn_info, net_params, dqn_params,
         feature_dqn = build_feature_dqn(feature_dqn_info)
         _, _, memory, dqn = run_dqn(
             env,
+            id="generate_sources_env_{}".format(ienv),
             workspace=workspace / "dqn_workspace",
             seed=seed,
             feature_dqn=feature_dqn,
@@ -38,6 +39,7 @@ def main(source_envs, feature_dqn_info, net_params, dqn_params,
         dump = json.dumps(params, indent=4)
         print(dump)
         file.write(dump)
+    return env.action_space.n
 
 # if __name__ == "__main__":
 #     from ncarrara.continuous_dqn.tools.configuration import C

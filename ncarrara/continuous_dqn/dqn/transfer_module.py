@@ -3,124 +3,81 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+import abc
 
-class TransferModule:
-    def __init__(self, autoencoders, loss_autoencoders, feature_autoencoders, sources_params=None,
-                 experience_replays=None, Q_sources=None, evaluate_continuously=False, device=None,
-                 selection_method="best_fit", N_actions=None, **kwargs):
-        self.N_actions = N_actions
+
+class TransferModule(abc.ABC):
+    def __init__(self,
+                 sources_params=None,
+                 evaluate_continuously=False,
+                 selection_method="best_fit", **kwargs):
+        self.N_sources = len(sources_params)
         self.selection_method = selection_method  # best fit or random
-        self.loss = loss_autoencoders
         self.sources_params = sources_params
-        self.device = device
-        self.Q_sources = Q_sources
-        self.auto_encoders = autoencoders
-        self.feature = feature_autoencoders
         self.evaluate_continuously = evaluate_continuously
-        self.experience_replays = experience_replays
-        if self.experience_replays is None:
-            logger.warning("experience replays is None")
-        if self.Q_sources is None:
-            logger.warning("Q sources is None")
-        self.memory_x = []
-        self.memory_a = []
-        self.reset()
+
+    @abc.abstractmethod
+    def _push_sample_to_memory(self, s, a, r_, s_, done, info):
+        return
+
+    @abc.abstractmethod
+    def _compute_sum_last_errors(self):
+        return
+
+    @abc.abstractmethod
+    def _memory_size(self):
+        return
+
+    @abc.abstractmethod
+    def _reset(self):
+        return
+
 
     def reset(self):
-        self.memory_x = []
-        self.memory_a = []
-        self.last_best_fit = None
-        self._update_sum_errors(np.random.random_sample((1, len(self.auto_encoders)))[0])
+        self.idx_last_best_fit = None
+        self._update_sum_errors(np.random.random_sample((1, self.N_sources))[0])
         self.evaluation_index = 0
+        self._reset()
 
-    def is_q_transfering(self):
-        return self.Q_sources is not None
-
-    def is_experience_replay_transfering(self):
-        return self.experience_replays is not None
-
-    def get_experience_replay_source(self):
-        if self.experience_replays is not None:
-            return self.experience_replays[self.best_fit]
-        else:
-            raise Exception("Transfer module's experience_replays are None")
-
-    def get_Q_source(self):
-        if self.Q_sources is not None:
-            return self.Q_sources[self.best_fit]
-        else:
-            raise Exception("Transfer module's Q_sources are None")
-
-    def get_error(self):
-        import torch
-        return torch.tensor([self.errors[self.best_fit]], device=self.device)
+    def get_best_error(self):
+        return self.errors[self.idx_best_fit]
 
     def push(self, s, a, r_, s_, done, info):
-        sample = (s, a, r_, s_, done, info)
-        x, a = self.feature(sample,self.N_actions)
-        self.memory_x.append(x)
-        self.memory_a.append(a)
+        self._push_sample_to_memory(s, a, r_, s_, done, info)
         if self.evaluate_continuously:
-            import torch
-            with torch.no_grad():
-                x = torch.tensor(x)
-                loss = np.array([self.loss(ae(x).gather(1,a), x).item() for ae in self.auto_encoders]).cpu().item()
-            self._update_sum_errors(self.sum_errors + loss)
-            self.evaluation_index += 1
+            self.update()
+
+    def best_source_params(self):
+        return  self.sources_params[self.idx_best_fit]
 
     def _update_sum_errors(self, sum_errors):
         self.sum_errors = sum_errors
-        self.errors = self.sum_errors / (1 if len(self.memory_x) == 0 else len(self.memory_x))
-        self.best_fit = np.argmin(self.errors)
-        if self.last_best_fit is None or self.best_fit != self.last_best_fit:
-            logger.info("Best fit changed [{}]: {}".format(self.best_fit, self.sources_params[self.best_fit]))
-        self.last_best_fit = self.best_fit
+        self.errors = self.sum_errors / (1 if self._memory_size() == 0 else self._memory_size())
+        self.idx_best_fit = np.argmin(self.errors)
+        if self.idx_last_best_fit is None or self.idx_best_fit != self.idx_last_best_fit:
+            logger.info("Best fit changed [{}]: {}".format(self.idx_best_fit, self.sources_params[self.idx_best_fit]))
+        self.idx_last_best_fit = self.idx_best_fit
 
     def push_memory(self, memory):
         for sample in memory:
-            x,y = self.feature(sample,self.N_actions)
-            self.memory_x.append(x)
-            self.memory_a.append(y)
+            self._push_sample_to_memory(*sample)
         if self.evaluate_continuously:
-            self.evaluate()
+            self.update()
 
-    def evaluate(self):
+    def update(self):
         """
         Evaluate the last unevaluated transitions
         :return:
         """
         if self.selection_method == "best_fit":
-            import torch
-            with torch.no_grad():
-                # TODO maybe parrale compute of this
-
-                X = self.memory_x[self.evaluation_index: len(self.memory_x)]
-                if type(X[0]) == type(torch.zeros(0)):
-                    X = torch.stack(X)
-                else:
-                    X = torch.tensor(X).to(self.device)
-
-                a = self.memory_a[self.evaluation_index: len(self.memory_a)]
-                if type(a[0]) == type(torch.zeros(0)):
-                    a = torch.stack(a)
-                else:
-                    a = torch.tensor(a).to(self.device)
-
-                # il y a surement moyen de faire ca en mode matricielle
-                losses = []
-                for ae in self.auto_encoders:
-                    loss = self.loss(X, ae(X).gather(1,a)).item()
-                    losses.append(loss)
-
-                losses = np.array(losses)
-
-                sum_errors = self.sum_errors + losses * (len(self.memory_x) - self.evaluation_index)
-
+            sum_errors = self.sum_errors + self._compute_sum_last_errors()
         elif self.selection_method == "random":
-            sum_errors = np.random.rand(len(self.auto_encoders))
+            sum_errors = np.random.rand(self.N_sources)
         else:
             raise Exception("unkown selection methode : {}".format(self.selection_method))
 
         self._update_sum_errors(sum_errors)
 
-        self.evaluation_index = len(self.memory_x) - 1
+        self.evaluation_index = self._memory_size() - 1
+
+

@@ -4,6 +4,7 @@ import os
 import torch
 import logging
 
+from ncarrara.continuous_dqn.ae.autoencoders import BatchAE
 from ncarrara.continuous_dqn.tools.features import build_feature_autoencoder
 from ncarrara.utils.color import Color
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -20,13 +21,16 @@ def load_models(path_models, device):
         autoencoders[i_autoencoder] = torch.load(path_model, map_location=device)
     return autoencoders
 
-def load_autoencoders(path_autoencoders,device):
+
+def load_autoencoders(path_autoencoders, device):
     logger.info("reading autoencoders at {}".format(path_autoencoders))
-    return load_models(path_autoencoders,device)
+    return load_models(path_autoencoders, device)
+
 
 def load_q_sources(path_q_sources, device):
     logger.info("reading q sources at {}".format(path_q_sources))
     return load_models(path_q_sources, device)
+
 
 def load_memories(path_data, as_json=False):
     logger.info("reading samples ...")
@@ -45,13 +49,23 @@ def load_memories(path_data, as_json=False):
     return memories
 
 
-def read_samples_for_autoencoders(path_data, feature):
+
+
+def read_samples_for_ae(path_data, feature, N_actions):
     from ncarrara.continuous_dqn.tools.configuration import C
     memories = load_memories(path_data, as_json=False)
     all_transitions = [None] * len(memories)
     for id_env, rm in enumerate(memories):
-        data = np.array([feature(transition) for transition in rm.memory])
-        all_transitions[id_env] = torch.from_numpy(data).float().to(C.device)
+        X = []
+        A = []
+        for t in rm.memory:
+            x, a = feature(t, N_actions)
+            X.append(x)
+            A.append(a)
+        X = torch.from_numpy(np.array(X)).float().to(C.device)
+        # A = np.asarray(A)
+        A = torch.tensor(A).to(C.device)
+        all_transitions[id_env] = BatchAE(X, A)
     return all_transitions
 
 
@@ -63,13 +77,13 @@ def array_to_cross_comparaison(tab, params_source, params_test):
         formaterrors = format_errors(tab[ienv], params_source, params_test[ienv], show_params=True) + "\n"
         toprint += formaterrors
 
-    len_params = len("".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in params_test[0].values()])) + 2
+    len_params = len("".join([v + " " if type(v) == str else "{:.2f} ".format(v) for v in params_test[0].values()])) + 2
 
     head = ""  # ""-" * (6+len_params) * len(params_source) + "\n"
     for key in keys:
         xx = " " * len_params
         for param in params_source:
-            xx += param[key]+" " if type(param[key]) == str else "{:5.2f} ".format(param[key])
+            xx += param[key] + " " if type(param[key]) == str else "{:5.2f} ".format(param[key])
         head += "{} <- {}\n".format(xx, key)
     head = head + " " * len_params + "-" * 6 * len(params_source) + "\n"
 
@@ -77,9 +91,10 @@ def array_to_cross_comparaison(tab, params_source, params_test):
 
 
 def format_errors(errors, params_source, param_test, show_params=False):
-    toprint = "" if not show_params else "".join([v+" " if type(v) == str else "{:.2f} ".format(v) for v in param_test.values()]) + "| "
+    toprint = "" if not show_params else "".join(
+        [v + " " if type(v) == str else "{:.2f} ".format(v) for v in param_test.values()]) + "| "
     min_idx = np.argmin(errors)
-    print(errors)
+    # print(errors)
     for isource in range(len(errors)):
         same_env = params_source[isource] == param_test
 

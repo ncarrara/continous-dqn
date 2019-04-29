@@ -1,9 +1,8 @@
-from ncarrara.continuous_dqn.tools import utils
 import logging
 import json
+from pathlib import Path
 
 from ncarrara.utils.configuration import Configuration
-from ncarrara.utils.os import makedirs
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +11,12 @@ class ConfigurationContinuousDQN(Configuration):
 
     def load(self, config):
         super(ConfigurationContinuousDQN, self).load(config)
-        self.path_sources = self.workspace / "sources"
+        if self["general"]["path_sources"] is None:
+            if "generate_sources" not in self:
+                raise Exception("You must specify path_sources or generate_sources")
+            self.path_sources = self.workspace / "sources"
+        else:
+            self.path_sources = Path(self["general"]["path_sources"])
         self.path_targets = self.workspace / "targets"
         return self
 

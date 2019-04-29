@@ -91,7 +91,7 @@ class DQN:
 
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
             # print(self.policy_net)
-            self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_error())
+            self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_best_error())
 
         self.optimizer = optimizer_factory(self.optimizer_type,
                                            self.policy_net.parameters(),
@@ -105,7 +105,7 @@ class DQN:
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
         if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-            self.target_net.set_Q_source(self.policy_net.Q_source, self.tranfer_module.get_error())
+            self.target_net.set_Q_source(self.policy_net.Q_source, self.tranfer_module.get_best_error())
 
     def _optimize_model(self):
 
@@ -116,7 +116,7 @@ class DQN:
 
         if self.tranfer_module is not None:
             # reeavalute errors
-            self.tranfer_module.evaluate()
+            self.tranfer_module.update()
 
             # transfert samples
             if self.tranfer_module.is_experience_replay_transfering():
@@ -128,14 +128,14 @@ class DQN:
 
             # transfer Q
             if self.tranfer_module.is_q_transfering():
-                self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_error())
+                self.policy_net.set_Q_source(self.tranfer_module.get_Q_source(), self.tranfer_module.get_best_error())
 
                 self.best_fit_over_time.append(self.tranfer_module.best_fit)
 
-                self.ae_errors_over_time.append(self.tranfer_module.get_error())
+                self.ae_errors_over_time.append(self.tranfer_module.get_best_error())
                 if self.writer is not None:
                     self.writer.add_scalar('ae_best_fit/episode', self.tranfer_module.best_fit, self.i_episode)
-                    self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_error(), self.i_episode)
+                    self.writer.add_scalar('ae_error/episode', self.tranfer_module.get_best_error(), self.i_episode)
         batch = TransitionGym(*zip(*transitions))
         non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
                                       device=self.device,
@@ -208,7 +208,7 @@ class DQN:
                 logger.info("[update][i_episode={}] copying weights to target network".format(self.i_episode))
                 self.target_net.load_state_dict(self.policy_net.state_dict())
                 if self.tranfer_module is not None and self.tranfer_module.is_q_transfering():
-                    self.target_net.set_Q_source(self.policy_net.Q_source, self.tranfer_module.get_error())
+                    self.target_net.set_Q_source(self.policy_net.Q_source, self.tranfer_module.get_best_error())
 
                 # if self.i_episode % 100 == 0:
                 #     with torch.no_grad():

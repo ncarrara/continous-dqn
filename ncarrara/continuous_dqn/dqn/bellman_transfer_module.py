@@ -1,6 +1,8 @@
 import numpy as np
 import logging
 
+from ncarrara.continuous_dqn.dqn.transfer_module import TransferModule
+from ncarrara.utils.torch_utils import loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
 from ncarrara.utils_rl.transition.transition import TransitionGym
 
@@ -9,8 +11,10 @@ logger = logging.getLogger(__name__)
 import abc
 
 
-class SimpleTransferModule(abc.ABC):
+class BellmanTransferModule(TransferModule):
     def __init__(self,
+                 loss_function,
+                 gamma,
                  feature=None,
                  sources_params=None,
                  evaluate_continuously=False,
@@ -18,27 +22,30 @@ class SimpleTransferModule(abc.ABC):
                  Q_sources=None,
                  device=None,
                  **kwargs):
-        super.__init__(sources_params, evaluate_continuously, selection_method)
+        super().__init__(sources_params, evaluate_continuously, selection_method)
         self.memory = []
         self.Q_sources = Q_sources
         self.feature = feature
-        self.device=device
+        self.device = device
+        self.gamma=gamma
+        self.loss_function=loss_fonction_factory(loss_function)
 
-    def get_Q_source(self):
+    def get_best_Q_source(self):
         return self.Q_sources[self.idx_best_fit]
 
     def _push_sample_to_memory(self, s, a, r_, s_, done, info):
         self.memory.append((s, a, r_, s_, done, info))
 
+
     def _compute_sum_last_errors(self):
-        transitions = self.memory[self.evaluation_index: self._memory_size(self)]
+        transitions = self.memory[self.evaluation_index: self._memory_size()]
         import torch
         with torch.no_grad():
 
-            if type(transitions[0]) == type(torch.zeros(0)):
-                transitions = torch.stack(transitions)
-            else:
-                transitions = torch.tensor(transitions).to(self.device)
+            # if type(transitions[0]) == type(torch.zeros(0)):
+            #     transitions = torch.stack(transitions)
+            # else:
+            #     transitions = torch.tensor(transitions).to(self.device)
 
             batch = TransitionGym(*zip(*transitions))
             non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
@@ -62,10 +69,10 @@ class SimpleTransferModule(abc.ABC):
                     next_state_values[non_final_mask] = Q_source(torch.cat(non_final_next_states)).max(1)[0].detach()
                 else:
                     logger.warning("Pas d'état non terminaux")
-                self.expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+                self.expected_state_action_values = (next_state_values * self.gamma) + reward_batch
                 loss = self.loss_function(state_action_values, self.expected_state_action_values.unsqueeze(1))
                 losses.append(loss.item())
-        losses = np.arrays(losses)
+        losses = np.array(losses)
         return losses * len(transitions)
 
     def _memory_size(self):

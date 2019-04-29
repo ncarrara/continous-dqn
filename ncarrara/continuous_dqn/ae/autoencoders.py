@@ -11,10 +11,10 @@ from ncarrara.continuous_dqn.tools.configuration import C
 logger = logging.getLogger(__name__)
 
 
-class Autoencoder(nn.Module):
-    def __init__(self, n, min_n, max_n,device):
+class AEA(nn.Module):
+    def __init__(self, n, min_n, max_n, device, N_actions):
         """n_coding must be a power 2 number"""
-        super(Autoencoder, self).__init__()
+        super(AEA, self).__init__()
 
         encoder_layers = []
         encoder_layers.append(nn.Linear(n, max_n))
@@ -31,7 +31,7 @@ class Autoencoder(nn.Module):
             decoder_layers.append(nn.Linear(this_n, int(this_n * 2)))
             decoder_layers.append(nn.ReLU(True))
             this_n = int(this_n * 2)
-        decoder_layers.append(nn.Linear(max_n, n))
+        decoder_layers.append(nn.Linear(max_n, n * N_actions))
         decoder_layers.append(nn.Tanh())
 
         self.encoder = nn.Sequential(*encoder_layers)
@@ -59,26 +59,22 @@ class Autoencoder(nn.Module):
 
     def fit(self, datas, weight_decay=1e-5, n_epochs=10, stop_loss=0.01, size_minibatch=None, optimizer=None,
             loss_function=None, normalize=False):
-        # print(datas.shape)
-        means = torch.mean(datas, dim=0)
-        stds = torch.std(datas, dim=0)
-        # print(means.shape)
-        # print(means)
-        # exit()
-        # exit()
+        means = torch.mean(datas.X, dim=0)
+        stds = torch.std(datas.X, dim=0)
         if normalize:
             self.set_normalization_params(means, stds)
         if size_minibatch is None:
-            size_minibatch = datas.shape[0]
+            size_minibatch = datas.X.shape[0]
         if optimizer is None:
             optimizer = torch.optim.Adam(self.parameters(), lr=0.001, weight_decay=weight_decay)
         if loss_function is None:
             loss_function = F.mse_loss
         logger.info("[fit] fitting ...")
         for epoch in range(n_epochs):
-            random_indexes = torch.LongTensor(np.random.choice(range(datas.shape[0]), size_minibatch)).to(C.device)
-            mini_batch = datas.index_select(0, random_indexes).to(C.device)
-            loss = loss_function(self(mini_batch), mini_batch)
+            random_indexes = torch.LongTensor(np.random.choice(range(datas.X.shape[0]), size_minibatch)).to(C.device)
+            mini_batch_X = datas.X.index_select(0, random_indexes).to(C.device)
+            mini_batch_Y = datas.Y.index_select(0, random_indexes).to(C.device)
+            loss = loss_function(self(mini_batch_X), mini_batch_Y)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

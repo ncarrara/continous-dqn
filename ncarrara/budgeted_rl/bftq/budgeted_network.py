@@ -1,6 +1,6 @@
 import torch
 
-from ncarrara.utils.torch import BaseModule
+from ncarrara.utils.torch_utils import BaseModule
 
 
 class BudgetedNetwork(BaseModule):

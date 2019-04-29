@@ -76,7 +76,7 @@
       ],
       "force_mag": 10.0
     },
-    "number_random_env": 30,
+    "number_random_env": 5,
     "envs_str": "CartPoleConfig-v0"
   },
   "target_envs": {
@@ -90,7 +90,7 @@
       ],
       "force_mag": 10.0
     },
-    "number_random_env": 15,
+    "number_random_env": 5,
     "envs_str": "CartPoleConfig-v0"
   },
   "dqn_params": {
@@ -99,8 +99,11 @@
     "target_update": 10,
     "optimizer": "ADAM",
     "loss_function": "l2",
+    "loss_function_gate": "l1",
     "lr": 0.001,
-    "weight_decay": 0.0
+    "weight_decay": 0.0,
+    "transfer_param_init": null,
+    "ratio_learn_test": 0.25
   },
   "net_params": {
     "intra_layers": [
@@ -146,7 +149,7 @@
     }
   },
   "feature_autoencoder_info": {
-    "feature_str": "feature_autoencoder_identity"
+    "feature_str": "feature_aea_identity"
   },
   "feature_dqn_info": {
     "feature_str": "feature_dqn_identity"

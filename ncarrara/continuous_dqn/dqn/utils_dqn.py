@@ -12,19 +12,15 @@ from ncarrara.utils_rl.transition.replay_memory import Memory
 logger = logging.getLogger(__name__)
 
 
-def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay, gamma=None,
-            transfer_params=None, evaluate_greedy_policy=True, traj_max_size=None, writer=None):
+def run_dqn(env,id, workspace, device, net_params, dqn_params, decay, N, seed, feature_dqn, start_decay, gamma=None,
+            transfer_module=None, evaluate_greedy_policy=True, traj_max_size=None, writer=None):
     size_state = len(feature_dqn(env.reset()))
-    if transfer_params is None or transfer_params["selection_method"] == "no_transfer":
-        tm = None
-    else:
-        tm = TransferModule(**transfer_params)
-        tm.reset()
+
     net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
     dqn = TDQN(
         policy_network=net,
         device=device,
-        transfer_module=tm,
+        transfer_module=transfer_module,
         workspace=workspace,
         writer=writer,
         feature=feature_dqn,
@@ -68,8 +64,8 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
             s = s_
             nb_samples += 1
             it += 1
-        if writer is not None:
-            writer.add_scalar('return/episode', rr, n)
+        # if writer is not None:
+        #     writer.add_scalar('{} return/episode', rr, n)
         rrr.append(rr)
 
         if evaluate_greedy_policy:
@@ -86,6 +82,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                     a = dqn.pi(s, action_mask)
                 else:
                     a = dqn.pi(s, np.zeros(env.action_space.n))
+                    # print(env.action_space_str[a])
 
                 s_, r_, done, info = env.step(a)
                 done = done or (traj_max_size is not None and it >= traj_max_size - 1)
@@ -94,7 +91,7 @@ def run_dqn(env, workspace, device, net_params, dqn_params, decay, N, seed, feat
                 it += 1
             rrr_greedy.append(rr_greedy)
             if writer is not None:
-                writer.add_scalar('return_greedy/episode', rr_greedy, n)
+                writer.add_scalar('{}_return_greedy/episode'.format(id), rr_greedy, n)
             # print("eps={} greedy={}".format(rr,rr_greedy))
     import matplotlib.pyplot as plt
     for param_stat in ["weights_over_time", "biais_over_time",

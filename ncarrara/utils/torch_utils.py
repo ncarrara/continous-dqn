@@ -8,6 +8,8 @@ import re
 logger = logging.getLogger(__name__)
 from subprocess import PIPE, run
 
+torch.set_printoptions(profile="short")
+
 def get_gpu_memory_map():
     result = subprocess.check_output(
         [

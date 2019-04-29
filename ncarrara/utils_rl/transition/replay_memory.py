@@ -34,6 +34,9 @@ class Memory(object):
         batch_size = len(self.memory) if batch_size > len(self.memory) else batch_size
         return random.sample(self.memory, batch_size)
 
+
+
+
     def save(self, path, as_json=True, indent=0):
         self.logger.info("saving memory at {}".format(path))
         makedirs(os.path.dirname(path))

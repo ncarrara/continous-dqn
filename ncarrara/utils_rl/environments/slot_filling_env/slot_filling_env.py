@@ -1,7 +1,6 @@
 import random
 from gym.spaces import Discrete
 import numpy as np
-from collections import namedtuple
 import logging
 
 import re
@@ -9,9 +8,6 @@ import re
 from ncarrara.utils_rl.environments.slot_filling_env.utils import plot_ctop_cbot
 
 logger = logging.getLogger(__name__)
-
-
-
 
 
 class SlotFillingEnv(object):
@@ -192,7 +188,6 @@ class SlotFillingEnv(object):
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.INFO)
     e = SlotFillingEnv(user_params={"cerr": -1, "cok": 1, "ser": 0.5, "cstd": 0.2, "proba_hangup": 0.3})
     e.seed(1)

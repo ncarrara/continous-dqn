@@ -32,15 +32,16 @@ class TransferModule(abc.ABC):
     @abc.abstractmethod
     def _reset(self):
         return
+    def reset(self):
+        self.evaluation_index = 0
+        self.best_net = None
+        self.error = None
+        self._reset()
 
     @abc.abstractmethod
     def _update_best_net(self):
         return
 
-
-    def reset(self):
-        self.update()
-        self._reset()
 
     def push(self, s, a, r_, s_, done, info):
         self._push_sample_to_memory(s, a, r_, s_, done, info)
@@ -67,7 +68,7 @@ class TransferModule(abc.ABC):
             raise Exception("unkown selection methode : {}".format(self.selection_method))
 
 
-        self.evaluation_index = self._memory_size() - 1
+        self.evaluation_index = self._memory_size()
         self.best_net = self._update_best_net()
 
 

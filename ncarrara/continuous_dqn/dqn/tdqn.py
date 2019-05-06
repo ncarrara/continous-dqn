@@ -194,7 +194,7 @@ class TDQN:
             ########################################
             ######### optimize partial net #########
             ########################################
-            if self.ratio_learn_test > 0:
+            if self.ratio_learn_test <1:
                 if len(self.memory_partial_learn) > 0:
                     self._optimize(
                         self.memory_partial_learn,
@@ -237,9 +237,9 @@ class TDQN:
 
         if self.tm is not None:
 
-            if self.ratio_learn_test > 0:
+            if self.ratio_learn_test < 1:
                 rdm = np.random.random_sample(1)[0]
-                if len(self.memory_partial_test.memory) == 0 or (rdm < self.ratio_learn_test):
+                if len(self.memory_partial_test.memory) == 0 or (rdm > self.ratio_learn_test):
                     self.memory_partial_test.push(*t)
                     self.tm.push(*t)
                 else:

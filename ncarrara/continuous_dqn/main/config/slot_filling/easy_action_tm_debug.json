@@ -20,7 +20,7 @@
           "handlers": [
             "default"
           ],
-          "level": "DEBUG",
+          "level": "INFO",
           "propagate": true
         },
         "ncarrara.bftq_pydial.tools.features": {
@@ -77,29 +77,29 @@
     "workspace": "tmp/slot_filling/easy_aea",
     "seed": 2,
     "id": "slot_filling_easy_aea",
-    "is_tensorboardX": true,
-    "-path_sources": "tmp/slot_filling/easy_aea/273/sources",
-    "path_sources": null
+    "is_tensorboardX": false,
+    "path_sources": "tmp/slot_filling/easy_aea/235/sources",
+    "-path_sources": null
   },
-   "generate_sources": {
+   "-generate_sources": {
     "N": 250,
-    "decay": 0.025,
+    "decay": 0.01,
     "start_decay": 1.0,
-    "traj_max_size": 10
+    "traj_max_size": 20
   },
   "N_actions": 8,
   "source_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.1,0.9]",
+      "ser": "[0.0,0.75]",
       "cstd": "[0.25]",
       "proba_hangup":"[0.0]",
-      "max_turn": "[10]",
-      "size_constraints": "[3]",
+      "max_turn": "[20]",
+      "size_constraints": "[5]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[-25]",
-      "penalty_by_turn": "[-5]",
+      "penalty_if_summarize_fail": "[0.0]",
+      "penalty_by_turn": "[0.0]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },
@@ -109,15 +109,15 @@
   "target_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.1,0.9]",
+      "ser": "[0.0,0.75]",
       "cstd": "[0.25]",
       "proba_hangup":"[0.5]",
-      "max_turn": "[10]",
-      "size_constraints": "[3]",
+      "max_turn": "[20]",
+      "size_constraints": "[5]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[-25]",
-      "penalty_by_turn": "[-5]",
+      "penalty_if_summarize_fail": "[0.0]",
+      "penalty_by_turn": "[0.0]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },
@@ -132,7 +132,7 @@
     "loss_function": "l2",
     "loss_function_gate": "l2",
     "lr": 0.001,
-    "weight_decay": 0.001,
+    "weight_decay": 0.0005,
     "transfer_param_init": null,
     "ratio_learn_test": 0.5
   },
@@ -149,9 +149,9 @@
 
   "transfer_dqn": {
     "traj_max_size": 10,
-    "N": 250,
+    "N": 500,
     "start_decay": 1.0,
-    "decay": 0.025,
+    "decay": 0.01,
     "configs": {
       "transfer": {
         "selection_method": "best_fit",
@@ -167,8 +167,8 @@
 
   "feature_dqn_info": {
     "feature_str": "feature_slot_filling",
-    "size_constraints": 3,
-    "max_turn": 10,
+    "size_constraints": 5,
+    "max_turn": 20,
     "user_actions": [
       "INFORM",
       "DENY_SUMMARIZE"
@@ -178,7 +178,9 @@
       "BYE",
       "ASK_ORAL(0)",
       "ASK_ORAL(1)",
-      "ASK_ORAL(2)"
+      "ASK_ORAL(2)",
+      "ASK_ORAL(3)",
+      "ASK_ORAL(4)"
     ]
   }
 }

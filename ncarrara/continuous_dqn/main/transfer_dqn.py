@@ -24,11 +24,11 @@ def main(
         traj_max_size, configs, gamma,
         writer=None, path_sources=None, **kwargs):
     epsilon_decay(start_decay, decay, N, savepath=workspace)
-
+    print("flag0")
     envs, tests_params = generate_envs(**target_envs)
-
+    print("flag1")
     feature_dqn = build_feature_dqn(feature_dqn_info)
-
+    print("flag2")
     transfer_params = {
         "device": device,
         "evaluate_continuously": False,
@@ -38,6 +38,7 @@ def main(
     datas = []
     import collections
     configs = collections.OrderedDict(configs)
+    print("flag3")
     # data = pd.DataFrame()
     for i_env in range(len(envs)):
         logger.info("===================    ==== ENV TARGET {} ======================".format(i_env))

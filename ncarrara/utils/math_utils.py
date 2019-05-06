@@ -70,7 +70,8 @@ def set_seed(seed, env=None):
 
 
 def epsilon_decay(start=1.0, decay=0.01, N=100, savepath=None):
-    makedirs(savepath)
+    if savepath is not None:
+        makedirs(savepath)
     if decay == 0:
         decays = np.full(N, start)
     elif decay > 0:
@@ -154,3 +155,4 @@ if __name__ == "__main__":
     epsilon_decay(1.0, 0.001, 5000,savepath="tmp")
     epsilon_decay(1.0, 0.005, 1000,savepath="tmp")
     epsilon_decay(1.0, 0.0005, 10000,savepath="tmp")
+    epsilon_decay(1.0, 0.025, 250, savepath="ok")

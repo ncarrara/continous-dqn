@@ -5,6 +5,7 @@ import copy
 
 from ncarrara.continuous_dqn.dqn.ae_transfer_module import AutoencoderTransferModule
 from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
+from ncarrara.utils.color import Color
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -23,6 +24,7 @@ class TDQN:
     ADAPTATIVE = "ADAPTATIVE"
 
     def __init__(self,
+                 id,
                  device,
                  policy_network,
                  gamma=0.999,
@@ -37,9 +39,12 @@ class TDQN:
                  weight_decay=None,
                  transfer_module=None,
                  writer=None,
+                 info={},
                  transfer_param_init=None,
                  feature=None,
                  **kwargs):
+        self.id = id
+        self.info = info
         self.tm = transfer_module
         # self.type_transfer_module = type(transfer_module)
         # print(self.type_transfer_module)
@@ -86,6 +91,7 @@ class TDQN:
         if reset_weight:
             self.full_net.reset()
 
+
         # target net of the main and greedy classic net
         self.full_target_net = copy.deepcopy(self.full_net)
         self.full_target_net.load_state_dict(self.full_net.state_dict())
@@ -100,6 +106,11 @@ class TDQN:
         if self.tm is not None:
             self.tm.reset()
             self.best_net = self.tm.get_best_Q_source()
+            self.previous_diff = -np.inf
+            self.previous_idx_best_source = self.tm.idx_best_fit
+            logging.info(
+                "[INITIAL][i_episode{}] Using {} source cstd={:.2f} {} Q function".format(
+                    self.i_episode, Color.BOLD, self.tm.best_source_params()["cstd"], Color.END))
             if self.ratio_learn_test > 0:
                 # net in order to eval bellman residu on test batch
                 self.memory_partial_learn = Memory()
@@ -244,13 +255,13 @@ class TDQN:
                     self.tm.update()
 
                     with torch.no_grad():
-                        # evaluation_net = self.partial_target_net
-                        evaluation_net = self.full_net
+                        evaluation_net = self.partial_target_net
+                        # evaluation_net = self.full_net
 
                         batch = TransitionGym(*zip(*self.memory_partial_test.memory))
                         nf_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
-                                                      device=self.device,
-                                                      dtype=torch.uint8)
+                                               device=self.device,
+                                               dtype=torch.uint8)
                         nf_ns = [s for s in batch.s_ if s is not None]
 
                         state_batch = torch.cat(batch.s)
@@ -268,27 +279,49 @@ class TDQN:
                         else:
                             logger.warning("Pas d'état non terminaux")
                         self.expected_state_action_values = (next_state_values * self.gamma) + reward_batch
-                        loss = self.loss_function(state_action_values,
-                                                  self.expected_state_action_values.unsqueeze(1)).item()
+                        target_loss = self.loss_function(state_action_values,
+                                                         self.expected_state_action_values.unsqueeze(1)).item()
 
-                    if loss < self.tm.get_best_error():
-                        print(">>> partial_target_net > Q_source <<<")
-                        if self.best_net != self.full_net:
-                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
-                                                                                                         self.tm.get_best_error(),
-                                                                                                         self.tm.best_source_params()))
+                    source_loss = self.tm.get_best_error()
+                    diff = source_loss - target_loss
+
+                    cstd_target = self.info["env"].user_params["cstd"]
+                    cstd_source = self.tm.best_source_params()["cstd"]
+                    cstd_source_before = self.tm.sources_params[self.previous_idx_best_source]["cstd"]
+
+                    if diff > 0:
                         self.best_net = self.full_net
-
+                        cstd = cstd_target
+                        if self.previous_diff < 0:
+                            logging.info(
+                                "[SWITCH][i_episode={}] switching from {} source cstd={:.2f} {} to {} target cstd={:.2f} {} [TARGET cstd={:.2f}]".format(
+                                    self.i_episode, Color.BOLD, cstd_source, Color.END, Color.BOLD, cstd_target,
+                                    Color.END,cstd_target))
                     else:
-                        if self.best_net != self.full_net:
-                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
-                                                                                                         self.tm.get_best_error(),
-                                                                                                         self.tm.best_source_params()[
-                                                                                                             "proba_hangup"]))
                         self.best_net = self.tm.get_best_Q_source()
-                    if self.writer is not None:
-                        self.writer.add_scalar('loss/episode', loss, self.i_episode)
+                        # self.best_net = self.tm.Q_sources[1]
+                        cstd = cstd_source
 
-                        for param, err in zip(self.tm.sources_params, self.tm.errors):
-                            self.writer.add_scalar('loss_tm_{}/episode'.format(param["proba_hangup"]), err,
-                                                   self.i_episode)
+                        if self.previous_diff > 0:
+                            logging.info(
+                                "[SWITCH][i_episode{}] switching from {} target cstd={:.2f} {} to {} source cstd={:.2f} {} [TARGET cstd={:.2f}]".format(
+                                    self.i_episode, Color.BOLD, cstd_target, Color.END, Color.BOLD, cstd_source,
+                                    Color.END,cstd_target))
+                        elif self.previous_idx_best_source != self.tm.idx_best_fit:
+                            logging.info(
+                                "[SWITCH][i_episode{}] switching from {} source cstd={:.2f} {} to {} source cstd={:.2f} {} [TARGET cstd={:.2f}]".format(
+                                    self.i_episode, Color.BOLD, cstd_source_before, Color.END, Color.BOLD, cstd_source,
+                                    Color.END,cstd_target))
+
+                    self.previous_idx_best_source = self.tm.idx_best_fit
+                    self.previous_diff = diff
+
+                    self.writer.add_scalar('cerr_{}/episode'.format(self.id), cstd, self.i_episode)
+
+                    self.writer.add_scalar('diff_loss_{}/episode'.format(self.id), diff, self.i_episode)
+
+                    if self.writer is not None:
+                        self.writer.add_scalar('target_loss_{}/episode'.format(self.id), target_loss, self.i_episode)
+
+                        # for param, err in zip(self.tm.sources_params, self.tm.errors):
+                        self.writer.add_scalar('source_loss_{}/episode'.format(self.id), source_loss, self.i_episode)

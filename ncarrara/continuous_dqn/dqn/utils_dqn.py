@@ -18,12 +18,14 @@ def run_dqn(env,id, workspace, device, net_params, dqn_params, decay, N, seed, f
 
     net = NetDQN(n_in=size_state, n_out=env.action_space.n, **net_params)
     dqn = TDQN(
+        id=id,
         policy_network=net,
         device=device,
         transfer_module=transfer_module,
         workspace=workspace,
         writer=writer,
         feature=feature_dqn,
+        info={"env":env},
         **dqn_params)
     dqn.reset()
     set_seed(seed=seed, env=env)

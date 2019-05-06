@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from ncarrara.continuous_dqn.dqn.action_transfer_module import ActionTransferModule
 from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
 from ncarrara.continuous_dqn.dqn.utils_dqn import run_dqn
 from ncarrara.utils_rl.environments.envs_factory import generate_envs
@@ -59,6 +60,10 @@ def main(
                     # autoencoders = utils.load_autoencoders(Path(path_sources) / "ae", device)
                     # "loss_autoencoders": tu.loss_fonction_factory(loss_function_autoencoder_str),
                     raise NotImplementedError()
+                elif config["type_transfer_module"] == "ActionTransferModule":
+                    transfer_params_config["Q_sources"] = utils.load_q_sources(Path(path_sources) / "dqn", device)
+                    transfer_params_config["Q_base_target"] = None
+                    transfer_module = ActionTransferModule(**transfer_params_config)
                 else:
                     raise Exception(
                         "Unknow type_transfer_module={}".format(transfer_params_config["type_transfer_module"]))

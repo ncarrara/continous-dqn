@@ -18,6 +18,7 @@ class AutoencoderTransferModule(TransferModule):
                  device=None,
                  selection_method="best_fit",
                  N_actions=None, **kwargs):
+        raise Exception("Decrepated")
         self.N_sources = len(Q_sources)
         self.N_actions = N_actions
         self.selection_method = selection_method  # best fit or random

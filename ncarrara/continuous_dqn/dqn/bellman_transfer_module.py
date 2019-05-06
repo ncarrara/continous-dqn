@@ -22,7 +22,9 @@ class BellmanTransferModule(TransferModule):
                  Q_sources=None,
                  device=None,
                  **kwargs):
+        raise Exception("Decrepated")
         super().__init__(sources_params, evaluate_continuously, selection_method)
+
         self.memory = []
         self.Q_sources = Q_sources
         self.feature = feature
@@ -41,11 +43,6 @@ class BellmanTransferModule(TransferModule):
         transitions = self.memory[self.evaluation_index: self._memory_size()]
         import torch
         with torch.no_grad():
-
-            # if type(transitions[0]) == type(torch.zeros(0)):
-            #     transitions = torch.stack(transitions)
-            # else:
-            #     transitions = torch.tensor(transitions).to(self.device)
 
             batch = TransitionGym(*zip(*transitions))
             non_final_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
@@ -81,18 +78,3 @@ class BellmanTransferModule(TransferModule):
     def _reset(self):
         self.memory.clear()
 
-    def evaluate(self):
-        """
-        Evaluate the last unevaluated transitions
-        :return:
-        """
-        if self.selection_method == "best_fit":
-            sum_errors = self.sum_errors + self._compute_sum_last_errors()
-        elif self.selection_method == "random":
-            sum_errors = np.random.rand(self.N_sources)
-        else:
-            raise Exception("unkown selection methode : {}".format(self.selection_method))
-
-        self._update_sum_errors(sum_errors)
-
-        self.evaluation_index = self._memory_size() - 1

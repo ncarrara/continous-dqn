@@ -15,13 +15,14 @@ class TransferModule(abc.ABC):
         self.selection_method = selection_method  # best fit or random
         self.sources_params = sources_params
         self.evaluate_continuously = evaluate_continuously
-
+        self.best_net=None
+        self.error=None
     @abc.abstractmethod
     def _push_sample_to_memory(self, s, a, r_, s_, done, info):
         return
 
     @abc.abstractmethod
-    def _compute_sum_last_errors(self):
+    def _compute_errors(self):
         return
 
     @abc.abstractmethod
@@ -32,31 +33,20 @@ class TransferModule(abc.ABC):
     def _reset(self):
         return
 
+    @abc.abstractmethod
+    def _update_best_net(self):
+        return
+
 
     def reset(self):
-        self.idx_last_best_fit = None
-        self._update_sum_errors(np.random.random_sample((1, self.N_sources))[0])
-        self.evaluation_index = 0
+        self.update()
         self._reset()
-
-    def get_best_error(self):
-        return self.errors[self.idx_best_fit]
 
     def push(self, s, a, r_, s_, done, info):
         self._push_sample_to_memory(s, a, r_, s_, done, info)
         if self.evaluate_continuously:
             self.update()
 
-    def best_source_params(self):
-        return  self.sources_params[self.idx_best_fit]
-
-    def _update_sum_errors(self, sum_errors):
-        self.sum_errors = sum_errors
-        self.errors = self.sum_errors / (1 if self._memory_size() == 0 else self._memory_size())
-        self.idx_best_fit = np.argmin(self.errors)
-        if self.idx_last_best_fit is None or self.idx_best_fit != self.idx_last_best_fit:
-            logger.info("Best fit changed [{}]: {}".format(self.idx_best_fit, self.sources_params[self.idx_best_fit]))
-        self.idx_last_best_fit = self.idx_best_fit
 
     def push_memory(self, memory):
         for sample in memory:
@@ -70,14 +60,14 @@ class TransferModule(abc.ABC):
         :return:
         """
         if self.selection_method == "best_fit":
-            sum_errors = self.sum_errors + self._compute_sum_last_errors()
+            self.errors = self._compute_errors()
         elif self.selection_method == "random":
-            sum_errors = np.random.rand(self.N_sources)
+            self.errors = np.random.rand(self.N_sources)
         else:
             raise Exception("unkown selection methode : {}".format(self.selection_method))
 
-        self._update_sum_errors(sum_errors)
 
         self.evaluation_index = self._memory_size() - 1
+        self.best_net = self._update_best_net()
 
 

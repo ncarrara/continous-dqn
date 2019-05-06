@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import copy
 
+from ncarrara.continuous_dqn.dqn.action_transfer_module import ActionTransferModule
 from ncarrara.continuous_dqn.dqn.ae_transfer_module import AutoencoderTransferModule
 from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
 from ncarrara.utils.os import makedirs
@@ -99,7 +100,6 @@ class TDQN:
 
         if self.tm is not None:
             self.tm.reset()
-            self.best_net = self.tm.get_best_Q_source()
             if self.ratio_learn_test > 0:
                 # net in order to eval bellman residu on test batch
                 self.memory_partial_learn = Memory()
@@ -116,8 +116,9 @@ class TDQN:
                     self.parameters_partial_net,
                     self.lr,
                     self.weight_decay)
-        else:
-            self.best_net = self.full_net
+                if isinstance(self.tm ,ActionTransferModule):
+                    self.tm.set_Q_full_net(self.full_target_net)
+                    self.tm.set_Q_partial_net(self.partial_net)
 
     def _construct_batch(self, memory):
         transitions = memory.sample(
@@ -202,9 +203,9 @@ class TDQN:
             action_mask = torch.tensor([action_mask], device=self.device, dtype=torch.float)
             s = torch.tensor([state], device=self.device, dtype=torch.float)
             if self.tm is not None:
-                v = self.best_net(s)
+                v = self.tm.best_net(s)
             else:
-                v = self.full_net(s)
+                v=self.full_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
             return a
 
@@ -240,55 +241,5 @@ class TDQN:
                 self.full_target_net.load_state_dict(self.full_net.state_dict())
                 if self.tm is not None:
                     self.partial_target_net.load_state_dict(self.partial_net.state_dict())
-
                     self.tm.update()
 
-                    with torch.no_grad():
-                        # evaluation_net = self.partial_target_net
-                        evaluation_net = self.full_net
-
-                        batch = TransitionGym(*zip(*self.memory_partial_test.memory))
-                        nf_mask = torch.tensor(tuple(map(lambda s: s is not None, batch.s_)),
-                                                      device=self.device,
-                                                      dtype=torch.uint8)
-                        nf_ns = [s for s in batch.s_ if s is not None]
-
-                        state_batch = torch.cat(batch.s)
-                        action_batch = torch.cat(batch.a)
-                        reward_batch = torch.cat(batch.r_)
-
-                        action_batch = action_batch.unsqueeze(1)
-
-                        next_state_values = torch.zeros(len(self.memory_partial_test.memory), device=self.device)
-
-                        Q = evaluation_net(state_batch)
-                        state_action_values = Q.gather(1, action_batch)
-                        if nf_ns:
-                            next_state_values[nf_mask] = evaluation_net(torch.cat(nf_ns)).max(1)[0].detach()
-                        else:
-                            logger.warning("Pas d'état non terminaux")
-                        self.expected_state_action_values = (next_state_values * self.gamma) + reward_batch
-                        loss = self.loss_function(state_action_values,
-                                                  self.expected_state_action_values.unsqueeze(1)).item()
-
-                    if loss < self.tm.get_best_error():
-                        print(">>> partial_target_net > Q_source <<<")
-                        if self.best_net != self.full_net:
-                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
-                                                                                                         self.tm.get_best_error(),
-                                                                                                         self.tm.best_source_params()))
-                        self.best_net = self.full_net
-
-                    else:
-                        if self.best_net != self.full_net:
-                            print("switching test_net : {:.2f} loss best Q source : {:.2f} -> {}".format(loss,
-                                                                                                         self.tm.get_best_error(),
-                                                                                                         self.tm.best_source_params()[
-                                                                                                             "proba_hangup"]))
-                        self.best_net = self.tm.get_best_Q_source()
-                    if self.writer is not None:
-                        self.writer.add_scalar('loss/episode', loss, self.i_episode)
-
-                        for param, err in zip(self.tm.sources_params, self.tm.errors):
-                            self.writer.add_scalar('loss_tm_{}/episode'.format(param["proba_hangup"]), err,
-                                                   self.i_episode)

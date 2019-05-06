@@ -41,9 +41,9 @@ def plot_ctop_cbot(cerr, cok, cstd, **kwargs):
     plt.show()
     plt.close()
 
-
-# plot_ctop_cbot(-0.25,0.25,0.1)
-# plot_ctop_cbot(-0.25,0.25,0.25)
-for i in np.linspace(0.1,0.5,9):
-    plot_ctop_cbot(-0.25,0.25,i)
-# plot_ctop_cbot(-0.25,0.25,0.75)
+if __name__=="__main__":
+    # plot_ctop_cbot(-0.25,0.25,0.1)
+    # plot_ctop_cbot(-0.25,0.25,0.25)
+    for i in np.linspace(0.1,0.5,9):
+        plot_ctop_cbot(-0.25,0.25,i)
+    # plot_ctop_cbot(-0.25,0.25,0.75)

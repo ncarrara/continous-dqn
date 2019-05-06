@@ -91,15 +91,15 @@
   "source_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.0,0.75]",
+      "ser": "[0.1,0.9]",
       "cstd": "[0.25]",
       "proba_hangup":"[0.0]",
       "max_turn": "[20]",
       "size_constraints": "[5]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[0.0]",
-      "penalty_by_turn": "[0.0]",
+      "penalty_if_summarize_fail": "[-25]",
+      "penalty_by_turn": "[-5]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },
@@ -109,15 +109,15 @@
   "target_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.0,0.75]",
+      "ser": "[0.1,0.9]",
       "cstd": "[0.25]",
       "proba_hangup":"[0.5]",
       "max_turn": "[20]",
       "size_constraints": "[5]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[0.0]",
-      "penalty_by_turn": "[0.0]",
+      "penalty_if_summarize_fail": "[-25]",
+      "penalty_by_turn": "[-5]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },

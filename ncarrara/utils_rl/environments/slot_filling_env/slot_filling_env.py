@@ -29,7 +29,7 @@ class SlotFillingEnv(object):
                  size_constraints=3,
                  penalty_if_bye=0.,
                  penalty_if_hangup=0.,
-                 penalty_if_summarize_fail=50.,
+                 penalty_if_summarize_fail=-50.,
                  penalty_by_turn=-5.,
                  penalty_if_max_turn=0.,
                  reward_if_sucess=100.,

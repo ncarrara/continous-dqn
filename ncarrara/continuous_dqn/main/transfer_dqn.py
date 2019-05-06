@@ -72,7 +72,7 @@ def main(
             env = envs[i_env]
             ret, ret_greedy, _, _ = run_dqn(
                 env,
-                id=key,
+                id="{}_e{}".format(key,i_env),
                 workspace=workspace / key,
                 seed=seed,
                 device=device,

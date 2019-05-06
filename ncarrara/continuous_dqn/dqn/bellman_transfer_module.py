@@ -35,6 +35,7 @@ class BellmanTransferModule(TransferModule):
     def get_best_Q_source(self):
         return self.Q_sources[self.idx_best_fit]
 
+
     def _push_sample_to_memory(self, s, a, r_, s_, done, info):
         self.memory.append((s, a, r_, s_, done, info))
 

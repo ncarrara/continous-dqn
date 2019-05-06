@@ -6,6 +6,7 @@ import copy
 from ncarrara.continuous_dqn.dqn.action_transfer_module import ActionTransferModule
 from ncarrara.continuous_dqn.dqn.ae_transfer_module import AutoencoderTransferModule
 from ncarrara.continuous_dqn.dqn.bellman_transfer_module import BellmanTransferModule
+from ncarrara.utils.color import Color
 from ncarrara.utils.os import makedirs
 from ncarrara.utils.torch_utils import BaseModule, optimizer_factory, loss_fonction_factory
 from ncarrara.utils_rl.transition.replay_memory import Memory
@@ -24,6 +25,7 @@ class TDQN:
     ADAPTATIVE = "ADAPTATIVE"
 
     def __init__(self,
+                 id,
                  device,
                  policy_network,
                  gamma=0.999,
@@ -38,9 +40,12 @@ class TDQN:
                  weight_decay=None,
                  transfer_module=None,
                  writer=None,
+                 info={},
                  transfer_param_init=None,
                  feature=None,
                  **kwargs):
+        self.id = id
+        self.info = info
         self.tm = transfer_module
         # self.type_transfer_module = type(transfer_module)
         # print(self.type_transfer_module)
@@ -87,6 +92,7 @@ class TDQN:
         if reset_weight:
             self.full_net.reset()
 
+
         # target net of the main and greedy classic net
         self.full_target_net = copy.deepcopy(self.full_net)
         self.full_target_net.load_state_dict(self.full_net.state_dict())
@@ -100,6 +106,12 @@ class TDQN:
 
         if self.tm is not None:
             self.tm.reset()
+            self.best_net = self.tm.get_best_Q_source()
+            self.previous_diff = -np.inf
+            self.previous_idx_best_source = self.tm.idx_best_fit
+            logging.info(
+                "[INITIAL][i_episode{}] Using {} source cstd={:.2f} {} Q function".format(
+                    self.i_episode, Color.BOLD, self.tm.best_source_params()["cstd"], Color.END))
             if self.ratio_learn_test > 0:
                 # net in order to eval bellman residu on test batch
                 self.memory_partial_learn = Memory()

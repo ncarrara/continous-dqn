@@ -17,6 +17,7 @@ class TransferModule(abc.ABC):
         self.evaluate_continuously = evaluate_continuously
         self.best_net=None
         self.error=None
+        logger.info("sources_params : {}".format(self.sources_params))
     @abc.abstractmethod
     def _push_sample_to_memory(self, s, a, r_, s_, done, info):
         return

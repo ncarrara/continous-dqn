@@ -75,31 +75,31 @@
       }
     },
     "workspace": "tmp/slot_filling/easy_aea",
-    "seed": 2,
+    "seed": 3,
     "id": "slot_filling_easy_aea",
     "is_tensorboardX": true,
-    "-path_sources": "tmp/slot_filling/easy_aea/273/sources",
-    "path_sources": null
+    "path_sources": "tmp/slot_filling/easy_aea/287/sources",
+    "-path_sources": null
   },
-   "generate_sources": {
+   "-generate_sources": {
     "N": 250,
     "decay": 0.025,
     "start_decay": 1.0,
     "traj_max_size": 10
   },
-  "N_actions": 8,
+  "N_actions": 5,
   "source_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.1,0.9]",
-      "cstd": "[0.25]",
+      "ser": "[0.25]",
+      "cstd": "[0.1,0.9]",
       "proba_hangup":"[0.0]",
       "max_turn": "[10]",
       "size_constraints": "[3]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[-25]",
-      "penalty_by_turn": "[-5]",
+      "penalty_if_summarize_fail": "[0]",
+      "penalty_by_turn": "[0]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },
@@ -109,15 +109,15 @@
   "target_envs": {
     "envs_params": {
       "cerr": "[-1]",
-      "ser": "[0.1,0.9]",
-      "cstd": "[0.25]",
-      "proba_hangup":"[0.5]",
+      "ser": "[0.25]",
+      "cstd": "[0.1,0.9]",
+      "proba_hangup":"[0.0]",
       "max_turn": "[10]",
       "size_constraints": "[3]",
       "penalty_if_bye": "[0.0]",
       "penalty_if_hangup": "[0.0]",
-      "penalty_if_summarize_fail": "[-25]",
-      "penalty_by_turn": "[-5]",
+      "penalty_if_summarize_fail": "[0]",
+      "penalty_by_turn": "[0]",
       "penalty_if_max_turn": "[0.0]",
       "reward_if_sucess": "[100.0]"
     },
@@ -125,14 +125,14 @@
     "envs_str": "slot_filling_env_v1"
   },
   "dqn_params": {
-    "gamma": 1.0,
+    "gamma": 0.95,
     "batch_size_experience_replay": 128,
-    "target_update": 10,
+    "target_update": 25,
     "optimizer": "ADAM",
     "loss_function": "l2",
     "loss_function_gate": "l2",
     "lr": 0.001,
-    "weight_decay": 0.001,
+    "weight_decay": 0.0005,
     "transfer_param_init": null,
     "ratio_learn_test": 0.5
   },

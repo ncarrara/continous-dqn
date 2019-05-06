@@ -92,7 +92,6 @@ class TDQN:
         if reset_weight:
             self.full_net.reset()
 
-
         # target net of the main and greedy classic net
         self.full_target_net = copy.deepcopy(self.full_net)
         self.full_target_net.load_state_dict(self.full_net.state_dict())
@@ -106,13 +105,12 @@ class TDQN:
 
         if self.tm is not None:
             self.tm.reset()
-            self.best_net = self.tm.get_best_Q_source()
-            self.previous_diff = -np.inf
-            self.previous_idx_best_source = self.tm.idx_best_fit
-            logging.info(
-                "[INITIAL][i_episode{}] Using {} source cstd={:.2f} {} Q function".format(
-                    self.i_episode, Color.BOLD, self.tm.best_source_params()["cstd"], Color.END))
-            if self.ratio_learn_test > 0:
+            # self.previous_diff = -np.inf
+            # self.previous_idx_best_source = self.tm.idx_best_fit
+            # logging.info(
+            #     "[INITIAL][i_episode{}] Using {} source cstd={:.2f} {} Q function".format(
+            #         self.i_episode, Color.BOLD, self.tm.best_source_params()["cstd"], Color.END))
+            if self.ratio_learn_test <1:
                 # net in order to eval bellman residu on test batch
                 self.memory_partial_learn = Memory()
                 self.memory_partial_test = Memory()
@@ -128,8 +126,8 @@ class TDQN:
                     self.parameters_partial_net,
                     self.lr,
                     self.weight_decay)
-                if isinstance(self.tm ,ActionTransferModule):
-                    self.tm.set_Q_full_net(self.full_target_net)
+                if isinstance(self.tm, ActionTransferModule):
+                    self.tm.set_Q_full_net(self.full_net)
                     self.tm.set_Q_partial_net(self.partial_net)
 
     def _construct_batch(self, memory):
@@ -194,7 +192,7 @@ class TDQN:
             ########################################
             ######### optimize partial net #########
             ########################################
-            if self.ratio_learn_test <1:
+            if self.ratio_learn_test < 1:
                 if len(self.memory_partial_learn) > 0:
                     self._optimize(
                         self.memory_partial_learn,
@@ -217,7 +215,7 @@ class TDQN:
             if self.tm is not None:
                 v = self.tm.best_net(s)
             else:
-                v=self.full_net(s)
+                v = self.full_net(s)
             a = v.squeeze().sub(action_mask).max(1)[1].view(1, 1).item()
             return a
 
@@ -254,4 +252,3 @@ class TDQN:
                 if self.tm is not None:
                     self.partial_target_net.load_state_dict(self.partial_net.state_dict())
                     self.tm.update()
-

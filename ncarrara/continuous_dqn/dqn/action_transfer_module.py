@@ -53,6 +53,8 @@ class ActionTransferModule(TransferModule):
         self.Q_partial_net = net
 
     def _update_best_net(self):
+        print([self.sources_params[idx]["cstd"] for idx in range(len(self.errors))])
+        print("{} vs {}".format(self.errors,self.error_partial_net))
         idx_min_source_error = np.argmin(self.errors)
         if self.errors[idx_min_source_error] < self.error_partial_net:
             self.idx_current_best_net = idx_min_source_error
@@ -60,14 +62,14 @@ class ActionTransferModule(TransferModule):
             self.idx_current_best_net = -1
         if self.idx_last_best_net is None:
             logger.info(
-                "initialising best net with {}".format(self.sources_params[self.idx_current_best_net]["proba_hangup"]))
+                "initialising best net with {}".format(self.sources_params[self.idx_current_best_net]["cstd"]))
         else:
             if self.idx_current_best_net != self.idx_last_best_net:
 
                 if self.idx_current_best_net != -1:
                     message = "{}switching to -> {}{}".format(Color.BOLD,
                                                               self.sources_params[self.idx_current_best_net][
-                                                                  "proba_hangup"], Color.END)
+                                                                  "cstd"], Color.END)
                 else:
                     message = Color.BOLD + "switching to full net" + Color.END
                 logger.info(message)
@@ -81,19 +83,14 @@ class ActionTransferModule(TransferModule):
         self.memory.append((s, a, r_, s_, done, info))
 
     def _compute_errors(self):
-        # import torch
-        # logger.info("memory size : {}".format(self._memory_size()))
-        # logger.info("self.evaluation_index : {}".format(self.evaluation_index))
         with torch.no_grad():
             # foward full net on the whole batch (since fullnet has been updated)
             batch_all_transitions = TransitionGym(*zip(*self.memory))
             state_batch_all_transitions = torch.cat(batch_all_transitions.s)
-            # logger.info("forward {} transitions for full Q".format(len(self.memory)))
             a_fullnet = self.Q_full_net(state_batch_all_transitions).max(1)[1]
 
             # foward the remaining state
             last_transitions = self.memory[self.evaluation_index: self._memory_size()]
-            # logger.info("forward {} transitions for each Q source".format(len(last_transitions)))
             batch = TransitionGym(*zip(*last_transitions))
             state_batch = torch.cat(batch.s)
 
@@ -103,11 +100,8 @@ class ActionTransferModule(TransferModule):
                 self.actions[idx] = torch.cat((actions_Q_source, self.actions[idx]))
                 error = torch.sum(a_fullnet != self.actions[idx]).item() / len(self.actions[idx])
                 errors[idx]=error
-            # print(errors)
 
             a_partialnet = self.Q_partial_net(state_batch_all_transitions).max(1)[1]
-            # print(a_fullnet)
-            # print(a_partialnet)
             self.error_partial_net = torch.sum(a_fullnet != a_partialnet).item() / len(a_partialnet)
             print("partial net error : {:.2f} vs {}".format(self.error_partial_net,errors))
         return errors

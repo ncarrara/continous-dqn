@@ -9,7 +9,8 @@ import copy
 import os
 from sys import getsizeof
 
-from ncarrara.budgeted_rl.bftq.budgeted_utils import TransitionBFTQ, convex_hull, f, optimal_pia_pib_parralle
+from ncarrara.budgeted_rl.bftq.budgeted_utils import TransitionBFTQ, convex_hull, f, optimal_pia_pib_parralle, \
+    optimal_pia_pib
 from ncarrara.utils.color import Color
 from ncarrara.utils.math_utils import update_lims, near_split
 from ncarrara.utils.miscelanous import pretty_format_list
@@ -430,8 +431,7 @@ class PytorchBudgetedFittedQ:
                 if isinstance(self.env, EnvGridWorld):
                     def pi(state, beta):
                         import torch
-                        from ncarrara.budgeted_rl.bftq.pytorch_budgeted_fittedq import convex_hull, \
-                            optimal_pia_pib
+
                         with torch.no_grad():
                             hull = convex_hull(s=torch.tensor([state], device=self.device, dtype=torch.float32),
                                                Q=self._policy_network,

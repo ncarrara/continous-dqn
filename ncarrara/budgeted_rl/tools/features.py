@@ -177,6 +177,7 @@ def feature_slot_filling(s, e, gaussian_reco):
 
 
 def feature_identity(s, e):
+    s = np.array(s)
     return s.flatten().tolist()
 
 

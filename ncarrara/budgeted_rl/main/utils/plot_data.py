@@ -1,5 +1,7 @@
 import itertools
 import sys
+from pathlib import Path
+
 import numpy as np
 import os
 
@@ -30,25 +32,25 @@ def parse_data(path, params):
         results = pd.DataFrame()
         for id in ids:
             # Results directory
-            file_id = "{}/{}/{}/results".format(path, id, algo)
-            if not os.path.exists(file_id):
+            results_dir = path / id / algo / "results"
+            if not results_dir.exists():
                 continue
 
-            logger.info("Loading from {}".format(file_id))
+            logger.info("Loading from {}".format(results_dir))
             # Results files
             id_results = pd.DataFrame()
-            for file_param in os.listdir(file_id):
-                m = re.search("=(.*).result", file_param)
+            for file_param in results_dir.iterdir():
+                m = re.search("=(.*).result", str(file_param))
                 if m:  # valid filename
                     param = m.group(1)
-                    res = pd.read_csv(file_id + "/" + file_param, sep=' ', names=['R', 'C', 'Rd', 'Cd'])
+                    res = pd.read_csv(file_param, sep=' ', names=['R', 'C', 'Rd', 'Cd'])
                     res["parameter"] = param
                     id_results = id_results.append(res, sort=False)
                 else:
                     continue
             # logger.info("id_results : \n{}".format(id_results))
             if id_results.empty:
-                logging.warning("Could not find any result at {}".format(file_id))
+                logging.warning("Could not find any result at {}".format(results_dir))
                 continue
             id_results["id"] = "id=" + id
             results = results.append(id_results, sort=False)
@@ -199,16 +201,6 @@ def plot_lines(data, x=None, y=None, filename=None, points=None, **kwargs):
     plt.close()
 
 
-def rename_fields(data, algos):
-    # data = data.replace("ftq_duplicate", "FTQ")
-    # data = data.replace("ftq_egreedy", "FTQ")
-    data = data.replace("bftq_egreedy", "BFTQ(risk-sensitive)")
-    data = data.replace("bftq_duplicate", "BFTQ(risk-neutral)")
-    algos["BFTQ(risk-neutral)"] = algos["bftq_duplicate"]
-    algos["BFTQ(risk-sensitive)"] = algos["bftq_egreedy"]
-    return data, algos
-
-
 def rename_label(label):
     replacement = {"Rd": r"$\mathcal{R}^\pi$", "Cd": r"$\mathcal{C}^\pi$"}
     return replacement.get(label, label)
@@ -217,16 +209,17 @@ def rename_label(label):
 
 
 def main(workspace):
+    workspace = Path(workspace)
     palette = itertools.cycle(sns.color_palette())
     marker = itertools.cycle(('^', 'v', '*', '+', '*'))
     algos = {
         "bftq_egreedy": [next(palette), next(marker), r"bftq risk-sensitive($\beta$)"],
-        "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
+        # "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
         # "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
         # "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
     }
     data = parse_data(workspace, algos)
-    data, algos = rename_fields(data, algos)
+    # data, algos = rename_fields(data, algos)
     print(data)
     plot_all(data, workspace, algos)
 

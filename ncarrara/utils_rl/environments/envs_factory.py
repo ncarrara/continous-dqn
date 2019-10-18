@@ -80,6 +80,10 @@ def generate_envs(envs_str, envs_params, number_random_env=None):
             __import__("highway_env")
             env = gym.make(envs_str)
             env.configure(dict(**param))
+        elif envs_str == "finite-mdp-v0":
+            __import__("finite_mdp")
+            env = gym.make(envs_str)
+            env.configure(dict(**param))
         elif envs_str == "test_death_trap":
             from ncarrara.utils_rl.environments.gridworld.model_generator import generate_test_death_trap
             env, _ = generate_test_death_trap()

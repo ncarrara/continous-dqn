@@ -1,4 +1,5 @@
 # coding=utf-8
+import shutil
 from multiprocessing.pool import Pool
 import matplotlib.pyplot as plt
 
@@ -124,7 +125,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
 
         # Save policy
         network_path = bftq.save_policy()
-        os.system("cp {}/policy.pt {}/policy.pt".format(bftq.workspace, workspace))
+        shutil.copy(bftq.workspace / "policy.pt", workspace / "policy.pt")
 
         # Save memory
         save_memory(bftq, memory_by_batch, by_batch=False)

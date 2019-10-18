@@ -14,8 +14,8 @@ def main(config):
 
     if "learn_bftq_egreedy" in config:
         print("-------- learn_bftq_greedy --------")
-        config.dict["bftq_params"]["betas_for_duplication"] = \
-            config.dict["learn_bftq_egreedy"]["betas_for_duplication"]
+        # config.dict["bftq_params"]["betas_for_duplication"] = \
+        #     config.dict["learn_bftq_egreedy"]["betas_for_duplication"]
         learn_bftq_egreedy.main(
             device=config.device, seed=config.seed,
             workspace=config.path_bftq_egreedy,

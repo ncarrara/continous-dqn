@@ -294,19 +294,22 @@ def generate_safe_explo(nb_cases=6, offset=2, std=[0.75, 0.75]):
     return m, emax
 
 
-def double_path(high=5, std=[0.75, 0.75]):
-    A_str = ["X", "v", "->", "<-", "^"]
-    A = [(0., 0.), (0., 1.), (1., 0.), (-1., 0), (0., -1.)]
+def double_path(high=5, std=[0.2, 0.2]):
+    A_str = ["v", "->", "<-", "^"]
+    A = [(0., 1.), (1., 0.), (-1., 0), (0., -1.)]
     start = np.array([1.5, 0.5])
     blocks = []
 
     reward_safe = []
-    for i in range(1, high):
-        reward_safe.append(i)
-    reward_safe += [100.]
+    for i in range(1, high + 1):
+        reward_safe.append(i / (high + 1) / 5)
+    # reward_safe += [100.]
     reward_unsafe = []
     for i in range(1, high + 1):
-        reward_unsafe.append(i * 10)
+        reward_unsafe.append(i / (high + 1))
+
+    reward_safe[-1] *= 5
+    reward_unsafe[-1] *= 5
 
     safe_path = []
     unsafe_path = []

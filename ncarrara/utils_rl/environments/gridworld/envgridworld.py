@@ -72,9 +72,10 @@ class EnvGridWorld(object):
         self.reset()
 
     def reset(self):
-        self.s = self.init_s
+        x, y = apply_noise(self.init_s[0], self.init_s[1], 0, 0, [0.2, 0.2], "gaussian")
+        self.s = np.array([x, y])
         self.t = 0
-        self.ended = False;
+        self.ended = False
         return np.array(self.s)
 
     def step(self, i_a):

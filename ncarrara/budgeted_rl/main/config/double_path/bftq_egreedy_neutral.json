@@ -131,7 +131,7 @@
       "start": 1.0,
       "decay": 0.012
     },
-    "betas_for_exploration": "[]"
+    "betas_for_exploration": "[1]"
   },
   "bftq_params": {
     "clamp_Qc": null,

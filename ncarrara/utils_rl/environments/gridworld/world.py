@@ -301,6 +301,22 @@ class World():
         for trajectory in trajectories:
             self.draw_test_trajectory(trajectory, alpha)
 
+    @staticmethod
+    def plot_density(trajectories, path):
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+        xx = []
+        yy = []
+        for traj in trajectories:
+            for s, _, _, sp, _, _ in traj:
+                x, y = s
+                xx.append(x)
+                yy.append(-y)
+        sns.kdeplot(xx, yy, shade=True, n_levels=30, shade_lowest=False)
+        plt.savefig(str(path))
+        plt.close()
+
+
     def save(self, filename):
         file = filename+'.png'
         # logging.info("[WORLD] saving to {}".format(file))

@@ -121,6 +121,7 @@ def main(generate_envs, feature_str, betas_for_exploration, gamma, gamma_c, bftq
             w.draw_cases()
             w.draw_source_trajectories(trajs)
             w.save((bftq.workspace / "bftq_on_2dworld_sources").as_posix())
+            w.plot_density(trajs, bftq.workspace / "densities.png")
         q = bftq.fit(transition_bftq)
 
         # Save policy

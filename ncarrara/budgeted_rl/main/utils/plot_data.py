@@ -73,25 +73,25 @@ def plot_all(data, path, params):
             for type in ["intra_seed", "extra_seed"]:
                 show_std = type_varation == "std"
                 show_ci = type_varation == "ci"
-                means = means_of_means
                 if type == "intra_seed":
                     stds = mean_of_stds
                 elif type == "extra_seed":
                     stds = std_of_means
-
-                plot_patch(type, means, stds, counts, show_annotation=show_annotation,
-                           show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
-                           curves="algorithm", points="parameter",
-                           params=params,
-                           filename=os.path.join(path, "{}_{}_annot={}.png".format(type, type_varation,
-                                                                                   show_annotation)))
-                plot_patch(type, means, stds, counts, show_annotation=show_annotation,
-                           show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
-                           curves="algorithm", points="parameter",
-                           params=params,
-                           filename=os.path.join(path, "{}_{}_annot={}.svg".format(type, type_varation,
-                                                                                   show_annotation)))
-
+                try:
+                    plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
+                               show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
+                               curves="algorithm", points="parameter",
+                               params=params,
+                               filename=os.path.join(path, "{}_{}_annot={}.png".format(type, type_varation,
+                                                                                       show_annotation)))
+                    plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
+                               show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
+                               curves="algorithm", points="parameter",
+                               params=params,
+                               filename=os.path.join(path, "{}_{}_annot={}.svg".format(type, type_varation,
+                                                                                       show_annotation)))
+                except Exception:
+                    pass
             # plot_patch(means_of_means, mean_of_stds, counts, show_annotation=show_annotation,x="Cd", y="Rd", curves="algorithm", points="parameter",
             #            params=params, filename=os.path.join(path, "results_disc_extra_annot={}.png".format(show_annotation)))
             # plot_patch(means_of_means, std_of_means, counts,show_annotation=show_annotation, x="Cd", y="Rd", curves="algorithm", points="parameter",
@@ -115,7 +115,7 @@ def plot_patch(type, mean, std, counts, x, y, curves, points, params, show_std=F
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
     result = pd.concat([mean, std.add_suffix("_std"), counts.add_suffix("_count")], axis=1, sort=False)
-    print(result)
+    # print(result)
     # nb_run =
 
     # handlers = []
@@ -131,7 +131,6 @@ def plot_patch(type, mean, std, counts, x, y, curves, points, params, show_std=F
                 raise Exception("malformed data")
         else:
             raise Exception("wrong type : {}".format(type))
-        print(type, nb_run)
         # exit()
         ax1 = data.plot.scatter(x=x, y=y, ax=ax, c=[params[group_label][0]], marker=params[group_label][1], s=30,
                                 zorder=2, label=group_label)
@@ -214,13 +213,13 @@ def main(workspace):
     marker = itertools.cycle(('^', 'v', '*', '+', '*'))
     algos = {
         "bftq_egreedy": [next(palette), next(marker), r"bftq risk-sensitive($\beta$)"],
-        # "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
+        "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
         # "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
         # "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
     }
     data = parse_data(workspace, algos)
     # data, algos = rename_fields(data, algos)
-    print(data)
+    # print(data)
     plot_all(data, workspace, algos)
 
 

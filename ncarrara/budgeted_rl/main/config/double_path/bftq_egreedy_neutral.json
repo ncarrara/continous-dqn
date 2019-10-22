@@ -124,12 +124,12 @@
     "normalize_reward": true
   },
   "learn_bftq_egreedy": {
-    "trajs_by_ftq_batch": 80,
+    "trajs_by_ftq_batch": 200,
     "normalize_reward": false,
-    "N_trajs": 400,
+    "N_trajs": 1200,
     "epsilon_decay": {
       "start": 1.0,
-      "decay": 0.004
+      "decay": 0.002
     },
     "betas_for_exploration": "[1]"
   },
@@ -144,7 +144,7 @@
     "max_nn_epoch": 1000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 7,
+    "max_ftq_epoch": 10,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,

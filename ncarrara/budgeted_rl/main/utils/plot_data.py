@@ -77,21 +77,21 @@ def plot_all(data, path, params):
                     stds = mean_of_stds
                 elif type == "extra_seed":
                     stds = std_of_means
-                try:
-                    plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
-                               show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
-                               curves="algorithm", points="parameter",
-                               params=params,
-                               filename=os.path.join(path, "{}_{}_annot={}.png".format(type, type_varation,
-                                                                                       show_annotation)))
-                    plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
-                               show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
-                               curves="algorithm", points="parameter",
-                               params=params,
-                               filename=os.path.join(path, "{}_{}_annot={}.svg".format(type, type_varation,
-                                                                                       show_annotation)))
-                except Exception:
-                    pass
+                # try:
+                plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
+                           show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
+                           curves="algorithm", points="parameter",
+                           params=params,
+                           filename=os.path.join(path, "{}_{}_annot={}.png".format(type, type_varation,
+                                                                                   show_annotation)))
+                # plot_patch(type, means_of_means, stds, counts, show_annotation=show_annotation,
+                #            show_std=show_std, show_confidence=show_ci, x="Cd", y="Rd",
+                #            curves="algorithm", points="parameter",
+                #            params=params,
+                #            filename=os.path.join(path, "{}_{}_annot={}.pdf".format(type, type_varation,
+                #                                                                    show_annotation)))
+                # except Exception:
+                #     pass
             # plot_patch(means_of_means, mean_of_stds, counts, show_annotation=show_annotation,x="Cd", y="Rd", curves="algorithm", points="parameter",
             #            params=params, filename=os.path.join(path, "results_disc_extra_annot={}.png".format(show_annotation)))
             # plot_patch(means_of_means, std_of_means, counts,show_annotation=show_annotation, x="Cd", y="Rd", curves="algorithm", points="parameter",
@@ -183,6 +183,7 @@ def plot_patch(type, mean, std, counts, x, y, curves, points, params, show_std=F
 
     if filename:
         plt.savefig(filename)
+        plt.savefig(Path(filename).with_suffix(".pdf"))
     plt.show()
     plt.close()
 
@@ -213,7 +214,7 @@ def main(workspace):
     marker = itertools.cycle(('^', 'v', '*', '+', '*'))
     algos = {
         "bftq_egreedy": [next(palette), next(marker), r"bftq risk-sensitive($\beta$)"],
-        "bftq_duplicate": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
+        "bftq_neutral": [next(palette), next(marker), r"bftq risk-neutral($\beta$)"],
         # "ftq_duplicate": [next(palette), next(marker), r"ftq duplicate($\lambda$)"],
         # "ftq_egreedy": [next(palette), next(marker), r"ftq egreedy($\lambda$)"],
     }

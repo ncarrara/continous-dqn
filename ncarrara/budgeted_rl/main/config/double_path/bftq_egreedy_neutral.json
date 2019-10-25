@@ -2,7 +2,7 @@
   "general": {
     "id": "main6",
     "seed": 0,
-    "workspace": "tmp/double_path/main6/",
+    "workspace": "tmp/double_path/main_neutral/",
     "is_tensorboardX": false,
     "hull_options": {
       "decimals": null,
@@ -144,14 +144,14 @@
     "max_nn_epoch": 1000,
     "optimizer": "ADAM",
     "loss_function": "l2",
-    "max_ftq_epoch": 10,
+    "max_ftq_epoch": 7,
     "learning_rate": 0.01,
     "reset_policy_each_ftq_epoch": true,
     "delta_stop": 0.001,
-    "weight_decay": 0.0001,
+    "weight_decay": 0.001,
     "batch_size_experience_replay": "ALL_BATCH",
     "loss_function_c": "l2",
-    "betas_for_duplication": "[]",
+    "betas_for_duplication": "np.linspace(0.,1.,11)",
     "weights_losses": [
       1.0,
       1.0

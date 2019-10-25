@@ -312,7 +312,8 @@ class World():
                 x, y = s
                 xx.append(x)
                 yy.append(-y)
-        sns.kdeplot(xx, yy, shade=True, n_levels=30, shade_lowest=False)
+        sns.kdeplot(xx, yy, shade=True, n_levels=10, shade_lowest=False, bw=0.35)
+        plt.axis('equal')
         plt.savefig(str(path))
         plt.close()
 
